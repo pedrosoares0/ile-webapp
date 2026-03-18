@@ -110,40 +110,85 @@ export default function HomeView({ onNavigate }: HomeViewProps) {
       </div>
 
       {/* Action Grid */}
-      <div className="mt-6 grid grid-cols-2 gap-4 px-5">
-        <button className="group flex h-[76px] items-center gap-3 rounded-[24px] bg-[#E8F8E4] px-4 shadow-[0_6px_15px_rgba(0,0,0,0.02)] active:scale-95 transition-all duration-200">
-          <div className="h-9 w-9 flex-shrink-0 flex items-center justify-center">
-            <img src="/img/financeiro-icon.png" alt="Financeiro" className="h-full w-full object-contain" />
+      <div className="mt-8 grid grid-cols-2 gap-4 px-5 pb-10">
+        <motion.button 
+          whileHover={{ y: -4, scale: 1.02 }}
+          whileTap={{ scale: 0.96 }}
+          className="group relative flex h-[140px] flex-col items-center justify-center overflow-hidden rounded-[32px] bg-[#E8F8E4] p-5 shadow-[0_10px_30px_rgba(45,90,39,0.08)]"
+        >
+          {/* Decorative Icon Background */}
+          <div className="absolute -right-4 -top-4 opacity-[0.08] transition-transform group-hover:scale-110 duration-500">
+            <img src="/img/financeiro-icon.png" alt="" className="h-32 w-32 object-contain" />
           </div>
-          <span className="text-[11px] font-bold text-[#414141] text-left leading-tight flex-1">Financeiro</span>
-        </button>
+          
+          <div className="relative z-10 mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/40 shadow-sm backdrop-blur-sm border border-white/40">
+            <img src="/img/financeiro-icon.png" alt="Financeiro" className="h-8 w-8 object-contain" />
+          </div>
+          
+          <div className="relative z-10 text-center">
+            <h3 className="text-[22px] leading-tight text-[#1B3B18]" style={{ fontFamily: 'BehindTheNinetiesItalic' }}>Financeiro</h3>
+            <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-[#1B3B18]/40">Mensalidades</p>
+          </div>
+        </motion.button>
 
-        <button 
+        <motion.button 
           onClick={() => onNavigate('eventos')}
-          className="group flex h-[76px] items-center gap-3 rounded-[24px] bg-[#FCE8C3] px-4 shadow-[0_6px_15px_rgba(0,0,0,0.02)] active:scale-95 transition-all duration-200"
+          whileHover={{ y: -4, scale: 1.02 }}
+          whileTap={{ scale: 0.96 }}
+          className="group relative flex h-[140px] flex-col items-center justify-center overflow-hidden rounded-[32px] bg-[#FCE8C3] p-5 shadow-[0_10px_30px_rgba(184,134,11,0.08)]"
         >
-          <div className="h-9 w-9 flex-shrink-0 flex items-center justify-center">
-            <img src="/img/eventos-icon.png" alt="Eventos" className="h-full w-full object-contain" />
+          <div className="absolute -right-4 -top-4 opacity-[0.08] transition-transform group-hover:scale-110 duration-500">
+            <img src="/img/eventos-icon.png" alt="" className="h-32 w-32 object-contain" />
           </div>
-          <span className="text-[11px] font-bold text-[#414141] text-left leading-tight flex-1">Eventos</span>
-        </button>
+          
+          <div className="relative z-10 mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/40 shadow-sm backdrop-blur-sm border border-white/40">
+            <img src="/img/eventos-icon.png" alt="Eventos" className="h-8 w-8 object-contain" />
+          </div>
+          
+          <div className="relative z-10 text-center">
+            <h3 className="text-[22px] leading-tight text-[#5C4033]" style={{ fontFamily: 'BehindTheNinetiesItalic' }}>Eventos</h3>
+            <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-[#5C4033]/40">Calendário</p>
+          </div>
+        </motion.button>
 
-        <button 
+        <motion.button 
           onClick={() => onNavigate('pontos')}
-          className="group flex h-[76px] items-center gap-3 rounded-[24px] bg-white px-4 shadow-[0_6px_15px_rgba(0,0,0,0.02)] active:scale-95 transition-all duration-200"
+          whileHover={{ y: -4, scale: 1.02 }}
+          whileTap={{ scale: 0.96 }}
+          className="group relative flex h-[140px] flex-col items-center justify-center overflow-hidden rounded-[32px] bg-[#FCE5E5] p-5 shadow-[0_10px_30px_rgba(148,28,28,0.08)]"
         >
-          <div className="h-9 w-9 flex-shrink-0 flex items-center justify-center">
-            <img src="/img/pontos-icon.png" alt="Pontos Cantados" className="h-full w-full object-contain" />
+          <div className="absolute -right-4 -top-4 opacity-[0.08] transition-transform group-hover:scale-110 duration-500">
+            <img src="/img/pontos-icon.png" alt="" className="h-32 w-32 object-contain" />
           </div>
-          <span className="text-[11px] font-bold text-[#414141] text-left leading-tight flex-1">Pontos Cantados</span>
-        </button>
+          
+          <div className="relative z-10 mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/40 shadow-sm backdrop-blur-sm border border-white/40">
+            <img src="/img/pontos-icon.png" alt="Pontos" className="h-8 w-8 object-contain" />
+          </div>
+          
+          <div className="relative z-10 text-center">
+            <h3 className="text-[22px] leading-tight text-[#941c1c]" style={{ fontFamily: 'BehindTheNinetiesItalic' }}>Pontos</h3>
+            <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-[#941c1c]/40">Cantados</p>
+          </div>
+        </motion.button>
 
-        <button className="group flex h-[76px] items-center gap-3 rounded-[24px] bg-white px-4 shadow-[0_6px_15px_rgba(0,0,0,0.02)] active:scale-95 transition-all duration-200">
-          <div className="h-9 w-9 flex-shrink-0 flex items-center justify-center">
-            <img src="/img/divindade-icon.png" alt="Divindades" className="h-full w-full object-contain" />
+        <motion.button 
+          whileHover={{ y: -4, scale: 1.02 }}
+          whileTap={{ scale: 0.96 }}
+          className="group relative flex h-[140px] flex-col items-center justify-center overflow-hidden rounded-[32px] bg-[#E3F2FD] p-5 shadow-[0_10px_30px_rgba(25,118,210,0.08)]"
+        >
+          <div className="absolute -right-4 -top-4 opacity-[0.08] transition-transform group-hover:scale-110 duration-500">
+            <img src="/img/divindade-icon.png" alt="" className="h-32 w-32 object-contain" />
           </div>
-          <span className="text-[11px] font-bold text-[#414141] text-left leading-tight flex-1">Divindades</span>
-        </button>
+          
+          <div className="relative z-10 mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/40 shadow-sm backdrop-blur-sm border border-white/40">
+            <img src="/img/divindade-icon.png" alt="Divindades" className="h-8 w-8 object-contain" />
+          </div>
+          
+          <div className="relative z-10 text-center">
+            <h3 className="text-[22px] leading-tight text-[#1565C0]" style={{ fontFamily: 'BehindTheNinetiesItalic' }}>Divindades</h3>
+            <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-[#1565C0]/40">Estudo</p>
+          </div>
+        </motion.button>
       </div>
     </motion.div>
   );
