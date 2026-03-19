@@ -1,20 +1,44 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import HomeView from './views/HomeView'
 import EventsView from './views/EventsView'
 import PontosView from './views/PontosView'
 import DivindadesView from './views/DivindadesView'
+import LoginView from './views/LoginView'
+import CadastrosView from './views/CadastrosView'
 import BurgerMenu from './components/BurgerMenu'
 import BottomNavigation from './components/BottomNavigation'
 import { ViewType } from './types'
+import { useAuth } from './context/AuthContext'
+import { useAppData } from './context/AppDataContext'
 
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewType>('home')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const { isAuthenticated, logout } = useAuth()
+  const { currentAccount } = useAppData()
+
+  // Ensure user is logged out if account data is missing (safety check from feat branch)
+  useEffect(() => {
+    if (isAuthenticated && !currentAccount) {
+      logout()
+    }
+  }, [currentAccount, isAuthenticated, logout])
+
+  // Reset view to home when logging in or out
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setCurrentView('home')
+    }
+  }, [isAuthenticated])
 
   const handleNavigate = (view: ViewType) => {
     setCurrentView(view)
+  }
+
+  if (!isAuthenticated) {
+    return <LoginView />
   }
 
   return (
@@ -45,6 +69,8 @@ export default function App() {
               onBack={() => setCurrentView('home')} 
               onModalToggle={setIsModalOpen}
             />
+          ) : currentView === 'cadastros' ? (
+            <CadastrosView key="cadastros" />
           ) : (
             <motion.div 
               key="coming-soon"

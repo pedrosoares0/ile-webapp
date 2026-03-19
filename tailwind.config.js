@@ -19,6 +19,7 @@ export default {
       },
       fontFamily: {
         'inter': ['Inter', 'sans-serif'],
+        'behind': ['BehindTheNineties', 'sans-serif'],
       },
     },
   },

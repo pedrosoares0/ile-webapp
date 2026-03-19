@@ -1,6 +1,10 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Menu } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+
+import { ViewType } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { useAppData } from '../context/AppDataContext';
 
 const HERO_BACKGROUNDS = [
   '/img/fundo-hero1.png',
@@ -13,12 +17,35 @@ const HERO_BACKGROUNDS = [
 ];
 
 interface HomeViewProps {
-  onNavigate: (view: 'home' | 'pontos' | 'eventos' | 'divindades') => void;
+  onNavigate: (view: ViewType) => void;
   onToggleMenu: () => void;
 }
 
 export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
   const [currentBg, setCurrentBg] = useState(0);
+  const { currentAccount, events, terreiros } = useAppData();
+
+  const isGlobalAdmin = currentAccount?.email === 'admin@ile.app';
+  const logoSrc = isGlobalAdmin ? '/img/logo-ile.webp' : '/img/logo-T7CA.png';
+
+  const currentTerreiro = useMemo(() => {
+    if (!currentAccount) return null;
+    return terreiros.find((t) => t.id === currentAccount.terreiroId) ?? null;
+  }, [currentAccount, terreiros]);
+
+  const nextEvent = useMemo(() => {
+    if (!events || events.length === 0) return null;
+    
+    // Find events from current terreiro or global
+    const terreiroEvents = events.filter(e => !currentAccount || e.terreiroId === currentAccount.terreiroId);
+    
+    const now = new Date();
+    const upcoming = terreiroEvents
+      .filter(e => new Date(e.date) >= now)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    return upcoming[0] ?? null;
+  }, [events, currentAccount]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -59,7 +86,7 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
             <div className="glass-overlay"></div>
             <div className="glass-specular"></div>
             <div className="glass-content h-full w-full items-center justify-center font-bold text-lg text-white">
-              U
+              {currentAccount?.nome?.charAt(0) ?? 'U'}
             </div>
           </div>
           
@@ -103,10 +130,14 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
             <div className="glass-content w-full p-4 pl-7 justify-between items-center rounded-full">
               <div className="flex flex-col pr-2">
                 <p className="text-[10px] font-bold tracking-widest uppercase opacity-60" style={{ color: '#fee3c5' }}>Bem-vindo</p>
-                <h1 className="text-2xl font-bold tracking-tight leading-none mt-0.5" style={{ color: '#fee3c5' }}>Usuário</h1>
+                <h1 className="text-2xl font-bold tracking-tight leading-none mt-0.5" style={{ color: '#fee3c5' }}>
+                  {currentAccount?.nome?.split(' ')[0] ?? 'Usuário'}
+                </h1>
                 <div className="mt-1.5 flex items-center gap-2">
                   <div className="h-1 w-1 rounded-full bg-[#fee3c5] animate-pulse" />
-                  <span className="text-[8px] font-bold tracking-[0.1em] uppercase opacity-50" style={{ color: '#fee3c5' }}>Terreiro de Umbanda T7CA</span>
+                  <span className="text-[8px] font-bold tracking-[0.1em] uppercase opacity-50" style={{ color: '#fee3c5' }}>
+                    {currentTerreiro?.nome ?? 'Sistema Ilê'}
+                  </span>
                 </div>
               </div>
               <div className="glass-container h-14 w-14 rounded-full border-none shadow-none bg-transparent flex-shrink-0">
@@ -114,7 +145,7 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
                 <div className="glass-overlay rounded-full opacity-30"></div>
                 <div className="glass-specular rounded-full border-none shadow-none"></div>
                 <div className="glass-content h-full w-full items-center justify-center overflow-hidden p-1.5">
-                  <img src="/img/logo-T7CA.png" alt="Logo" className="h-[90%] w-[90%] object-contain brightness-110" />
+                  <img src={logoSrc} alt="Logo" className="h-[90%] w-[90%] object-contain brightness-110" />
                 </div>
               </div>
             </div>
@@ -124,7 +155,11 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
 
       {/* Next Event Card */}
       <div className="mt-10 px-5">
-        <div className="group relative h-28 w-full overflow-hidden rounded-[24px] shadow-[0_12px_24px_rgba(148,28,28,0.15)] bg-[#941c1c] active:scale-[0.98] transition-all duration-200">
+        <motion.div 
+          onClick={() => onNavigate('eventos')}
+          whileTap={{ scale: 0.98 }}
+          className="group relative h-28 w-full overflow-hidden rounded-[24px] shadow-[0_12px_24px_rgba(148,28,28,0.15)] bg-[#941c1c] transition-all duration-200 cursor-pointer"
+        >
           <img 
             src="/img/fundo-evento1.png" 
             alt="Event Background" 
@@ -134,10 +169,22 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
           
           <div className="relative z-10 flex h-full flex-col justify-center px-8">
             <p className="text-[8px] uppercase tracking-[0.3em] font-bold text-white/90">Próximo evento</p>
-            <h2 className="mt-0.5 text-[32px] leading-tight font-behind-it" style={{ color: '#fee3c5' }}>Deitada de Santo</h2>
-            <p className="mt-1 text-[10px] font-medium text-white/80">Largo do Jenipapeiro - 24/03 | 19h</p>
+            {nextEvent ? (
+              <>
+                <h2 className="mt-0.5 text-[28px] leading-tight font-behind-it" style={{ color: '#fee3c5' }}>
+                  {nextEvent.title}
+                </h2>
+                <p className="mt-1 text-[10px] font-medium text-white/80">
+                  {nextEvent.location} - {new Date(nextEvent.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} | {nextEvent.time}
+                </p>
+              </>
+            ) : (
+              <h2 className="mt-0.5 text-[24px] leading-tight font-behind-it" style={{ color: '#fee3c5' }}>
+                Nenhum evento agendado
+              </h2>
+            )}
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Action Grid */}

@@ -1,5 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { ViewType } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { useAppData } from '../context/AppDataContext';
 import { 
   Home, 
   Calendar, 
@@ -11,7 +13,8 @@ import {
   Settings, 
   LogOut,
   X,
-  Info
+  Info,
+  ShieldCheck
 } from 'lucide-react';
 
 interface BurgerMenuProps {
@@ -32,6 +35,7 @@ const MENU_ITEMS: MenuItem[] = [
   { id: 'home', label: 'Home', icon: Home },
   { id: 'divindades', label: 'Divindades', icon: Info },
   { id: 'eventos', label: 'Eventos', icon: Calendar },
+  { id: 'cadastros', label: 'Cadastros', icon: ShieldCheck },
   { id: 'avisos', label: 'Avisos', icon: Bell },
   { id: 'financeiro', label: 'Financeiro', icon: DollarSign },
   { id: 'consultas', label: 'Consultas Agendadas', icon: CalendarCheck },
@@ -42,6 +46,17 @@ const MENU_ITEMS: MenuItem[] = [
 ];
 
 export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }: BurgerMenuProps) {
+  const { logout } = useAuth();
+  const { canAccessCadastros, currentAccount } = useAppData();
+
+  const isGlobalAdmin = currentAccount?.email === 'admin@ile.app';
+  const logoSrc = isGlobalAdmin ? '/img/logo-ile.webp' : '/img/logo-T7CA.png';
+
+  const filteredMenuItems = MENU_ITEMS.filter(item => {
+    if (item.id === 'cadastros' && !canAccessCadastros) return false;
+    return true;
+  });
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -68,11 +83,15 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
               <div className="flex items-center justify-between mb-10">
                 <div className="flex items-center gap-4">
                   <div className="h-16 w-16 flex items-center justify-center">
-                    <img src="/img/logo-T7CA.png" alt="Logo" className="h-full w-full object-contain" />
+                    <img src={logoSrc} alt="Logo" className="h-full w-full object-contain" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-black text-[#414141] leading-tight tracking-tight">T7CA</h2>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#414141]/40">Umbanda</p>
+                    <h2 className="text-2xl font-black text-[#941c1c] leading-tight tracking-tight">
+                      {isGlobalAdmin ? 'Ilê' : 'T7CA'}
+                    </h2>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#414141]/40">
+                      {isGlobalAdmin ? 'Sistema' : 'Terreiro'}
+                    </p>
                   </div>
                 </div>
                 <button 
@@ -83,9 +102,8 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
                 </button>
               </div>
 
-              {/* Menu Items */}
               <div className="flex-1 space-y-1 overflow-y-auto pr-2 custom-scrollbar">
-                {MENU_ITEMS.map((item) => {
+                {filteredMenuItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = currentView === item.id;
                   
@@ -94,7 +112,10 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
                       key={item.id}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => {
-                        if (!item.isExit) {
+                        if (item.isExit) {
+                          logout();
+                          onClose();
+                        } else {
                           onNavigate(item.id);
                           onClose();
                         }
@@ -141,7 +162,7 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
 
               {/* Footer Logo Background Overlay */}
               <div className="absolute bottom-[-20px] left-[-20px] opacity-[0.03] pointer-events-none">
-                <img src="/img/logo-T7CA.png" alt="" className="h-48 w-48 object-contain" />
+                <img src={logoSrc} alt="" className="h-48 w-48 object-contain" />
               </div>
             </div>
           </motion.div>

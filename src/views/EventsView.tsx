@@ -1,62 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Calendar from 'react-calendar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, MapPin, Plus, CalendarDays, X, Menu } from 'lucide-react';
 import '../styles/Calendar.css';
-import { Event } from '../types';
-
-const mockEvents: Event[] = [
-  { 
-    id: '1',
-    date: new Date(2026, 2, 3), 
-    title: 'Gira de Caboclo', 
-    time: '19:00', 
-    location: 'Terreiro T7CA', 
-    type: 'importante',
-    category: 'Religioso'
-  },
-  { 
-    id: '2',
-    date: new Date(2026, 2, 12), 
-    title: 'Limpeza do Terreiro', 
-    time: '09:00', 
-    location: 'Terreiro T7CA', 
-    type: 'normal',
-    category: 'Manutenção'
-  },
-  { 
-    id: '3',
-    date: new Date(2026, 2, 15), 
-    title: 'Festa de Ogum', 
-    time: '18:00', 
-    location: 'Largo do Jenipapeiro', 
-    type: 'importante',
-    category: 'Festa'
-  },
-  { 
-    id: '4',
-    date: new Date(2026, 2, 24), 
-    title: 'Deitada de Santo', 
-    time: '19:00', 
-    location: 'Terreiro T7CA', 
-    type: 'importante',
-    category: 'Fundamento'
-  },
-  { 
-    id: '5',
-    date: new Date(2026, 2, 28), 
-    title: 'Reunião de Cambonos', 
-    time: '15:00', 
-    location: 'Sala de Estudos', 
-    type: 'normal',
-    category: 'Estudo'
-  },
-];
+import { TerreiroEvent } from '../types';
+import { useAppData } from '../context/AppDataContext';
 
 const EventsView = ({ onToggleMenu }: { onToggleMenu: () => void }) => {
+  const { events, saveEvent, currentAccount, terreiros } = useAppData();
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [events, setEvents] = useState<Event[]>(mockEvents);
   const [showAddModal, setShowAddModal] = useState(false);
+  
+  const currentTerreiro = useMemo(() => {
+    if (!currentAccount) return null;
+    return terreiros.find(t => t.id === currentAccount.terreiroId);
+  }, [currentAccount, terreiros]);
+
   const [newEvent, setNewEvent] = useState({
     title: '',
     time: '',
@@ -67,7 +26,7 @@ const EventsView = ({ onToggleMenu }: { onToggleMenu: () => void }) => {
 
   const tileContent = ({ date, view }: { date: Date, view: string }) => {
     if (view === 'month') {
-      const dayEvents = events.filter(event => event.date.toDateString() === date.toDateString());
+      const dayEvents = events.filter(event => new Date(event.date).toDateString() === date.toDateString());
       if (dayEvents.length > 0) {
         return (
           <div className="dot-container">
@@ -82,17 +41,21 @@ const EventsView = ({ onToggleMenu }: { onToggleMenu: () => void }) => {
   };
 
   const selectedDayEvents = events.filter(
-    event => event.date.toDateString() === selectedDate.toDateString()
+    event => new Date(event.date).toDateString() === selectedDate.toDateString()
   );
 
   const handleAddEvent = (e: React.FormEvent) => {
     e.preventDefault();
-    const event: Event = {
-      id: Date.now().toString(),
+    if (!currentAccount) return;
+
+    const event: TerreiroEvent = {
+      id: `event_${Date.now()}`,
       date: selectedDate,
+      terreiroId: currentAccount.terreiroId,
       ...newEvent
     };
-    setEvents([...events, event]);
+    
+    saveEvent(event);
     setShowAddModal(false);
     setNewEvent({ title: '', time: '', location: '', type: 'normal', category: 'Religioso' });
   };
@@ -108,7 +71,9 @@ const EventsView = ({ onToggleMenu }: { onToggleMenu: () => void }) => {
         <div className="flex items-center justify-between px-2">
           <div>
             <h1 className="text-[32px] font-black text-[#414141] leading-tight">Eventos</h1>
-            <p className="text-[11px] font-bold text-[#941c1c] opacity-30 uppercase tracking-[0.2em]">Calendário T7CA</p>
+            <p className="text-[11px] font-bold text-[#941c1c] opacity-30 uppercase tracking-[0.2em]">
+              Calendário {currentTerreiro?.nome ?? 'Ilê'}
+            </p>
           </div>
           <button 
             onClick={onToggleMenu}
