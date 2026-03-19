@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Calendar from 'react-calendar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, MapPin, Plus, CalendarDays, X, Tag, Info } from 'lucide-react';
+import { Clock, MapPin, Plus, CalendarDays, X, Tag, Info, Menu } from 'lucide-react';
 import '../styles/Calendar.css';
 import { Event } from '../types';
 
@@ -53,7 +53,7 @@ const mockEvents: Event[] = [
   },
 ];
 
-const EventsView = () => {
+const EventsView = ({ onToggleMenu }: { onToggleMenu: () => void }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [events, setEvents] = useState<Event[]>(mockEvents);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -85,10 +85,6 @@ const EventsView = () => {
     event => event.date.toDateString() === selectedDate.toDateString()
   );
 
-  const currentMonthEvents = events.filter(
-    event => event.date.getMonth() === selectedDate.getMonth()
-  );
-
   const handleAddEvent = (e: React.FormEvent) => {
     e.preventDefault();
     const event: Event = {
@@ -108,6 +104,20 @@ const EventsView = () => {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-8"
       >
+        {/* Header with Menu Button */}
+        <div className="flex items-center justify-between px-2">
+          <div>
+            <h1 className="text-[32px] font-black text-[#414141] leading-tight">Eventos</h1>
+            <p className="text-[11px] font-bold text-[#941c1c] opacity-30 uppercase tracking-[0.2em]">Calendário T7CA</p>
+          </div>
+          <button 
+            onClick={onToggleMenu}
+            className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-lg border border-black/5 text-[#414141] active:scale-90 transition-transform"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+        </div>
+
         {/* Calendar Section */}
         <div className="relative overflow-hidden rounded-[40px] bg-white p-7 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.08)] border border-black/5">
           <Calendar 
@@ -194,171 +204,96 @@ const EventsView = () => {
             </AnimatePresence>
           </div>
         </div>
-
-        {/* Month Overview */}
-        <div className="space-y-6 pt-6">
-          <div className="px-2">
-            <h3 className="text-[11px] font-bold text-[#941c1c] opacity-30 uppercase tracking-[0.2em] mb-1">Destaques do Mês</h3>
-            <p className="text-2xl font-bold text-[#414141] capitalize tracking-tight">
-              {selectedDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
-            </p>
-          </div>
-
-          <div className="flex gap-5 overflow-x-auto pb-8 scrollbar-hide -mx-6 px-6">
-            {currentMonthEvents.map((event, idx) => (
-              <motion.div
-                key={`month-${event.id}`}
-                whileHover={{ y: -5 }}
-                className="w-[290px] flex-shrink-0 relative overflow-hidden rounded-[36px] bg-white p-7 shadow-[0_20px_40px_rgba(0,0,0,0.04)] border border-black/5"
-              >
-                  <div className="flex justify-between items-start mb-6">
-                    <div className={`px-4 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-widest ${
-                      event.type === 'importante' ? 'bg-[#941c1c]/10 text-[#941c1c]' : 'bg-green-100 text-green-600'
-                    }`}>
-                      {event.category}
-                    </div>
-                    <div className="bg-[#fef7e7] px-3 py-2 rounded-2xl text-center min-w-[50px]">
-                      <p className="text-[18px] font-black text-[#941c1c] leading-none mb-0.5">{event.date.getDate()}</p>
-                      <p className="text-[9px] font-bold text-[#941c1c]/40 uppercase">{event.date.toLocaleDateString('pt-BR', { month: 'short' })}</p>
-                    </div>
-                  </div>
-                  <h4 className="text-[19px] font-bold text-[#414141] leading-tight mb-5">{event.title}</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="h-7 w-7 rounded-lg bg-[#f8f8f8] flex items-center justify-center">
-                        <Clock className="h-3.5 w-3.5 text-[#414141]/30" />
-                      </div>
-                      <span className="text-[11px] font-bold text-[#414141]/50">{event.time}</span>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <div className="h-7 w-7 rounded-lg bg-[#f8f8f8] flex items-center justify-center">
-                        <MapPin className="h-3.5 w-3.5 text-[#414141]/30" />
-                      </div>
-                      <span className="text-[11px] font-bold text-[#414141]/50 truncate">{event.location}</span>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
       </motion.div>
 
       {/* Add Event Modal */}
       <AnimatePresence>
         {showAddModal && (
-          <div className="fixed inset-0 z-[100] flex items-end justify-center">
+          <>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowAddModal(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+              className="fixed inset-0 z-[60] bg-black/20 backdrop-blur-md"
             />
-            
             <motion.div
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
-              className="relative w-full max-w-[430px] bg-[#fef7e7] p-8 rounded-t-[45px] shadow-2xl overflow-y-auto max-h-[90vh]"
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-x-0 bottom-0 z-[70] rounded-t-[45px] bg-white p-8 shadow-2xl"
             >
+              <div className="mx-auto mb-8 h-1.5 w-12 rounded-full bg-black/10" />
               <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h2 className="text-[32px] font-black text-[#941c1c]">Novo Evento</h2>
-                  <p className="text-[12px] font-bold text-[#941c1c]/40 uppercase tracking-widest">
-                    Para: {selectedDate.toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
-                <button 
-                  onClick={() => setShowAddModal(false)}
-                  className="h-12 w-12 rounded-full bg-[#941c1c]/5 text-[#941c1c] flex items-center justify-center"
-                >
-                  <X className="h-6 w-6" />
+                <h2 className="text-2xl font-bold text-[#414141]">Novo Evento</h2>
+                <button onClick={() => setShowAddModal(false)} className="p-2 rounded-full bg-black/5">
+                  <X className="h-5 w-5 text-[#414141]/40" />
                 </button>
               </div>
-
-              <form onSubmit={handleAddEvent} className="space-y-6">
-                <div>
-                  <label className="text-[10px] font-black text-[#941c1c]/40 uppercase tracking-widest ml-4 mb-2 block">Título do Evento</label>
-                  <div className="relative">
-                    <Info className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-[#941c1c]/20" />
-                    <input 
-                      required
-                      value={newEvent.title}
-                      onChange={e => setNewEvent({...newEvent, title: e.target.value})}
-                      placeholder="Ex: Gira de Pretos Velhos"
-                      className="w-full rounded-[25px] bg-white border border-white px-14 py-4 text-[#414141] font-bold placeholder:text-[#414141]/20 focus:outline-none focus:ring-2 focus:ring-[#941c1c]/10"
-                    />
-                  </div>
+              <form onSubmit={handleAddEvent} className="space-y-5">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-[#414141]/30 uppercase tracking-widest ml-4">Título do Evento</label>
+                  <input
+                    required
+                    type="text"
+                    value={newEvent.title}
+                    onChange={e => setNewEvent({...newEvent, title: e.target.value})}
+                    placeholder="Ex: Gira de Caboclo"
+                    className="w-full rounded-2xl bg-black/5 px-6 py-4 text-sm font-semibold outline-none focus:ring-2 ring-[#941c1c]/20 transition-all"
+                  />
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[10px] font-black text-[#941c1c]/40 uppercase tracking-widest ml-4 mb-2 block">Horário</label>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-[#414141]/30 uppercase tracking-widest ml-4">Horário</label>
                     <div className="relative">
-                      <Clock className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-[#941c1c]/20" />
-                      <input 
+                      <Clock className="absolute left-5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#414141]/30" />
+                      <input
                         required
                         type="time"
                         value={newEvent.time}
                         onChange={e => setNewEvent({...newEvent, time: e.target.value})}
-                        className="w-full rounded-[25px] bg-white border border-white px-14 py-4 text-[#414141] font-bold focus:outline-none focus:ring-2 focus:ring-[#941c1c]/10"
+                        className="w-full rounded-2xl bg-black/5 pl-12 pr-6 py-4 text-sm font-semibold outline-none focus:ring-2 ring-[#941c1c]/20 transition-all"
                       />
                     </div>
                   </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#941c1c]/40 uppercase tracking-widest ml-4 mb-2 block">Tipo</label>
-                    <div className="relative">
-                      <Tag className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-[#941c1c]/20" />
-                      <select 
-                        value={newEvent.type}
-                        onChange={e => setNewEvent({...newEvent, type: e.target.value as any})}
-                        className="w-full rounded-[25px] bg-white border border-white px-14 py-4 text-[#414141] font-bold focus:outline-none focus:ring-2 focus:ring-[#941c1c]/10 appearance-none"
-                      >
-                        <option value="normal">Normal</option>
-                        <option value="importante">Importante</option>
-                      </select>
-                    </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-[#414141]/30 uppercase tracking-widest ml-4">Categoria</label>
+                    <select
+                      value={newEvent.category}
+                      onChange={e => setNewEvent({...newEvent, category: e.target.value})}
+                      className="w-full rounded-2xl bg-black/5 px-6 py-4 text-sm font-semibold outline-none focus:ring-2 ring-[#941c1c]/20 transition-all appearance-none"
+                    >
+                      <option>Religioso</option>
+                      <option>Festa</option>
+                      <option>Estudo</option>
+                      <option>Manutenção</option>
+                    </select>
                   </div>
                 </div>
-
-                <div>
-                  <label className="text-[10px] font-black text-[#941c1c]/40 uppercase tracking-widest ml-4 mb-2 block">Localização</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-[#414141]/30 uppercase tracking-widest ml-4">Localização</label>
                   <div className="relative">
-                    <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-[#941c1c]/20" />
-                    <input 
+                    <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#414141]/30" />
+                    <input
                       required
+                      type="text"
                       value={newEvent.location}
                       onChange={e => setNewEvent({...newEvent, location: e.target.value})}
                       placeholder="Ex: Terreiro T7CA"
-                      className="w-full rounded-[25px] bg-white border border-white px-14 py-4 text-[#414141] font-bold placeholder:text-[#414141]/20 focus:outline-none focus:ring-2 focus:ring-[#941c1c]/10"
+                      className="w-full rounded-2xl bg-black/5 pl-12 pr-6 py-4 text-sm font-semibold outline-none focus:ring-2 ring-[#941c1c]/20 transition-all"
                     />
                   </div>
                 </div>
-
-                <div>
-                  <label className="text-[10px] font-black text-[#941c1c]/40 uppercase tracking-widest ml-4 mb-2 block">Categoria</label>
-                  <select 
-                    value={newEvent.category}
-                    onChange={e => setNewEvent({...newEvent, category: e.target.value})}
-                    className="w-full rounded-[25px] bg-white border border-white px-8 py-4 text-[#414141] font-bold focus:outline-none focus:ring-2 focus:ring-[#941c1c]/10 appearance-none"
-                  >
-                    <option value="Religioso">Religioso</option>
-                    <option value="Festa">Festa</option>
-                    <option value="Manutenção">Manutenção</option>
-                    <option value="Fundamento">Fundamento</option>
-                    <option value="Estudo">Estudo</option>
-                  </select>
-                </div>
-
-                <button 
+                <button
                   type="submit"
-                  className="w-full rounded-[28px] bg-[#941c1c] py-6 text-sm font-black text-white uppercase tracking-[0.2em] shadow-xl shadow-[#941c1c]/20 transition-all active:scale-[0.98] mt-4"
+                  className="w-full rounded-2xl bg-[#941c1c] py-5 text-sm font-bold text-white shadow-xl shadow-[#941c1c]/20 active:scale-[0.98] transition-all mt-4"
                 >
-                  CRIAR EVENTO
+                  Agendar Evento
                 </button>
               </form>
             </motion.div>
-          </div>
+          </>
         )}
       </AnimatePresence>
     </div>

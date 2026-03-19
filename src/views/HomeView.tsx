@@ -13,10 +13,11 @@ const HERO_BACKGROUNDS = [
 ];
 
 interface HomeViewProps {
-  onNavigate: (view: 'home' | 'pontos' | 'eventos') => void;
+  onNavigate: (view: 'home' | 'pontos' | 'eventos' | 'divindades') => void;
+  onToggleMenu: () => void;
 }
 
-export default function HomeView({ onNavigate }: HomeViewProps) {
+export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
   const [currentBg, setCurrentBg] = useState(0);
 
   useEffect(() => {
@@ -66,7 +67,10 @@ export default function HomeView({ onNavigate }: HomeViewProps) {
             />
           </div>
           
-          <button className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md border border-white/30 shadow-lg">
+          <button 
+            onClick={onToggleMenu}
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md border border-white/30 shadow-lg active:scale-90 transition-transform"
+          >
             <Menu className="h-6 w-6" strokeWidth={2} />
           </button>
         </div>
@@ -172,6 +176,7 @@ export default function HomeView({ onNavigate }: HomeViewProps) {
         </motion.button>
 
         <motion.button 
+          onClick={() => onNavigate('divindades')}
           whileHover={{ y: -4, scale: 1.02 }}
           whileTap={{ scale: 0.96 }}
           className="group relative flex h-[140px] flex-col items-center justify-center overflow-hidden rounded-[32px] bg-[#E3F2FD] p-5 shadow-[0_10px_30px_rgba(25,118,210,0.08)]"
