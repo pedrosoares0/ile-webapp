@@ -198,68 +198,89 @@ export default function DivindadesView({ onToggleMenu, onBack, onModalToggle }: 
 
       {/* Optimized Mobile Carousel */}
       <div className="mt-8 flex-1 overflow-hidden">
-        <div 
+        <motion.div 
           ref={scrollRef}
-          className="flex gap-6 overflow-x-auto px-6 pb-12 snap-x snap-mandatory no-scrollbar touch-pan-x"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex gap-4 overflow-x-auto px-6 pb-12 snap-x snap-mandatory no-scrollbar touch-pan-x"
           style={{ 
             scrollbarWidth: 'none', 
             msOverflowStyle: 'none',
             WebkitOverflowScrolling: 'touch'
           }}
         >
-          {DIVINDADES.map((divindade) => (
+          {DIVINDADES.map((divindade, index) => (
             <motion.div
               key={divindade.id}
-              whileTap={{ scale: 0.98 }}
+              initial={{ opacity: 0, scale: 0.9, x: 20 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              transition={{ delay: index * 0.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => handleOpenModal(divindade)}
-              className="relative min-w-[280px] h-[420px] rounded-[40px] overflow-hidden shadow-2xl snap-center border-4 border-white"
+              className="relative min-w-[300px] h-[460px] rounded-[48px] overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.2)] snap-center border-[6px] border-white group"
             >
-              {/* Image Placeholder with Gradient */}
-              <div className="absolute inset-0 bg-neutral-200 animate-pulse" />
-              <img 
+              {/* Image with Parallax Effect on Hover/Tap */}
+              <motion.img 
                 src={divindade.imagem} 
                 alt={divindade.nome}
-                className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 hover:scale-110"
+                whileHover={{ scale: 1.1 }}
+                transition={{ duration: 0.6 }}
+                className="absolute inset-0 h-full w-full object-cover object-top"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = `https://via.placeholder.com/400x600?text=${divindade.nome}`;
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              
+              {/* Dynamic Overlay based on Divinity Color */}
+              <div 
+                className="absolute inset-0 opacity-40 mix-blend-overlay transition-opacity group-hover:opacity-20"
+                style={{ background: `linear-gradient(to bottom, transparent, ${divindade.cor})` }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
               
               {/* Card Content */}
-              <div className="absolute bottom-0 left-0 right-0 p-8">
-                <div className="flex items-center gap-2 mb-2">
-                  <div 
-                    className="h-2 w-8 rounded-full" 
+              <div className="absolute bottom-0 left-0 right-0 p-8 transform transition-transform duration-300 group-hover:-translate-y-2">
+                <div className="flex items-center gap-3 mb-3">
+                  <motion.div 
+                    layoutId={`pill-${divindade.id}`}
+                    className="h-1.5 w-10 rounded-full shadow-lg" 
                     style={{ backgroundColor: divindade.cor }}
                   />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70">
+                  <span className="text-[11px] font-black uppercase tracking-[0.25em] text-white/90 drop-shadow-md">
                     {divindade.saudacao}
                   </span>
                 </div>
-                <h3 className="text-4xl font-bold text-white mb-1" style={{ fontFamily: 'BehindTheNinetiesItalic' }}>
+                <h3 className="text-5xl font-bold text-white mb-1 drop-shadow-xl" style={{ fontFamily: 'BehindTheNinetiesItalic' }}>
                   {divindade.nome}
                 </h3>
-                <p className="text-white/60 text-xs font-bold uppercase tracking-widest">
-                  {divindade.titulo}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-white/70 text-[10px] font-black uppercase tracking-[0.2em]">
+                    {divindade.titulo}
+                  </p>
+                  <div className="h-1 w-1 rounded-full bg-white/30" />
+                  <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest">
+                    {divindade.elemento}
+                  </p>
+                </div>
               </div>
 
-              {/* Info Badge */}
+              {/* Glassmorphism Badge */}
               <div className="absolute top-6 right-6">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white">
-                  <Info className="h-5 w-5" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 text-white shadow-xl transition-transform group-hover:rotate-12">
+                  <Info className="h-6 w-6 opacity-80" />
                 </div>
               </div>
             </motion.div>
           ))}
-        </div>
+          {/* Padding for better scroll end */}
+          <div className="min-w-[20px] h-full" />
+        </motion.div>
       </div>
 
       {/* Details Modal */}
       <AnimatePresence>
         {selectedDivindade && (
-          <div className="fixed inset-0 z-[100] flex flex-col justify-end">
+          <div className="fixed inset-0 z-[100]">
             {/* Backdrop with a subtle white fade at the very bottom to prevent the beige gap */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -271,17 +292,17 @@ export default function DivindadesView({ onToggleMenu, onBack, onModalToggle }: 
             
             <motion.div
               initial={{ y: '100%' }}
-              animate={{ y: 0 }}
+              animate={{ y: '4%' }}
               exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="relative w-full h-[92vh] bg-white rounded-t-[50px] overflow-hidden flex flex-col shadow-[0_-20px_50px_rgba(0,0,0,0.15)]"
+              transition={{ type: 'spring', damping: 28, stiffness: 200 }}
+              className="absolute inset-x-0 bottom-[-100px] top-0 bg-white rounded-t-[50px] shadow-[0_-20px_50px_rgba(0,0,0,0.25)] flex flex-col"
             >
               {/* Modal Drag Indicator */}
               <div className="absolute top-4 left-1/2 -translate-x-1/2 w-12 h-1.5 rounded-full bg-black/10 z-[120]" />
 
-              <div className="flex-1 overflow-y-auto no-scrollbar pb-20">
+              <div className="flex-1 overflow-y-auto no-scrollbar pb-40 rounded-t-[50px] z-10">
                 {/* Modal Header/Image - Added object-top to prevent cutting heads */}
-                <div className="relative h-96 w-full">
+                <div className="relative h-[420px] w-full overflow-hidden rounded-t-[50px]">
                   <img 
                     src={selectedDivindade.imagem} 
                     alt={selectedDivindade.nome}
@@ -339,9 +360,6 @@ export default function DivindadesView({ onToggleMenu, onBack, onModalToggle }: 
                   </div>
                 </div>
               </div>
-
-              {/* Bottom White Safety Area - Covers the beige gap on Safari/Mobile browsers */}
-              <div className="h-10 w-full bg-white shrink-0" />
             </motion.div>
           </div>
         )}
