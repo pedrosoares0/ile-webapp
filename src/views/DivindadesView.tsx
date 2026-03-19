@@ -292,17 +292,27 @@ export default function DivindadesView({ onToggleMenu, onBack, onModalToggle }: 
             
             <motion.div
               initial={{ y: '100%' }}
-              animate={{ y: '4%' }}
+              animate={{ y: '0%' }}
               exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 200 }}
-              className="absolute inset-x-0 bottom-[-100px] top-0 bg-white rounded-t-[50px] shadow-[0_-20px_50px_rgba(0,0,0,0.25)] flex flex-col"
+              transition={{ type: 'spring', damping: 32, stiffness: 300 }}
+              className="absolute inset-x-0 bottom-0 top-[40px] bg-white rounded-t-[40px] shadow-[0_-20px_50px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden"
             >
               {/* Modal Drag Indicator */}
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 w-12 h-1.5 rounded-full bg-black/10 z-[120]" />
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 rounded-full bg-black/10 z-[120]" />
 
-              <div className="flex-1 overflow-y-auto no-scrollbar pb-40 rounded-t-[50px] z-10">
-                {/* Modal Header/Image - Added object-top to prevent cutting heads */}
-                <div className="relative h-[420px] w-full overflow-hidden rounded-t-[50px]">
+              {/* Fixed Close Button - Always visible */}
+              <div className="absolute top-5 right-5 z-[120]">
+                <button 
+                  onClick={handleCloseModal}
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-white/80 backdrop-blur-md text-[#414141] shadow-lg active:scale-90 transition-transform border border-black/5"
+                >
+                  <X className="h-6 w-6" strokeWidth={2.5} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto no-scrollbar pb-32">
+                {/* Modal Header/Image */}
+                <div className="relative h-[400px] w-full overflow-hidden">
                   <img 
                     src={selectedDivindade.imagem} 
                     alt={selectedDivindade.nome}
@@ -311,16 +321,10 @@ export default function DivindadesView({ onToggleMenu, onBack, onModalToggle }: 
                       (e.target as HTMLImageElement).src = `https://via.placeholder.com/400x300?text=${selectedDivindade.nome}`;
                     }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-black/20" />
-                  <button 
-                    onClick={handleCloseModal}
-                    className="absolute top-8 right-8 flex h-12 w-12 items-center justify-center rounded-full bg-white/20 backdrop-blur-xl text-white border border-white/30 active:scale-90 shadow-lg z-20"
-                  >
-                    <X className="h-6 w-6" />
-                  </button>
+                  <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-black/10" />
                 </div>
 
-                <div className="px-10 -mt-20 relative z-10">
+                <div className="px-8 -mt-16 relative z-10">
                   <div className="flex items-center gap-3 mb-4">
                     <div 
                       className="h-3 w-14 rounded-full shadow-lg" 
