@@ -6,16 +6,15 @@ import PontosView from './views/PontosView'
 import DivindadesView from './views/DivindadesView'
 import BurgerMenu from './components/BurgerMenu'
 import BottomNavigation from './components/BottomNavigation'
+import { ViewType } from './types'
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'pontos' | 'eventos' | 'divindades' | 'financeiro' | 'avisos'>('home')
+  const [currentView, setCurrentView] = useState<ViewType>('home')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const handleNavigate = (view: 'home' | 'pontos' | 'eventos' | 'divindades' | 'financeiro' | 'avisos') => {
-    if (['home', 'pontos', 'eventos', 'divindades', 'financeiro', 'avisos'].includes(view)) {
-      setCurrentView(view)
-    }
+  const handleNavigate = (view: ViewType) => {
+    setCurrentView(view)
   }
 
   return (

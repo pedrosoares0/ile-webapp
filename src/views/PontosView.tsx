@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Play, Clock, Youtube, FileText, Menu } from 'lucide-react';
+import { Plus, X, Play, Youtube, FileText, Menu } from 'lucide-react';
 import { useState } from 'react';
 import { Ponto } from '../types';
 

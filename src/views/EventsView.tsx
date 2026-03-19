@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Calendar from 'react-calendar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, MapPin, Plus, CalendarDays, X, Tag, Info, Menu } from 'lucide-react';
+import { Clock, MapPin, Plus, CalendarDays, X, Menu } from 'lucide-react';
 import '../styles/Calendar.css';
 import { Event } from '../types';
 

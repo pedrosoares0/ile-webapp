@@ -16,3 +16,5 @@ export interface Event {
   type: 'importante' | 'normal';
   category: string;
 }
+
+export type ViewType = 'home' | 'pontos' | 'eventos' | 'divindades' | 'financeiro' | 'avisos' | 'consultas' | 'oracao' | 'ajuda' | 'ajustes' | 'sair';

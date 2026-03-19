@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { ViewType } from '../types';
 import { 
   Home, 
   Calendar, 
@@ -16,11 +17,18 @@ import {
 interface BurgerMenuProps {
   isOpen: boolean;
   onClose: () => void;
-  currentView: string;
-  onNavigate: (view: string) => void;
+  currentView: ViewType;
+  onNavigate: (view: ViewType) => void;
 }
 
-const MENU_ITEMS = [
+interface MenuItem {
+  id: ViewType;
+  label: string;
+  icon: any;
+  isExit?: boolean;
+}
+
+const MENU_ITEMS: MenuItem[] = [
   { id: 'home', label: 'Home', icon: Home },
   { id: 'divindades', label: 'Divindades', icon: Info },
   { id: 'eventos', label: 'Eventos', icon: Calendar },
@@ -91,31 +99,41 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
                           onClose();
                         }
                       }}
-                      className={`group flex w-full items-center gap-4 rounded-[22px] px-4 py-3.5 transition-all duration-300 ${
+                      className={`group relative flex w-full items-center gap-4 rounded-[22px] px-4 py-3.5 transition-all duration-300 ${
                         isActive 
-                          ? 'bg-[#941c1c] text-white shadow-[0_10px_25px_rgba(148,28,28,0.25)]' 
+                          ? 'bg-white shadow-lg shadow-black/5' 
                           : 'text-[#414141]/60 hover:bg-black/5'
                       }`}
                     >
-                      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors duration-300 ${
-                        isActive ? 'bg-white/15' : 'bg-black/5 group-hover:bg-black/10'
-                      }`}>
-                        <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-[#414141]/50'}`} strokeWidth={2.2} />
-                      </div>
-                      
-                      <span 
-                        className={`text-[15px] font-semibold tracking-tight text-left leading-tight ${isActive ? 'translate-x-1' : ''} transition-transform duration-300`}
-                        style={{ fontFamily: isActive ? 'BehindTheNinetiesItalic' : 'inherit' }}
-                      >
-                        {item.label}
-                      </span>
-
                       {isActive && (
-                        <motion.div 
-                          layoutId="activeIndicator"
-                          className="ml-auto h-1.5 w-1.5 rounded-full bg-white/60"
-                        />
+                        <>
+                          <div className="glass-filter rounded-[22px]"></div>
+                          <div className="glass-overlay rounded-[22px]"></div>
+                          <div className="glass-specular rounded-[22px]"></div>
+                        </>
                       )}
+
+                      <div className={`glass-content relative z-10 flex w-full items-center gap-4 ${isActive ? 'p-0' : ''}`}>
+                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors duration-300 ${
+                          isActive ? 'bg-[#941c1c]/10' : 'bg-black/5 group-hover:bg-black/10'
+                        }`}>
+                          <Icon className={`h-5 w-5 ${isActive ? 'text-[#941c1c]' : 'text-[#414141]/50'}`} strokeWidth={2.2} />
+                        </div>
+                        
+                        <span 
+                          className={`text-[15px] font-semibold tracking-tight text-left leading-tight ${isActive ? 'translate-x-1' : ''} transition-transform duration-300 ${isActive ? 'text-[#941c1c]' : ''}`}
+                          style={{ fontFamily: isActive ? 'BehindTheNinetiesItalic' : 'inherit' }}
+                        >
+                          {item.label}
+                        </span>
+
+                        {isActive && (
+                          <motion.div 
+                            layoutId="activeIndicator"
+                            className="ml-auto h-1.5 w-1.5 rounded-full bg-[#941c1c]/40"
+                          />
+                        )}
+                      </div>
                     </motion.button>
                   );
                 })}

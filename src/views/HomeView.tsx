@@ -53,42 +53,69 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
         
         {/* Header Controls */}
         <div className="relative z-10 flex items-center justify-between px-6 pt-12">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md border border-white/30 font-bold text-lg shadow-lg">
-            U
+          {/* Profile Icon with Glassmorphism */}
+          <div className="glass-container h-11 w-11 rounded-full">
+            <div className="glass-filter"></div>
+            <div className="glass-overlay"></div>
+            <div className="glass-specular"></div>
+            <div className="glass-content h-full w-full items-center justify-center font-bold text-lg text-white">
+              U
+            </div>
           </div>
           
-          <div className="mx-3 flex h-10 flex-1 items-center gap-2 rounded-full bg-white/10 px-4 backdrop-blur-md border border-white/20">
-            <Search className="h-4 w-4 text-white/70" strokeWidth={2.5} />
-            <input 
-              type="text" 
-              placeholder="Procure por eventos..."
-              className="w-full bg-transparent text-[11px] text-white placeholder:text-white/60 outline-none font-medium"
-              disabled
-            />
+          {/* Search Bar with Glassmorphism */}
+          <div className="glass-container mx-3 h-10 flex-1 rounded-full">
+            <div className="glass-filter"></div>
+            <div className="glass-overlay"></div>
+            <div className="glass-specular"></div>
+            <div className="glass-content h-full w-full items-center gap-2 px-4">
+              <Search className="h-4 w-4 text-white/70" strokeWidth={2.5} />
+              <input 
+                type="text" 
+                placeholder="Procure por eventos..."
+                className="w-full bg-transparent text-[11px] text-white placeholder:text-white/60 outline-none font-medium"
+                disabled
+              />
+            </div>
           </div>
           
+          {/* Burger Menu with Glassmorphism */}
           <button 
             onClick={onToggleMenu}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md border border-white/30 shadow-lg active:scale-90 transition-transform"
+            className="glass-container h-11 w-11 rounded-full active:scale-90 transition-transform"
           >
-            <Menu className="h-6 w-6" strokeWidth={2} />
+            <div className="glass-filter"></div>
+            <div className="glass-overlay"></div>
+            <div className="glass-specular"></div>
+            <div className="glass-content h-full w-full items-center justify-center text-white">
+              <Menu className="h-6 w-6" strokeWidth={2} />
+            </div>
           </button>
         </div>
 
         {/* User Welcome Card */}
-        <div className="absolute bottom-10 left-6 right-6 z-10">
-          <div className="rounded-[32px] bg-black/10 p-5 backdrop-blur-md border border-white/10 shadow-xl">
-            <div className="flex items-center justify-between">
-              <div>
+        <div className="absolute bottom-10 left-4 right-4 z-10">
+          <div className="glass-container mx-auto w-fit min-w-[320px] max-w-full rounded-full">
+            <div className="glass-filter rounded-full"></div>
+            <div className="glass-overlay rounded-full"></div>
+            <div className="glass-specular rounded-full"></div>
+            
+            <div className="glass-content w-full p-4 pl-7 justify-between items-center rounded-full">
+              <div className="flex flex-col pr-2">
                 <p className="text-[10px] font-bold tracking-widest uppercase opacity-60" style={{ color: '#fee3c5' }}>Bem-vindo</p>
-                <h1 className="text-3xl font-bold tracking-tight" style={{ color: '#fee3c5' }}>Usuário</h1>
-                <div className="mt-2 flex items-center gap-2">
+                <h1 className="text-2xl font-bold tracking-tight leading-none mt-0.5" style={{ color: '#fee3c5' }}>Usuário</h1>
+                <div className="mt-1.5 flex items-center gap-2">
                   <div className="h-1 w-1 rounded-full bg-[#fee3c5] animate-pulse" />
-                  <span className="text-[9px] font-bold tracking-[0.15em] uppercase opacity-50" style={{ color: '#fee3c5' }}>Terreiro de Umbanda T7CA</span>
+                  <span className="text-[8px] font-bold tracking-[0.1em] uppercase opacity-50" style={{ color: '#fee3c5' }}>Terreiro de Umbanda T7CA</span>
                 </div>
               </div>
-              <div className="h-16 w-16 rounded-full bg-[#fee3c5]/15 p-1 backdrop-blur-md border border-[#fee3c5]/30 shadow-lg flex items-center justify-center overflow-hidden">
-                <img src="/img/logo-T7CA.png" alt="Logo" className="h-[85%] w-[85%] object-contain brightness-110" />
+              <div className="glass-container h-14 w-14 rounded-full border-none shadow-none bg-transparent flex-shrink-0">
+                <div className="glass-filter rounded-full"></div>
+                <div className="glass-overlay rounded-full opacity-30"></div>
+                <div className="glass-specular rounded-full border-none shadow-none"></div>
+                <div className="glass-content h-full w-full items-center justify-center overflow-hidden p-1.5">
+                  <img src="/img/logo-T7CA.png" alt="Logo" className="h-[90%] w-[90%] object-contain brightness-110" />
+                </div>
               </div>
             </div>
           </div>
@@ -107,7 +134,7 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
           
           <div className="relative z-10 flex h-full flex-col justify-center px-8">
             <p className="text-[8px] uppercase tracking-[0.3em] font-bold text-white/90">Próximo evento</p>
-            <h2 className="mt-0.5 text-[32px] leading-tight" style={{ color: '#fee3c5', fontFamily: 'BehindTheNinetiesItalic' }}>Deitada de Santo</h2>
+            <h2 className="mt-0.5 text-[32px] leading-tight font-behind-it" style={{ color: '#fee3c5' }}>Deitada de Santo</h2>
             <p className="mt-1 text-[10px] font-medium text-white/80">Largo do Jenipapeiro - 24/03 | 19h</p>
           </div>
         </div>
@@ -130,7 +157,7 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
           </div>
           
           <div className="relative z-10 text-center">
-            <h3 className="text-[22px] leading-tight text-[#1B3B18]" style={{ fontFamily: 'BehindTheNinetiesItalic' }}>Financeiro</h3>
+            <h3 className="text-[22px] leading-tight text-[#1B3B18] font-behind-it">Financeiro</h3>
             <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-[#1B3B18]/40">Mensalidades</p>
           </div>
         </motion.button>
@@ -150,7 +177,7 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
           </div>
           
           <div className="relative z-10 text-center">
-            <h3 className="text-[22px] leading-tight text-[#5C4033]" style={{ fontFamily: 'BehindTheNinetiesItalic' }}>Eventos</h3>
+            <h3 className="text-[22px] leading-tight text-[#5C4033] font-behind-it">Eventos</h3>
             <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-[#5C4033]/40">Calendário</p>
           </div>
         </motion.button>
@@ -170,7 +197,7 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
           </div>
           
           <div className="relative z-10 text-center">
-            <h3 className="text-[22px] leading-tight text-[#941c1c]" style={{ fontFamily: 'BehindTheNinetiesItalic' }}>Pontos</h3>
+            <h3 className="text-[22px] leading-tight text-[#941c1c] font-behind-it">Pontos</h3>
             <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-[#941c1c]/40">Cantados</p>
           </div>
         </motion.button>
@@ -190,7 +217,7 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
           </div>
           
           <div className="relative z-10 text-center">
-            <h3 className="text-[22px] leading-tight text-[#1565C0]" style={{ fontFamily: 'BehindTheNinetiesItalic' }}>Divindades</h3>
+            <h3 className="text-[22px] leading-tight text-[#1565C0] font-behind-it">Divindades</h3>
             <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-[#1565C0]/40">Estudo</p>
           </div>
         </motion.button>
