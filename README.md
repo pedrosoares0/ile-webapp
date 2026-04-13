@@ -23,36 +23,19 @@ O grande diferencial técnico e visual é o foco em **estética e fluidez**. Uti
 ### ⚡ Performance e Escalabilidade
 Construído com **React** e **TypeScript**, o projeto utiliza uma arquitetura baseada em contextos (`Context API`) para garantir um estado global consistente e uma base de código tipada, reduzindo bugs e facilitando a manutenção futura.
 
-### 🎨 Design Moderno
+### 🎨 Design
 - **Mobile-First**: Otimizado para dispositivos móveis (430px).
 - **Glassmorphism**: Uso de transparências e desfoques para um visual sofisticado.
 - **Componentização**: Interface construída com componentes reutilizáveis e modulares.
 
 ---
 
-## 🛠️ Tecnologias de Ponta
+## 🛠️ Stacks
 
 - **React + Vite**: Frontend rápido e moderno.
 - **TypeScript**: Segurança e produtividade no desenvolvimento.
 - **Tailwind CSS**: Estilização ágil e responsiva.
 - **Framer Motion**: Animações complexas e interações de alto nível.
-- **Lucide React**: Biblioteca de ícones moderna e consistente.
-
----
-
-## 🚀 Como Visualizar o Projeto
-
-Para rodar o ambiente de desenvolvimento localmente:
-
-1. **Clone o repositório**
-2. **Instale as dependências**
-   ```bash
-   npm install
-   ```
-3. **Inicie o servidor**
-   ```bash
-   npm run dev
-   ```
 
 ---
 
