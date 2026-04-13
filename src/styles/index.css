@@ -1,0 +1,190 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/Inter_18pt-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/Inter_18pt-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/Inter_18pt-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/Inter_18pt-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/Inter_18pt-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BehindTheNineties';
+  src: url('/src/assets/fonts/BehindTheNineties.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BehindTheNinetiesItalic';
+  src: url('/Behind-The-Nineties-Sans-Md-It.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+:root {
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light;
+  color: #414141;
+  background-color: #fef7e7;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Glass Variables */
+  --lg-bg-color: rgba(255, 255, 255, 0.25); 
+  --lg-highlight: rgba(255, 255, 255, 0.55); 
+  --lg-text: #ffffff; 
+  --lg-hover-glow: rgba(255, 255, 255, 0.4); 
+  --lg-red: #fb4268; 
+  --lg-grey: #5b5b5b; 
+}
+
+/* Glassmorphism Styles */
+.glass-container { 
+  position: relative; 
+  display: flex; 
+  font-weight: 600; 
+  color: var(--lg-text); 
+  cursor: pointer; 
+  background: transparent; 
+  border-radius: 2rem; 
+  box-shadow: 0 6px 6px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 0, 0, 0.1); 
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2); 
+} 
+
+/* Red Glass Variant */
+.glass-container-red {
+  position: relative;
+  display: flex;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  background: transparent;
+  border-radius: 2rem;
+  box-shadow: 0 6px 6px rgba(251, 66, 104, 0.2), 0 0 20px rgba(251, 66, 104, 0.1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+}
+
+.glass-overlay-red {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgba(251, 66, 104, 0.15);
+  border-radius: inherit;
+}
+
+.glass-specular-red {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  overflow: hidden;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 0 4px rgba(255, 255, 255, 0.4);
+}
+
+.glass-filter { 
+  position: absolute; 
+  inset: 0; 
+  z-index: 0; 
+  backdrop-filter: blur(2px); 
+  filter: url(#lg-dist); 
+  isolation: isolate; 
+  border-radius: inherit;
+} 
+
+.glass-overlay { 
+  position: absolute; 
+  inset: 0; 
+  z-index: 1; 
+  background: var(--lg-bg-color); 
+  border-radius: inherit;
+} 
+
+.glass-specular { 
+  position: absolute; 
+  inset: 0; 
+  z-index: 2; 
+  border-radius: inherit; 
+  overflow: hidden; 
+  box-shadow: inset 1px 1px 0 var(--lg-highlight), 
+    inset 0 0 4px var(--lg-highlight); 
+} 
+
+.glass-content { 
+  position: relative; 
+  z-index: 3; 
+  display: flex; 
+  align-items: center; 
+  gap: 20px; 
+  border-radius: inherit;
+} 
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #fef7e7;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+  margin: 0 auto;
+  background-color: #fef7e7;
+  min-height: 100vh;
+}
+
+@layer utilities {
+  .font-behind {
+    font-family: 'BehindTheNineties', sans-serif;
+  }
+  .font-behind-it {
+    font-family: 'BehindTheNinetiesItalic', sans-serif;
+  }
+  .apple-blur {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
