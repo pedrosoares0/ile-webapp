@@ -17,7 +17,7 @@ Muitas comunidades religiosas enfrentam desafios na organização de eventos, co
 
 ## ✨ Diferenciais do Projeto
 
-### � Experiência Premium (UI/UX)
+### 📱 Experiência Premium (UI/UX)
 O grande diferencial técnico e visual é o foco em **estética e fluidez**. Utilizando **Framer Motion**, o aplicativo possui transições suaves, efeitos de "Glassmorphism" e uma interface limpa que valoriza o conteúdo.
 
 ### ⚡ Performance e Escalabilidade
@@ -37,6 +37,22 @@ Construído com **React** e **TypeScript**, o projeto utiliza uma arquitetura ba
 - **Tailwind CSS**: Estilização ágil e responsiva.
 - **Framer Motion**: Animações complexas e interações de alto nível.
 - **Lucide React**: Biblioteca de ícones moderna e consistente.
+
+---
+
+## 🚀 Como Visualizar o Projeto
+
+Para rodar o ambiente de desenvolvimento localmente:
+
+1. **Clone o repositório**
+2. **Instale as dependências**
+   ```bash
+   npm install
+   ```
+3. **Inicie o servidor**
+   ```bash
+   npm run dev
+   ```
 
 ---
 
