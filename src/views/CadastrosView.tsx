@@ -5,27 +5,23 @@ import {
   Building2,
   CalendarDays,
   Pencil,
-  Play,
   Plus,
   ShieldCheck,
   Trash2,
   Users,
+  ChevronLeft,
 } from 'lucide-react';
 import EmptyStateCard from '../components/EmptyStateCard';
 import SheetModal from '../components/SheetModal';
 import { useAppData } from '../context/AppDataContext';
 import { formatDateInputValue, sortEvents } from '../lib/date';
 import { createId } from '../lib/id';
-import { buildYoutubeThumbnail, getYoutubeId } from '../lib/youtube';
 import {
   AppUser,
   EVENT_CATEGORIES,
   EVENT_TYPES,
   EventCategory,
   EventType,
-  PONTO_CATEGORIES,
-  Ponto,
-  PontoCategory,
   TERREIRO_ACCESS_ROLES,
   Terreiro,
   TerreiroEvent,
@@ -36,7 +32,7 @@ import {
   UserStatus,
 } from '../types';
 
-type AdminTab = 'terreiros' | 'usuarios' | 'eventos' | 'pontos';
+type AdminTab = 'terreiros' | 'usuarios' | 'eventos';
 
 interface TerreiroFormState {
   nome: string;
@@ -72,24 +68,17 @@ interface EventFormState {
   date: string;
 }
 
-interface PontoFormState {
-  titulo: string;
-  categoria: PontoCategory;
-  youtubeUrl: string;
-  descricao: string;
-  terreiroId: string;
-  letra: string;
-}
+
 
 const inputClass =
-  'w-full rounded-[25px] border border-white bg-white px-6 py-4 font-bold text-[#414141] focus:outline-none focus:ring-2 focus:ring-[#941c1c]/10';
+  'w-full rounded-[25px] border border-white bg-white px-6 py-4 font-bold text-[#414141] focus:outline-none focus:ring-2 focus:ring-[#1565c0]/10';
 const selectClass =
-  'w-full appearance-none rounded-[25px] border border-white bg-white px-6 py-4 font-bold text-[#414141] focus:outline-none focus:ring-2 focus:ring-[#941c1c]/10';
+  'w-full appearance-none rounded-[25px] border border-white bg-white px-6 py-4 font-bold text-[#414141] focus:outline-none focus:ring-2 focus:ring-[#1565c0]/10';
 const textareaClass =
-  'w-full resize-none rounded-[25px] border border-white bg-white px-6 py-4 font-bold text-[#414141] focus:outline-none focus:ring-2 focus:ring-[#941c1c]/10';
+  'w-full resize-none rounded-[25px] border border-white bg-white px-6 py-4 font-bold text-[#414141] focus:outline-none focus:ring-2 focus:ring-[#1565c0]/10';
 const labelClass =
-  'mb-2 ml-4 block text-[10px] font-black uppercase tracking-widest text-[#941c1c]/40';
-const iconButtonClass = 'flex h-10 w-10 items-center justify-center rounded-full bg-[#fef7e7] text-[#941c1c]';
+  'mb-2 ml-4 block text-[10px] font-black uppercase tracking-widest text-[#1565c0]/40';
+const iconButtonClass = 'flex h-10 w-10 items-center justify-center rounded-full bg-[#e3f2fd] text-[#1565c0]';
 
 function getDefaultTerreiroForm(): TerreiroFormState {
   return {
@@ -131,24 +120,14 @@ function getDefaultEventForm(terreiroId: string): EventFormState {
   };
 }
 
-function getDefaultPontoForm(terreiroId: string): PontoFormState {
-  return {
-    titulo: '',
-    categoria: 'ORIXÁS',
-    youtubeUrl: '',
-    descricao: '',
-    terreiroId,
-    letra: '',
-  };
-}
 
-export default function CadastrosView() {
+
+export default function CadastrosView({ onBack }: { onBack: () => void }) {
   const {
     terreiros,
     accounts,
     users,
     events,
-    pontos,
     currentAccount,
     isGlobalAdmin,
     saveTerreiro,
@@ -159,8 +138,6 @@ export default function CadastrosView() {
     deleteUser,
     saveEvent,
     deleteEvent,
-    savePonto,
-    deletePonto,
   } = useAppData();
 
   const [tab, setTab] = useState<AdminTab>('terreiros');
@@ -179,9 +156,7 @@ export default function CadastrosView() {
   const [showEventModal, setShowEventModal] = useState(false);
   const [eventForm, setEventForm] = useState<EventFormState>(getDefaultEventForm(terreiros[0]?.id ?? ''));
 
-  const [editingPontoId, setEditingPontoId] = useState<string | null>(null);
-  const [showPontoModal, setShowPontoModal] = useState(false);
-  const [pontoForm, setPontoForm] = useState<PontoFormState>(getDefaultPontoForm(terreiros[0]?.id ?? ''));
+
 
   const firstTerreiroId = terreiros[0]?.id ?? '';
   const orderedEvents = sortEvents(events);
@@ -203,7 +178,6 @@ export default function CadastrosView() {
     return {
       users: users.filter((user) => user.terreiroId === terreiroId).length,
       events: events.filter((event) => event.terreiroId === terreiroId).length,
-      pontos: pontos.filter((ponto) => ponto.terreiroId === terreiroId).length,
     };
   }
 
@@ -294,28 +268,7 @@ export default function CadastrosView() {
     setShowEventModal(true);
   }
 
-  function openPontoModal(ponto?: Ponto) {
-    clearMessages();
-    if (!firstTerreiroId && !ponto) {
-      setPageMessage('Cadastre um terreiro antes de criar pontos.');
-      return;
-    }
 
-    setEditingPontoId(ponto?.id ?? null);
-    setPontoForm(
-      ponto
-        ? {
-            titulo: ponto.titulo,
-            categoria: ponto.categoria,
-            youtubeUrl: ponto.youtubeUrl,
-            descricao: ponto.descricao,
-            terreiroId: ponto.terreiroId,
-            letra: ponto.letra,
-          }
-        : getDefaultPontoForm(firstTerreiroId),
-    );
-    setShowPontoModal(true);
-  }
 
   function handleDeleteTerreiro(terreiroId: string) {
     clearMessages();
@@ -327,7 +280,7 @@ export default function CadastrosView() {
       return;
     }
 
-    if (links.users || links.events || links.pontos) {
+    if (links.users || links.events) {
       setPageMessage('Este terreiro possui vínculos e não pode ser removido agora.');
       return;
     }
@@ -513,44 +466,18 @@ export default function CadastrosView() {
     setShowEventModal(false);
   }
 
-  function handleSavePonto(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const videoId = getYoutubeId(pontoForm.youtubeUrl);
 
-    if (!videoId) {
-      setFormError('Informe uma URL válida do YouTube.');
-      return;
-    }
-
-    savePonto({
-      id: editingPontoId ?? createId('ponto'),
-      titulo: pontoForm.titulo.trim(),
-      categoria: pontoForm.categoria,
-      youtubeUrl: pontoForm.youtubeUrl.trim(),
-      descricao: pontoForm.descricao.trim(),
-      thumbnail: buildYoutubeThumbnail(videoId),
-      terreiroId: pontoForm.terreiroId,
-      letra: pontoForm.letra.trim(),
-      createdAt:
-        pontos.find((registeredPonto) => registeredPonto.id === editingPontoId)?.createdAt ??
-        new Date().toISOString(),
-    });
-
-    setShowPontoModal(false);
-  }
 
   const stats = [
     { id: 'terreiros', title: 'Terreiros', value: terreiros.length },
     { id: 'usuarios', title: 'Usuários', value: users.length },
     { id: 'eventos', title: 'Eventos', value: events.length },
-    { id: 'pontos', title: 'Pontos', value: pontos.length },
   ];
 
   const tabs: Array<{ id: AdminTab; label: string }> = [
     { id: 'terreiros', label: 'Terreiros' },
     { id: 'usuarios', label: 'Usuários' },
     { id: 'eventos', label: 'Eventos' },
-    { id: 'pontos', label: 'Pontos' },
   ];
 
   return (
@@ -559,27 +486,37 @@ export default function CadastrosView() {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20 }}
-      className="px-6 pb-32 pt-16"
+      className="px-6 pb-32 pt-12"
     >
+      {/* Back button row */}
+      <div className="mb-6 flex items-center">
+        <button 
+          onClick={onBack}
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm border border-black/[0.03] text-[#414141] active:scale-95 transition-transform"
+        >
+          <ChevronLeft className="h-5 w-5" strokeWidth={2.5} />
+        </button>
+      </div>
+
       <div className="rounded-[45px] border border-white/40 bg-white/60 p-8 shadow-[0_10px_40px_rgba(0,0,0,0.02)] backdrop-blur-xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-[12px] font-behind uppercase tracking-[0.2em] text-[#941c1c]/40">ADMINISTRAÇÃO</p>
-            <h1 className="mt-1 text-[44px] font-behind leading-tight text-[#941c1c]">Cadastros</h1>
-            <p className="mt-3 max-w-[240px] text-[13px] font-medium leading-relaxed text-[#941c1c]/40">
-              Estruture usuários, terreiros, agenda e biblioteca em uma base pronta para backend.
+            <p className="text-[12px] font-behind uppercase tracking-[0.2em] text-[#1565c0]/40">ADMINISTRAÇÃO</p>
+            <h1 className="mt-1 text-[44px] font-behind leading-tight text-[#1565c0]">Cadastros</h1>
+            <p className="mt-3 max-w-[240px] text-[13px] font-medium leading-relaxed text-[#1565c0]/40">
+              Estruture usuários, terreiros e agenda em uma base pronta para backend.
             </p>
-            <div className="mt-4 inline-flex rounded-full bg-[#941c1c]/6 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#941c1c]/50">
+            <div className="mt-4 inline-flex rounded-full bg-[#1565c0]/6 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#1565c0]/50">
               {isGlobalAdmin ? 'Admin geral' : 'Admin do terreiro'} · {currentAccount?.email}
             </div>
           </div>
-          <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-[#941c1c] text-white shadow-lg shadow-[#941c1c]/20">
+          <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-[#1565c0] text-white shadow-lg shadow-[#1565c0]/20">
             <ShieldCheck className="h-8 w-8" />
           </div>
         </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-4">
+      <div className="mt-6 grid grid-cols-3 gap-4">
         {stats.map((stat) => (
           <button
             key={stat.id}
@@ -587,7 +524,7 @@ export default function CadastrosView() {
             onClick={() => setTab(stat.id as AdminTab)}
             className="rounded-[28px] bg-white px-5 py-5 text-left shadow-[0_6px_15px_rgba(0,0,0,0.02)]"
           >
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#941c1c]/40">{stat.title}</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1565c0]/40">{stat.title}</p>
             <p className="mt-3 text-3xl font-black tracking-tight text-[#414141]">{stat.value}</p>
           </button>
         ))}
@@ -604,8 +541,8 @@ export default function CadastrosView() {
             }}
             className={`whitespace-nowrap rounded-[20px] px-7 py-4 text-[11px] font-black shadow-sm transition-all duration-300 ${
               tab === currentTab.id
-                ? 'bg-[#941c1c] text-white shadow-[#941c1c]/20'
-                : 'border border-[#941c1c]/5 bg-white text-[#941c1c]'
+                ? 'bg-[#1565c0] text-white shadow-[#1565c0]/20'
+                : 'border border-[#1565c0]/5 bg-white text-[#1565c0]'
             }`}
           >
             {currentTab.label}
@@ -614,7 +551,7 @@ export default function CadastrosView() {
       </div>
 
       {pageMessage ? (
-        <div className="mt-6 flex items-start gap-3 rounded-[28px] border border-[#941c1c]/10 bg-white px-5 py-4 text-[#941c1c]">
+        <div className="mt-6 flex items-start gap-3 rounded-[28px] border border-[#1565c0]/10 bg-white px-5 py-4 text-[#1565c0]">
           <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
           <p className="text-[13px] font-semibold leading-relaxed">{pageMessage}</p>
         </div>
@@ -623,26 +560,22 @@ export default function CadastrosView() {
       <div className="mt-8 space-y-4">
         <div className="flex items-end justify-between px-2">
           <div>
-            <h3 className="mb-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#941c1c] opacity-30">
+            <h3 className="mb-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#1565c0] opacity-30">
               {tab === 'terreiros'
                 ? 'Gestão de Casas'
                 : tab === 'usuarios'
                   ? 'Gestão de Acesso'
-                  : tab === 'eventos'
-                    ? 'Agenda Operacional'
-                    : 'Biblioteca Litúrgica'}
+                  : 'Agenda Operacional'}
             </h3>
             <p className="text-2xl font-bold tracking-tight text-[#414141]">
               {tab === 'terreiros'
                 ? 'Terreiros Cadastrados'
                 : tab === 'usuarios'
                   ? 'Usuários do Sistema'
-                  : tab === 'eventos'
-                    ? 'Eventos do Sistema'
-                    : 'Pontos Cadastrados'}
+                  : 'Eventos do Sistema'}
             </p>
             {tab === 'terreiros' && !isGlobalAdmin ? (
-              <p className="mt-2 text-[12px] font-semibold text-[#941c1c]/45">
+              <p className="mt-2 text-[12px] font-semibold text-[#1565c0]/45">
                 A criação e edição de terreiros é exclusiva do admin geral.
               </p>
             ) : null}
@@ -654,12 +587,10 @@ export default function CadastrosView() {
                 ? openTerreiroModal()
                 : tab === 'usuarios'
                   ? openUserModal()
-                  : tab === 'eventos'
-                    ? openEventModal()
-                    : openPontoModal()
+                  : openEventModal()
             }
             disabled={tab === 'terreiros' && !isGlobalAdmin}
-            className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#941c1c] text-white shadow-xl shadow-[#941c1c]/20 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1565c0] text-white shadow-xl shadow-[#1565c0]/20 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Plus className="h-6 w-6" />
           </button>
@@ -681,8 +612,8 @@ export default function CadastrosView() {
                       <p className="mt-2 text-[12px] font-semibold text-[#414141]/60">
                         {terreiro.cidade} - {terreiro.estado} | {terreiro.dirigente}
                       </p>
-                      <p className="mt-2 text-[12px] font-semibold text-[#941c1c]/40">
-                        {links.users} usuários, {links.events} eventos, {links.pontos} pontos
+                      <p className="mt-2 text-[12px] font-semibold text-[#1565c0]/40">
+                        {links.users} usuários, {links.events} eventos
                       </p>
                     </div>
                     {isGlobalAdmin ? (
@@ -706,7 +637,7 @@ export default function CadastrosView() {
                     </p>
                   ) : null}
                   {isGlobalAdmin ? (
-                    <p className="mt-2 text-[12px] font-semibold text-[#941c1c]/45">
+                    <p className="mt-2 text-[12px] font-semibold text-[#1565c0]/45">
                       Acesso: {accounts.find((account) => account.id === terreiro.accessAccountId)?.email ?? 'Não definido'}
                     </p>
                   ) : null}
@@ -715,7 +646,7 @@ export default function CadastrosView() {
             })
           ) : (
             <EmptyStateCard
-              icon={<Building2 className="h-8 w-8 text-[#941c1c]/20" />}
+              icon={<Building2 className="h-8 w-8 text-[#1565c0]/20" />}
               title="Nenhum terreiro cadastrado"
               description="Crie as casas antes de vincular usuários, eventos e pontos."
             />
@@ -737,14 +668,14 @@ export default function CadastrosView() {
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="text-[18px] font-bold text-[#414141]">{user.nome}</p>
-                      <p className="mt-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#941c1c]/40">
+                      <p className="mt-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#1565c0]/40">
                         {user.role} | {user.status}
                       </p>
                       <p className="mt-2 text-[13px] font-medium text-[#414141]/60">{user.email}</p>
                       <p className="mt-1 text-[13px] font-medium text-[#414141]/60">
                         {getTerreiroName(user.terreiroId)}
                       </p>
-                      <p className="mt-2 text-[12px] font-semibold text-[#941c1c]/45">
+                      <p className="mt-2 text-[12px] font-semibold text-[#1565c0]/45">
                         Acesso: {linkedAccount ? getAccessRoleLabel(linkedAccount.role as TerreiroAccessRole) : 'Sem acesso'}
                       </p>
                     </div>
@@ -762,7 +693,7 @@ export default function CadastrosView() {
             })
           ) : (
             <EmptyStateCard
-              icon={<Users className="h-8 w-8 text-[#941c1c]/20" />}
+              icon={<Users className="h-8 w-8 text-[#1565c0]/20" />}
               title="Nenhum usuário cadastrado"
               description="Cadastre administradores, dirigentes e membros para começar a operação."
             />
@@ -802,51 +733,13 @@ export default function CadastrosView() {
             ))
           ) : (
             <EmptyStateCard
-              icon={<CalendarDays className="h-8 w-8 text-[#941c1c]/20" />}
+              icon={<CalendarDays className="h-8 w-8 text-[#1565c0]/20" />}
               title="Nenhum evento cadastrado"
               description="Monte a agenda com datas, horários, locais e vínculos com os terreiros."
             />
           ))}
 
-        {tab === 'pontos' &&
-          (pontos.length ? (
-            pontos.map((ponto) => (
-              <div
-                key={ponto.id}
-                className="rounded-[32px] border border-black/5 bg-white p-6 shadow-[0_10px_30px_rgba(0,0,0,0.03)]"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[18px] font-bold text-[#414141]">{ponto.titulo}</p>
-                    <p className="mt-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#941c1c]/40">
-                      {ponto.categoria} | {getTerreiroName(ponto.terreiroId)}
-                    </p>
-                    <p className="mt-2 text-[13px] font-medium leading-relaxed text-[#414141]/60">
-                      {ponto.descricao}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button type="button" onClick={() => openPontoModal(ponto)} className={iconButtonClass}>
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(() => deletePonto(ponto.id), 'Deseja excluir este ponto?')}
-                      className={iconButtonClass}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <EmptyStateCard
-              icon={<Play className="h-8 w-8 text-[#941c1c]/20" />}
-              title="Nenhum ponto cadastrado"
-              description="Monte a biblioteca com links, letras e fundamentos por terreiro."
-            />
-          ))}
+
       </div>
 
       <SheetModal
@@ -857,7 +750,7 @@ export default function CadastrosView() {
       >
         <form onSubmit={handleSaveTerreiro} className="space-y-6">
           {formError ? (
-            <div className="flex items-start gap-3 rounded-[24px] border border-[#941c1c]/10 bg-white px-5 py-4 text-[#941c1c]">
+            <div className="flex items-start gap-3 rounded-[24px] border border-[#1565c0]/10 bg-white px-5 py-4 text-[#1565c0]">
               <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
               <p className="text-[13px] font-semibold leading-relaxed">{formError}</p>
             </div>
@@ -911,8 +804,8 @@ export default function CadastrosView() {
               />
             </div>
           </div>
-          <div className="rounded-[28px] border border-[#941c1c]/10 bg-[#fef7e7] px-5 py-5">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#941c1c]/40">Acesso do terreiro</p>
+          <div className="rounded-[28px] border border-[#1565c0]/10 bg-[#e3f2fd] px-5 py-5">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#1565c0]/40">Acesso do terreiro</p>
             <p className="mt-2 text-[13px] font-medium leading-relaxed text-[#414141]/60">
               Essas credenciais serão usadas pelo administrador deste terreiro para acessar apenas os próprios dados.
             </p>
@@ -959,7 +852,7 @@ export default function CadastrosView() {
           </label>
           <button
             type="submit"
-            className="w-full rounded-[28px] bg-[#941c1c] py-6 text-sm font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-[#941c1c]/20"
+            className="w-full rounded-[28px] bg-[#1565c0] py-6 text-sm font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-[#1565c0]/20"
           >
             {editingTerreiroId ? 'SALVAR TERREIRO' : 'CRIAR TERREIRO'}
           </button>
@@ -974,7 +867,7 @@ export default function CadastrosView() {
       >
         <form onSubmit={handleSaveUser} className="space-y-6">
           {formError ? (
-            <div className="flex items-start gap-3 rounded-[24px] border border-[#941c1c]/10 bg-white px-5 py-4 text-[#941c1c]">
+            <div className="flex items-start gap-3 rounded-[24px] border border-[#1565c0]/10 bg-white px-5 py-4 text-[#1565c0]">
               <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
               <p className="text-[13px] font-semibold leading-relaxed">{formError}</p>
             </div>
@@ -1053,8 +946,8 @@ export default function CadastrosView() {
               ))}
             </select>
           </div>
-          <div className="rounded-[28px] border border-[#941c1c]/10 bg-[#fef7e7] px-5 py-5">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#941c1c]/40">Acesso ao sistema</p>
+          <div className="rounded-[28px] border border-[#1565c0]/10 bg-[#e3f2fd] px-5 py-5">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#1565c0]/40">Acesso ao sistema</p>
             <p className="mt-2 text-[13px] font-medium leading-relaxed text-[#414141]/60">
               Admin do terreiro gerencia usuários, eventos e pontos. Usuário comum acessa apenas os conteúdos do terreiro.
             </p>
@@ -1090,7 +983,7 @@ export default function CadastrosView() {
           </div>
           <button
             type="submit"
-            className="w-full rounded-[28px] bg-[#941c1c] py-6 text-sm font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-[#941c1c]/20"
+            className="w-full rounded-[28px] bg-[#1565c0] py-6 text-sm font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-[#1565c0]/20"
           >
             {editingUserId ? 'SALVAR USUÁRIO' : 'CRIAR USUÁRIO'}
           </button>
@@ -1199,101 +1092,13 @@ export default function CadastrosView() {
           </div>
           <button
             type="submit"
-            className="w-full rounded-[28px] bg-[#941c1c] py-6 text-sm font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-[#941c1c]/20"
+            className="w-full rounded-[28px] bg-[#1565c0] py-6 text-sm font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-[#1565c0]/20"
           >
             {editingEventId ? 'SALVAR EVENTO' : 'CRIAR EVENTO'}
           </button>
         </form>
       </SheetModal>
 
-      <SheetModal
-        isOpen={showPontoModal}
-        title={editingPontoId ? 'Editar Ponto' : 'Novo Ponto'}
-        subtitle="Biblioteca de fundamentos"
-        onClose={() => setShowPontoModal(false)}
-      >
-        <form onSubmit={handleSavePonto} className="space-y-6">
-          {formError ? (
-            <div className="flex items-start gap-3 rounded-[24px] border border-[#941c1c]/10 bg-white px-5 py-4 text-[#941c1c]">
-              <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
-              <p className="text-[13px] font-semibold leading-relaxed">{formError}</p>
-            </div>
-          ) : null}
-          <div>
-            <label className={labelClass}>Título</label>
-            <input
-              required
-              value={pontoForm.titulo}
-              onChange={(event) => setPontoForm({ ...pontoForm, titulo: event.target.value })}
-              className={inputClass}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>Categoria</label>
-              <select
-                value={pontoForm.categoria}
-                onChange={(event) => setPontoForm({ ...pontoForm, categoria: event.target.value as PontoCategory })}
-                className={selectClass}
-              >
-                {PONTO_CATEGORIES.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>Terreiro</label>
-              <select
-                value={pontoForm.terreiroId}
-                onChange={(event) => setPontoForm({ ...pontoForm, terreiroId: event.target.value })}
-                className={selectClass}
-              >
-                {terreiros.map((terreiro) => (
-                  <option key={terreiro.id} value={terreiro.id}>
-                    {terreiro.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className={labelClass}>Link do YouTube</label>
-            <input
-              required
-              value={pontoForm.youtubeUrl}
-              onChange={(event) => setPontoForm({ ...pontoForm, youtubeUrl: event.target.value })}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className={labelClass}>Descrição</label>
-            <textarea
-              required
-              value={pontoForm.descricao}
-              onChange={(event) => setPontoForm({ ...pontoForm, descricao: event.target.value })}
-              rows={3}
-              className={textareaClass}
-            />
-          </div>
-          <div>
-            <label className={labelClass}>Letra</label>
-            <textarea
-              value={pontoForm.letra}
-              onChange={(event) => setPontoForm({ ...pontoForm, letra: event.target.value })}
-              rows={4}
-              className={textareaClass}
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full rounded-[28px] bg-[#941c1c] py-6 text-sm font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-[#941c1c]/20"
-          >
-            {editingPontoId ? 'SALVAR PONTO' : 'CRIAR PONTO'}
-          </button>
-        </form>
-      </SheetModal>
     </motion.div>
   );
 }

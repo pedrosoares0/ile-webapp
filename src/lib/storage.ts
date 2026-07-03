@@ -212,7 +212,91 @@ export function loadAppData() {
   }
 
   try {
-    return normalizeData(JSON.parse(raw));
+    const parsed = normalizeData(JSON.parse(raw));
+    
+    // Auto-inject hub account if it was initialized before it was added to seed.ts
+    const hasHubAccount = parsed.accounts.some(acc => acc.email === 'hub@ile.app');
+    if (!hasHubAccount) {
+      const seedHubAccount = seedAppData.accounts.find(acc => acc.email === 'hub@ile.app');
+      const seedHubUser = seedAppData.users.find(u => u.email === 'hub@ile.app');
+      if (seedHubAccount) parsed.accounts.push(seedHubAccount);
+      if (seedHubUser) parsed.users.push(seedHubUser);
+      saveAppData(parsed);
+    }
+
+    // Auto-inject or update seeded terreiros and their associated data
+    let dataChanged = false;
+    seedAppData.terreiros.forEach(seedT => {
+      const existingIdx = parsed.terreiros.findIndex(t => t.id === seedT.id);
+      if (existingIdx === -1) {
+        parsed.terreiros.push(seedT);
+        dataChanged = true;
+      } else {
+        const existing = parsed.terreiros[existingIdx];
+        if (existing.nome !== seedT.nome || existing.dirigente !== seedT.dirigente || existing.cidade !== seedT.cidade) {
+          parsed.terreiros[existingIdx] = {
+            ...existing,
+            nome: seedT.nome,
+            dirigente: seedT.dirigente,
+            cidade: seedT.cidade,
+            estado: seedT.estado,
+            observacoes: seedT.observacoes
+          };
+          dataChanged = true;
+        }
+      }
+    });
+    seedAppData.accounts.forEach(seedAcc => {
+      const existingIdx = parsed.accounts.findIndex(acc => acc.id === seedAcc.id);
+      if (existingIdx === -1) {
+        parsed.accounts.push(seedAcc);
+        dataChanged = true;
+      } else {
+        const existing = parsed.accounts[existingIdx];
+        if (existing.nome !== seedAcc.nome || existing.email !== seedAcc.email) {
+          parsed.accounts[existingIdx] = {
+            ...existing,
+            nome: seedAcc.nome,
+            email: seedAcc.email
+          };
+          dataChanged = true;
+        }
+      }
+    });
+    seedAppData.users.forEach(seedU => {
+      const existingIdx = parsed.users.findIndex(u => u.id === seedU.id);
+      if (existingIdx === -1) {
+        parsed.users.push(seedU);
+        dataChanged = true;
+      } else {
+        const existing = parsed.users[existingIdx];
+        if (existing.nome !== seedU.nome || existing.email !== seedU.email) {
+          parsed.users[existingIdx] = {
+            ...existing,
+            nome: seedU.nome,
+            email: seedU.email
+          };
+          dataChanged = true;
+        }
+      }
+    });
+    seedAppData.events.forEach(seedE => {
+      if (!parsed.events.some(e => e.id === seedE.id)) {
+        parsed.events.push(seedE);
+        dataChanged = true;
+      }
+    });
+    seedAppData.pontos.forEach(seedP => {
+      if (!parsed.pontos.some(p => p.id === seedP.id)) {
+        parsed.pontos.push(seedP);
+        dataChanged = true;
+      }
+    });
+    if (dataChanged) {
+      saveAppData(parsed);
+    }
+    
+    return parsed;
   } catch {
     return seedAppData;
   }

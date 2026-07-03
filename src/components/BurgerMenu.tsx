@@ -5,15 +5,9 @@ import { useAppData } from '../context/AppDataContext';
 import { 
   Home, 
   Calendar, 
-  Bell, 
-  DollarSign, 
-  CalendarCheck, 
-  Droplets, 
-  HelpCircle, 
-  Settings, 
   LogOut,
   X,
-  Info,
+  BookOpen,
   ShieldCheck
 } from 'lucide-react';
 
@@ -32,17 +26,11 @@ interface MenuItem {
 }
 
 const MENU_ITEMS: MenuItem[] = [
-  { id: 'home', label: 'Home', icon: Home },
-  { id: 'divindades', label: 'Divindades', icon: Info },
-  { id: 'eventos', label: 'Eventos', icon: Calendar },
-  { id: 'cadastros', label: 'Cadastros', icon: ShieldCheck },
-  { id: 'avisos', label: 'Avisos', icon: Bell },
-  { id: 'financeiro', label: 'Financeiro', icon: DollarSign },
-  { id: 'consultas', label: 'Consultas Agendadas', icon: CalendarCheck },
-  { id: 'oracao', label: 'Pedidos de Oração', icon: Droplets },
-  { id: 'ajuda', label: 'Ajuda', icon: HelpCircle },
-  { id: 'ajustes', label: 'Ajustes', icon: Settings },
-  { id: 'sair', label: 'Sair', icon: LogOut, isExit: true },
+  { id: 'home', label: 'Início', icon: Home },
+  { id: 'divindades', label: 'Divindades', icon: BookOpen },
+  { id: 'eventos', label: 'Calendário de Eventos', icon: Calendar },
+  { id: 'cadastros', label: 'Painel Admin', icon: ShieldCheck },
+  { id: 'sair', label: 'Desconectar conta', icon: LogOut, isExit: true },
 ];
 
 export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }: BurgerMenuProps) {
@@ -50,9 +38,13 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
   const { canAccessCadastros, currentAccount } = useAppData();
 
   const isGlobalAdmin = currentAccount?.email === 'admin@ile.app';
-  const logoSrc = isGlobalAdmin ? '/img/logo-ile.webp' : '/img/logo-T7CA.png';
+  const isHubUser = currentAccount?.role === 'terreiro_user' && !currentAccount?.terreiroId;
+  const logoSrc = (isGlobalAdmin || isHubUser) ? '/img/login/icone.webp' : '/img/logo-T7CA.png';
 
   const filteredMenuItems = MENU_ITEMS.filter(item => {
+    if (isHubUser) {
+      return item.id === 'home' || item.id === 'divindades' || item.id === 'sair';
+    }
     if (item.id === 'cadastros' && !canAccessCadastros) return false;
     return true;
   });
@@ -61,109 +53,122 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop Blur */}
+          {/* Backdrop Blur with smooth fade */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 z-[60] bg-black/20 backdrop-blur-sm"
           />
 
-          {/* Menu Drawer */}
+          {/* Menu Drawer - Editorial Refined Light-Glass Vibe */}
           <motion.div
-            initial={{ x: '-100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '-100%' }}
-            transition={{ type: 'spring', damping: 28, stiffness: 200 }}
-            className="fixed inset-y-0 left-0 z-[70] w-[300px] bg-white/70 backdrop-blur-2xl p-8 shadow-2xl rounded-r-[40px] border-r border-white/20"
+            initial={{ x: '100%', opacity: 0.9 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: '100%', opacity: 0.9 }}
+            transition={{ type: 'spring', damping: 30, stiffness: 240 }}
+            className="fixed inset-y-0 right-0 z-[70] w-[290px] bg-[#FEF9ED]/95 border-l border-white/40 p-8 shadow-2xl flex flex-col justify-between"
+            style={{
+              boxShadow: '-10px 0 40px rgba(0,0,0,0.08)',
+              backdropFilter: 'blur(30px) saturate(1.8)'
+            }}
           >
-            <div className="flex flex-col h-full">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-10">
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 flex items-center justify-center">
-                    <img src={logoSrc} alt="Logo" className="h-full w-full object-contain" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-black text-[#941c1c] leading-tight tracking-tight">
-                      {isGlobalAdmin ? 'Ilê' : 'T7CA'}
-                    </h2>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#414141]/40">
-                      {isGlobalAdmin ? 'Sistema' : 'Terreiro'}
-                    </p>
-                  </div>
+            {/* Top Glossy Reflection Sheen */}
+            <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
+
+            <div className="flex flex-col h-full justify-between z-10">
+              
+              {/* Top Section */}
+              <div>
+                {/* Close Button Header Row */}
+                <div className="flex justify-end mb-6">
+                  <button 
+                    onClick={onClose}
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-black/[0.03] text-[#414141]/40 active:scale-90 transition-all hover:bg-black/[0.06] hover:text-[#414141]/75"
+                  >
+                    <X className="h-4.5 w-4.5" />
+                  </button>
                 </div>
-                <button 
-                  onClick={onClose}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-black/5 text-black/40 active:scale-90 transition-transform hover:bg-black/10"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
 
-              <div className="flex-1 space-y-1 overflow-y-auto pr-2 custom-scrollbar">
-                {filteredMenuItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = currentView === item.id;
-                  
-                  return (
-                    <motion.button
-                      key={item.id}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => {
-                        if (item.isExit) {
-                          logout();
-                          onClose();
-                        } else {
-                          onNavigate(item.id);
-                          onClose();
-                        }
-                      }}
-                      className={`group relative flex w-full items-center gap-4 rounded-[22px] px-4 py-3.5 transition-all duration-300 ${
-                        isActive 
-                          ? 'bg-white shadow-lg shadow-black/5' 
-                          : 'text-[#414141]/60 hover:bg-black/5'
-                      }`}
-                    >
-                      {isActive && (
-                        <>
-                          <div className="glass-filter rounded-[22px]"></div>
-                          <div className="glass-overlay rounded-[22px]"></div>
-                          <div className="glass-specular rounded-[22px]"></div>
-                        </>
-                      )}
+                {/* Brand Identity Card */}
+                <div className="flex flex-col items-center text-center px-2 py-4 mb-8 bg-[#F4E8D9]/40 border border-[#414141]/5 rounded-2xl">
+                  <img src={logoSrc} alt="Logo" className="h-14 w-14 object-contain mb-3" />
+                  <h2 className="text-lg font-bold text-[#414141] tracking-widest leading-none font-sans uppercase">
+                    {(isGlobalAdmin || isHubUser) ? 'Ilê' : 'T7CA'}
+                  </h2>
+                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#414141]/40 mt-1.5">
+                    {isGlobalAdmin ? 'Portal Administrativo' : isHubUser ? 'Hub de Terreiros' : 'Terreiro de Umbanda'}
+                  </p>
+                </div>
 
-                      <div className={`glass-content relative z-10 flex w-full items-center gap-4 ${isActive ? 'p-0' : ''}`}>
-                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors duration-300 ${
-                          isActive ? 'bg-[#941c1c]/10' : 'bg-black/5 group-hover:bg-black/10'
-                        }`}>
-                          <Icon className={`h-5 w-5 ${isActive ? 'text-[#941c1c]' : 'text-[#414141]/50'}`} strokeWidth={2.2} />
-                        </div>
-                        
-                        <span 
-                          className={`text-[15px] font-semibold tracking-tight text-left leading-tight ${isActive ? 'translate-x-1' : ''} transition-transform duration-300 ${isActive ? 'text-[#941c1c]' : ''}`}
-                          style={{ fontFamily: isActive ? 'BehindTheNinetiesItalic' : 'inherit' }}
-                        >
-                          {item.label}
-                        </span>
+                {/* Clean Typographic Links */}
+                <div className="space-y-1.5">
+                  {filteredMenuItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = currentView === item.id;
+                    const isExit = item.isExit;
 
+                    return (
+                      <motion.button
+                        key={item.id}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          if (isExit) {
+                            logout();
+                            onClose();
+                          } else {
+                            onNavigate(item.id);
+                            onClose();
+                          }
+                        }}
+                        className={`group relative flex w-full items-center gap-4 rounded-xl px-4 py-3.5 transition-all duration-300 ${
+                          isActive 
+                            ? 'text-[#1565c0] bg-[#1565c0]/5 border border-[#1565c0]/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)] font-bold' 
+                            : isExit 
+                              ? 'text-red-600/70 hover:bg-red-500/5 hover:text-red-700 border border-transparent' 
+                              : 'text-[#414141]/75 hover:bg-black/[0.02] hover:text-[#414141] border border-transparent'
+                        }`}
+                      >
+                        {/* Left Active Indicator Bar */}
                         {isActive && (
                           <motion.div 
-                            layoutId="activeIndicator"
-                            className="ml-auto h-1.5 w-1.5 rounded-full bg-[#941c1c]/40"
+                            layoutId="active-menu-bar"
+                            className="absolute left-0 top-1/4 bottom-1/4 w-1 rounded-r-md bg-[#1565c0]"
+                            transition={{ type: "spring", stiffness: 350, damping: 30 }}
                           />
                         )}
-                      </div>
-                    </motion.button>
-                  );
-                })}
+
+                        <Icon 
+                          className={`h-4.5 w-4.5 transition-colors duration-300 ${
+                            isActive 
+                              ? 'text-[#1565c0]' 
+                              : isExit 
+                                ? 'text-red-600/60 group-hover:text-red-600' 
+                                : 'text-[#414141]/45 group-hover:text-[#414141]/70'
+                          }`} 
+                          strokeWidth={isActive ? 2.5 : 2} 
+                        />
+                        
+                        <span className="text-[13.5px] font-semibold tracking-wide text-left leading-none font-sans">
+                          {item.label}
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Footer Logo Background Overlay */}
-              <div className="absolute bottom-[-20px] left-[-20px] opacity-[0.03] pointer-events-none">
-                <img src={logoSrc} alt="" className="h-48 w-48 object-contain" />
+              {/* Bottom Metadata & Versioning */}
+              <div className="border-t border-black/[0.05] pt-6 text-center">
+                <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-[#414141]/35">
+                  Ilê WebApp · v1.4.0
+                </p>
+                <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-[#414141]/20 mt-1">
+                  Protegido por Axé e Lei
+                </p>
               </div>
+
             </div>
           </motion.div>
         </>

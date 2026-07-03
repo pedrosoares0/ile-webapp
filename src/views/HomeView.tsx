@@ -1,14 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Menu } from 'lucide-react';
+import { Calendar, BookOpen, CreditCard, ChevronRight, Menu } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 
 import { ViewType } from '../types';
-import { useAuth } from '../context/AuthContext';
 import { useAppData } from '../context/AppDataContext';
 
 const HERO_BACKGROUNDS = [
-  '/img/fundo-hero1.png',
-  '/img/fundo-hero2.jpg',
   '/img/fundo-hero3.jpg',
   '/img/fundo-hero4.jpg',
   '/img/fundo-hero5.jpg',
@@ -35,238 +32,186 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
 
   const nextEvent = useMemo(() => {
     if (!events || events.length === 0) return null;
-    
+
     // Find events from current terreiro or global
     const terreiroEvents = events.filter(e => !currentAccount || e.terreiroId === currentAccount.terreiroId);
-    
+
     const now = new Date();
     const upcoming = terreiroEvents
       .filter(e => new Date(e.date) >= now)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    
+
     return upcoming[0] ?? null;
   }, [events, currentAccount]);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentBg((prev) => (prev + 1) % HERO_BACKGROUNDS.length);
-    }, 5000);
+    }, 3500); // Faster slide interval transition
     return () => clearInterval(timer);
   }, []);
+
+  // Format date for the ticket badge if an event exists
+  const eventDateObj = nextEvent ? new Date(nextEvent.date) : null;
+  const dayStr = eventDateObj ? eventDateObj.toLocaleDateString('pt-BR', { day: '2-digit' }) : '';
+  const monthStr = eventDateObj ? eventDateObj.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '').toUpperCase() : '';
+
+  // Polished gender welcome check
+  const isFemale = useMemo(() => {
+    const name = currentAccount?.nome?.toLowerCase() ?? '';
+    return name.endsWith('a') || name.includes('ana') || name.includes('maria') || name.includes('beatriz') || name.includes('julia');
+  }, [currentAccount]);
+
+  const welcomeMsg = isFemale ? 'Seja muito bem vinda!' : 'Seja muito bem-vindo!';
 
   return (
     <motion.div 
       key="home"
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.3 }}
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -15 }}
+      transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+      style={{ background: 'linear-gradient(180deg, #F4E8D9 88%, #DBC6AB 100%)' }}
+      className="flex flex-col h-full w-full p-4 pb-6 box-border overflow-hidden relative z-10"
     >
-      {/* Hero Card */}
-      <div className="relative h-[480px] w-full overflow-hidden rounded-b-[45px] shadow-[0_20px_40px_rgba(0,0,0,0.1)]">
-        <AnimatePresence mode="wait">
-          <motion.img 
-            key={HERO_BACKGROUNDS[currentBg]}
-            src={HERO_BACKGROUNDS[currentBg]}
-            alt="Hero Background" 
-            initial={{ opacity: 0, scale: 1.1 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.5, ease: "easeInOut" }}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        </AnimatePresence>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-        
-        {/* Header Controls */}
-        <div className="relative z-10 flex items-center justify-between px-6 pt-12">
-          {/* Profile Icon with Glassmorphism */}
-          <div className="glass-container h-11 w-11 rounded-full">
-            <div className="glass-filter"></div>
-            <div className="glass-overlay"></div>
-            <div className="glass-specular"></div>
-            <div className="glass-content h-full w-full items-center justify-center font-bold text-lg text-white">
-              {currentAccount?.nome?.charAt(0) ?? 'U'}
-            </div>
-          </div>
+      {/* Aurora Backdrop Effect behind the main card (More vivid and stronger Light/Dark Blue glows) */}
+      <div className="absolute inset-x-0 top-0 h-[52dvh] pointer-events-none overflow-hidden z-0 select-none">
+        {/* Strong Dark Blue Glow */}
+        <div 
+          className="absolute w-[72vw] h-[72vw] rounded-full bg-gradient-to-br from-[#0d47a1]/85 to-[#1565c0]/45 blur-[60px] -top-[18%] -left-[12%] animate-[pulse_6s_ease-in-out_infinite]"
+        />
+        {/* Strong Light Blue Glow */}
+        <div 
+          className="absolute w-[85vw] h-[85vw] rounded-full bg-gradient-to-tr from-[#00b0ff]/80 to-[#00e5ff]/35 blur-[70px] -top-[22%] -right-[18%] animate-[pulse_8s_ease-in-out_infinite_1.2s]"
+        />
+      </div>
+
+      {/* Huge cover image card with dynamic white hairline border glow */}
+      <div className="mystical-glow flex-1 w-full rounded-[40px] shadow-[0_20px_45px_rgba(0,0,0,0.15)] relative z-10">
+        <div className="mystical-glow-content flex flex-col h-full w-full relative">
+          <AnimatePresence mode="wait">
+            <motion.img 
+              key={HERO_BACKGROUNDS[currentBg]}
+              src={HERO_BACKGROUNDS[currentBg]}
+              alt="Cover" 
+              initial={{ opacity: 0, scale: 1.05 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.65, ease: "easeInOut" }} // Faster fade transition
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          </AnimatePresence>
           
-          {/* Search Bar with Glassmorphism */}
-          <div className="glass-container mx-3 h-10 flex-1 rounded-full">
-            <div className="glass-filter"></div>
-            <div className="glass-overlay"></div>
-            <div className="glass-specular"></div>
-            <div className="glass-content h-full w-full items-center gap-2 px-4">
-              <Search className="h-4 w-4 text-white/70" strokeWidth={2.5} />
-              <input 
-                type="text" 
-                placeholder="Procure por eventos..."
-                className="w-full bg-transparent text-[11px] text-white placeholder:text-white/60 outline-none font-medium"
-                disabled
-              />
-            </div>
-          </div>
+          {/* Vignette overlay (Removed the dark bottom shadow completely, replaced with soft 20% opacity cover) */}
+          <div className="absolute inset-0 bg-black/20" />
           
-          {/* Burger Menu with Glassmorphism */}
-          <button 
-            onClick={onToggleMenu}
-            className="glass-container h-11 w-11 rounded-full active:scale-90 transition-transform"
+          {/* Top Header Row inside the card */}
+          <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-20">
+            {/* Logo image directly (no background, matches menu button h-11 w-11) */}
+            <img src={logoSrc} alt="Logo" className="h-11 w-11 object-contain brightness-110 shrink-0" />
+
+            {/* Terreiro Name (Straight font-behind) */}
+            <h2 
+              className="text-[13.5px] font-normal tracking-[0.22em] text-white uppercase font-behind not-italic"
+              style={{ textShadow: '0 2px 5px rgba(0,0,0,0.5)' }}
+            >
+              {currentTerreiro?.nome ?? 'SISTEMA ILÊ'}
+            </h2>
+
+            {/* Glassmorphic Burger Menu Button */}
+            <button 
+              onClick={onToggleMenu}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20 backdrop-blur-md border border-white/25 text-white active:scale-95 transition-all shrink-0 z-30"
+            >
+              <Menu className="h-5 w-5" strokeWidth={2} />
+            </button>
+          </div>
+
+          {/* Text Overlay (Bottom Center of card - moved closer to the footer) */}
+          <div className="absolute bottom-6 left-6 right-6 flex flex-col items-center text-center z-10">
+            <h1 
+              className="text-[44px] sm:text-[50px] font-normal leading-none text-white font-behind-it tracking-wide"
+              style={{ textShadow: '0 2px 6px rgba(0,0,0,0.4)' }}
+            >
+              Olá {currentAccount?.nome?.split(' ')[0] ?? 'Visitante'}
+            </h1>
+            <p 
+              className="text-white/95 text-[11px] font-medium tracking-[0.18em] uppercase mt-2.5 font-behind not-italic"
+              style={{ textShadow: '0 2px 5px rgba(0,0,0,0.5)' }}
+            >
+              {welcomeMsg}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Next Activity Section (Less rounded [rounded-[28px]] and larger, using third color #FEF9ED) */}
+      <div className="mt-4 shrink-0 relative z-10">
+        {nextEvent ? (
+          <motion.div 
+            onClick={() => onNavigate('eventos')}
+            whileTap={{ scale: 0.98 }}
+            className="relative overflow-hidden rounded-[28px] bg-[#FEF9ED] shadow-[0_12px_28px_rgba(65,65,65,0.08)] p-6 cursor-pointer group"
           >
-            <div className="glass-filter"></div>
-            <div className="glass-overlay"></div>
-            <div className="glass-specular"></div>
-            <div className="glass-content h-full w-full items-center justify-center text-white">
-              <Menu className="h-6 w-6" strokeWidth={2} />
-            </div>
-          </button>
-        </div>
-
-        {/* User Welcome Card */}
-        <div className="absolute bottom-10 left-4 right-4 z-10">
-          <div className="glass-container mx-auto w-fit min-w-[320px] max-w-full rounded-full">
-            <div className="glass-filter rounded-full"></div>
-            <div className="glass-overlay rounded-full"></div>
-            <div className="glass-specular rounded-full"></div>
-            
-            <div className="glass-content w-full p-4 pl-7 justify-between items-center rounded-full">
-              <div className="flex flex-col pr-2">
-                <p className="text-[10px] font-bold tracking-widest uppercase opacity-60" style={{ color: '#fee3c5' }}>Bem-vindo</p>
-                <h1 className="text-2xl font-bold tracking-tight leading-none mt-0.5" style={{ color: '#fee3c5' }}>
-                  {currentAccount?.nome?.split(' ')[0] ?? 'Usuário'}
-                </h1>
-                <div className="mt-1.5 flex items-center gap-2">
-                  <div className="h-1 w-1 rounded-full bg-[#fee3c5] animate-pulse" />
-                  <span className="text-[8px] font-bold tracking-[0.1em] uppercase opacity-50" style={{ color: '#fee3c5' }}>
-                    {currentTerreiro?.nome ?? 'Sistema Ilê'}
-                  </span>
-                </div>
+            <div className="flex items-center gap-4">
+              {/* Apple Calendar Style Ticket (Blue) */}
+              <div className="flex flex-col items-center justify-center w-12 h-12 rounded-[18px] bg-[#1565c0]/5 border border-[#1565c0]/10 shrink-0">
+                <span className="text-[8px] font-black tracking-widest text-[#1565c0] opacity-80 leading-none">{monthStr}</span>
+                <span className="text-xl font-bold text-[#1565c0] leading-none mt-1">{dayStr}</span>
               </div>
-              <div className="glass-container h-14 w-14 rounded-full border-none shadow-none bg-transparent flex-shrink-0">
-                <div className="glass-filter rounded-full"></div>
-                <div className="glass-overlay rounded-full opacity-30"></div>
-                <div className="glass-specular rounded-full border-none shadow-none"></div>
-                <div className="glass-content h-full w-full items-center justify-center overflow-hidden p-1.5">
-                  <img src={logoSrc} alt="Logo" className="h-[90%] w-[90%] object-contain brightness-110" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Next Event Card */}
-      <div className="mt-10 px-5">
-        <motion.div 
-          onClick={() => onNavigate('eventos')}
-          whileTap={{ scale: 0.98 }}
-          className="group relative h-28 w-full overflow-hidden rounded-[24px] shadow-[0_12px_24px_rgba(148,28,28,0.15)] bg-[#941c1c] transition-all duration-200 cursor-pointer"
-        >
-          <img 
-            src="/img/fundo-evento1.png" 
-            alt="Event Background" 
-            className="absolute inset-0 h-full w-full object-cover opacity-50"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#941c1c] via-[#941c1c]/40 to-transparent" />
-          
-          <div className="relative z-10 flex h-full flex-col justify-center px-8">
-            <p className="text-[8px] uppercase tracking-[0.3em] font-bold text-white/90">Próximo evento</p>
-            {nextEvent ? (
-              <>
-                <h2 className="mt-0.5 text-[28px] leading-tight font-behind-it" style={{ color: '#fee3c5' }}>
+              
+              <div className="flex-1 min-w-0">
+                <span className="inline-block px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider bg-green-500/10 text-green-700">
+                  {nextEvent.category}
+                </span>
+                <h3 className="text-[15px] font-bold text-[#414141] mt-1 leading-tight group-hover:text-[#1565c0] transition-colors truncate">
                   {nextEvent.title}
-                </h2>
-                <p className="mt-1 text-[10px] font-medium text-white/80">
-                  {nextEvent.location} - {new Date(nextEvent.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} | {nextEvent.time}
-                </p>
-              </>
-            ) : (
-              <h2 className="mt-0.5 text-[24px] leading-tight font-behind-it" style={{ color: '#fee3c5' }}>
-                Nenhum evento agendado
-              </h2>
-            )}
+                </h3>
+                <div className="flex items-center gap-2 mt-0.5 text-[#414141]/55 text-xs font-semibold">
+                  <span className="truncate">{nextEvent.time} · {nextEvent.location}</span>
+                </div>
+              </div>
+              
+              <ChevronRight className="h-4 w-4 text-[#414141]/30 group-hover:text-[#1565c0] group-hover:translate-x-0.5 transition-all" />
+            </div>
+          </motion.div>
+        ) : (
+          <div className="rounded-[28px] bg-[#FEF9ED] shadow-[0_12px_28px_rgba(65,65,65,0.08)] py-6 px-6 text-center">
+            <p className="text-[14px] font-bold text-[#414141]/60">Nenhum evento agendado</p>
           </div>
-        </motion.div>
+        )}
       </div>
 
-      {/* Action Grid */}
-      <div className="mt-8 grid grid-cols-2 gap-4 px-5 pb-10">
-        <motion.button 
-          whileHover={{ y: -4, scale: 1.02 }}
-          whileTap={{ scale: 0.96 }}
-          className="group relative flex h-[140px] flex-col items-center justify-center overflow-hidden rounded-[32px] bg-[#E8F8E4] p-5 shadow-[0_10px_30px_rgba(45,90,39,0.08)]"
-        >
-          {/* Decorative Icon Background */}
-          <div className="absolute -right-4 -top-4 opacity-[0.08] transition-transform group-hover:scale-110 duration-500">
-            <img src="/img/financeiro-icon.png" alt="" className="h-32 w-32 object-contain" />
-          </div>
-          
-          <div className="relative z-10 mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/40 shadow-sm backdrop-blur-sm border border-white/40">
-            <img src="/img/financeiro-icon.png" alt="Financeiro" className="h-8 w-8 object-contain" />
-          </div>
-          
-          <div className="relative z-10 text-center">
-            <h3 className="text-[22px] leading-tight text-[#1B3B18] font-behind-it">Financeiro</h3>
-            <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-[#1B3B18]/40">Mensalidades</p>
-          </div>
-        </motion.button>
-
-        <motion.button 
+      {/* Three Button Pill Row (Calendário, Financeiro, Divindades, using third color #FEF9ED) */}
+      <div className="grid grid-cols-3 gap-2.5 mt-4 shrink-0 relative z-10">
+        {/* Calendário */}
+        <motion.button
           onClick={() => onNavigate('eventos')}
-          whileHover={{ y: -4, scale: 1.02 }}
-          whileTap={{ scale: 0.96 }}
-          className="group relative flex h-[140px] flex-col items-center justify-center overflow-hidden rounded-[32px] bg-[#FCE8C3] p-5 shadow-[0_10px_30px_rgba(184,134,11,0.08)]"
+          whileTap={{ scale: 0.95 }}
+          className="bg-[#FEF9ED] hover:bg-[#FEF9ED]/95 rounded-full py-4 px-2 flex items-center justify-center gap-1.5 shadow-[0_8px_20px_rgba(65,65,65,0.06)] text-[#414141] group"
         >
-          <div className="absolute -right-4 -top-4 opacity-[0.08] transition-transform group-hover:scale-110 duration-500">
-            <img src="/img/eventos-icon.png" alt="" className="h-32 w-32 object-contain" />
-          </div>
-          
-          <div className="relative z-10 mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/40 shadow-sm backdrop-blur-sm border border-white/40">
-            <img src="/img/eventos-icon.png" alt="Eventos" className="h-8 w-8 object-contain" />
-          </div>
-          
-          <div className="relative z-10 text-center">
-            <h3 className="text-[22px] leading-tight text-[#5C4033] font-behind-it">Eventos</h3>
-            <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-[#5C4033]/40">Calendário</p>
-          </div>
+          <Calendar className="h-3.5 w-3.5 text-[#1565c0]" strokeWidth={2.5} />
+          <span className="text-[11px] font-bold tracking-tight text-[#414141]/85">Calendário</span>
         </motion.button>
 
-        <motion.button 
-          onClick={() => onNavigate('pontos')}
-          whileHover={{ y: -4, scale: 1.02 }}
-          whileTap={{ scale: 0.96 }}
-          className="group relative flex h-[140px] flex-col items-center justify-center overflow-hidden rounded-[32px] bg-[#FCE5E5] p-5 shadow-[0_10px_30px_rgba(148,28,28,0.08)]"
+        {/* Financeiro */}
+        <motion.button
+          onClick={() => onNavigate('financeiro')}
+          whileTap={{ scale: 0.95 }}
+          className="bg-[#FEF9ED] hover:bg-[#FEF9ED]/95 rounded-full py-4 px-2 flex items-center justify-center gap-1.5 shadow-[0_8px_20px_rgba(65,65,65,0.06)] text-[#414141] group"
         >
-          <div className="absolute -right-4 -top-4 opacity-[0.08] transition-transform group-hover:scale-110 duration-500">
-            <img src="/img/pontos-icon.png" alt="" className="h-32 w-32 object-contain" />
-          </div>
-          
-          <div className="relative z-10 mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/40 shadow-sm backdrop-blur-sm border border-white/40">
-            <img src="/img/pontos-icon.png" alt="Pontos" className="h-8 w-8 object-contain" />
-          </div>
-          
-          <div className="relative z-10 text-center">
-            <h3 className="text-[22px] leading-tight text-[#941c1c] font-behind-it">Pontos</h3>
-            <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-[#941c1c]/40">Cantados</p>
-          </div>
+          <CreditCard className="h-3.5 w-3.5 text-[#1b3b18]" strokeWidth={2.5} />
+          <span className="text-[11px] font-bold tracking-tight text-[#414141]/85">Financeiro</span>
         </motion.button>
 
-        <motion.button 
+        {/* Divindades */}
+        <motion.button
           onClick={() => onNavigate('divindades')}
-          whileHover={{ y: -4, scale: 1.02 }}
-          whileTap={{ scale: 0.96 }}
-          className="group relative flex h-[140px] flex-col items-center justify-center overflow-hidden rounded-[32px] bg-[#E3F2FD] p-5 shadow-[0_10px_30px_rgba(25,118,210,0.08)]"
+          whileTap={{ scale: 0.95 }}
+          className="bg-[#FEF9ED] hover:bg-[#FEF9ED]/95 rounded-full py-4 px-2 flex items-center justify-center gap-1.5 shadow-[0_8px_20px_rgba(65,65,65,0.06)] text-[#414141] group"
         >
-          <div className="absolute -right-4 -top-4 opacity-[0.08] transition-transform group-hover:scale-110 duration-500">
-            <img src="/img/divindade-icon.png" alt="" className="h-32 w-32 object-contain" />
-          </div>
-          
-          <div className="relative z-10 mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/40 shadow-sm backdrop-blur-sm border border-white/40">
-            <img src="/img/divindade-icon.png" alt="Divindades" className="h-8 w-8 object-contain" />
-          </div>
-          
-          <div className="relative z-10 text-center">
-            <h3 className="text-[22px] leading-tight text-[#1565C0] font-behind-it">Divindades</h3>
-            <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-[#1565C0]/40">Estudo</p>
-          </div>
+          <BookOpen className="h-3.5 w-3.5 text-[#1565c0]" strokeWidth={2.5} />
+          <span className="text-[11px] font-bold tracking-tight text-[#414141]/85">Divindades</span>
         </motion.button>
       </div>
     </motion.div>

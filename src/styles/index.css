@@ -58,7 +58,7 @@
 
   color-scheme: light;
   color: #414141;
-  background-color: #fef7e7;
+  background-color: #e3f2fd;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -158,15 +158,20 @@
 body {
   margin: 0;
   padding: 0;
-  background-color: #fef7e7;
+  background-color: #e3f2fd;
   min-height: 100vh;
 }
 
 #root {
   width: 100%;
   margin: 0 auto;
-  background-color: #fef7e7;
+  background-color: #e3f2fd;
   min-height: 100vh;
+}
+
+@keyframes spin-slow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 @layer utilities {
@@ -186,5 +191,38 @@ body {
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+  .mystical-glow {
+    position: relative;
+    padding: 2.2px;
+    overflow: hidden;
+  }
+  .mystical-glow::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      rgba(255, 255, 255, 1) 90deg,
+      transparent 180deg,
+      rgba(255, 255, 255, 1) 270deg,
+      transparent 360deg
+    );
+    animation: spin-slow 4s linear infinite;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .mystical-glow-content {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+    background: black;
+    border-radius: inherit;
+    overflow: hidden;
   }
 }

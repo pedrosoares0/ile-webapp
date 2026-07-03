@@ -148,7 +148,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       );
     };
 
-    const terreiros = isGlobalAdmin
+    const isHubUser = currentAccount?.role === 'terreiro_user' && !currentAccount?.terreiroId;
+
+    const terreiros = (isGlobalAdmin || isHubUser)
       ? state.terreiros
       : state.terreiros.filter((terreiro) => scopedTerreiroId === terreiro.id);
     const accounts = isGlobalAdmin
@@ -161,10 +163,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const users = isGlobalAdmin
       ? state.users
       : state.users.filter((user) => scopedTerreiroId === user.terreiroId);
-    const events = isGlobalAdmin
+    const events = (isGlobalAdmin || isHubUser)
       ? state.events
       : state.events.filter((event) => scopedTerreiroId === event.terreiroId);
-    const pontos = isGlobalAdmin
+    const pontos = (isGlobalAdmin || isHubUser)
       ? state.pontos
       : state.pontos.filter((ponto) => scopedTerreiroId === ponto.terreiroId);
 
