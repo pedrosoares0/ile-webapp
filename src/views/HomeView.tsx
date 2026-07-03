@@ -6,8 +6,8 @@ import { ViewType } from '../types';
 import { useAppData } from '../context/AppDataContext';
 
 const HERO_BACKGROUNDS = [
-  '/img/fundo-hero3.jpg',
   '/img/fundo-hero4.jpg',
+  '/img/fundo-hero3.jpg',
   '/img/fundo-hero5.jpg',
   '/img/fundo-hero6.jpg',
   '/img/fundo-hero7.jpg',
@@ -65,7 +65,7 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
   const welcomeMsg = isFemale ? 'Seja muito bem vinda!' : 'Seja muito bem-vindo!';
 
   return (
-    <motion.div 
+    <motion.div
       key="home"
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
@@ -77,11 +77,11 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
       {/* Aurora Backdrop Effect behind the main card (More vivid and stronger Light/Dark Blue glows) */}
       <div className="absolute inset-x-0 top-0 h-[52dvh] pointer-events-none overflow-hidden z-0 select-none">
         {/* Strong Dark Blue Glow */}
-        <div 
+        <div
           className="absolute w-[72vw] h-[72vw] rounded-full bg-gradient-to-br from-[#0d47a1]/85 to-[#1565c0]/45 blur-[60px] -top-[18%] -left-[12%] animate-[pulse_6s_ease-in-out_infinite]"
         />
         {/* Strong Light Blue Glow */}
-        <div 
+        <div
           className="absolute w-[85vw] h-[85vw] rounded-full bg-gradient-to-tr from-[#00b0ff]/80 to-[#00e5ff]/35 blur-[70px] -top-[22%] -right-[18%] animate-[pulse_8s_ease-in-out_infinite_1.2s]"
         />
       </div>
@@ -90,10 +90,10 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
       <div className="mystical-glow flex-1 w-full rounded-[40px] shadow-[0_20px_45px_rgba(0,0,0,0.15)] relative z-10">
         <div className="mystical-glow-content flex flex-col h-full w-full relative">
           <AnimatePresence mode="wait">
-            <motion.img 
+            <motion.img
               key={HERO_BACKGROUNDS[currentBg]}
               src={HERO_BACKGROUNDS[currentBg]}
-              alt="Cover" 
+              alt="Cover"
               initial={{ opacity: 0, scale: 1.05 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
@@ -101,17 +101,17 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
               className="absolute inset-0 h-full w-full object-cover"
             />
           </AnimatePresence>
-          
+
           {/* Vignette overlay (Removed the dark bottom shadow completely, replaced with soft 20% opacity cover) */}
           <div className="absolute inset-0 bg-black/20" />
-          
+
           {/* Top Header Row inside the card */}
           <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-20">
             {/* Logo image directly (no background, matches menu button h-11 w-11) */}
             <img src={logoSrc} alt="Logo" className="h-11 w-11 object-contain brightness-110 shrink-0" />
 
             {/* Terreiro Name (Straight font-behind) */}
-            <h2 
+            <h2
               className="text-[13.5px] font-normal tracking-[0.22em] text-white uppercase font-behind not-italic"
               style={{ textShadow: '0 2px 5px rgba(0,0,0,0.5)' }}
             >
@@ -119,7 +119,7 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
             </h2>
 
             {/* Glassmorphic Burger Menu Button */}
-            <button 
+            <button
               onClick={onToggleMenu}
               className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20 backdrop-blur-md border border-white/25 text-white active:scale-95 transition-all shrink-0 z-30"
             >
@@ -129,13 +129,13 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
 
           {/* Text Overlay (Bottom Center of card - moved closer to the footer) */}
           <div className="absolute bottom-6 left-6 right-6 flex flex-col items-center text-center z-10">
-            <h1 
+            <h1
               className="text-[44px] sm:text-[50px] font-normal leading-none text-white font-behind-it tracking-wide"
               style={{ textShadow: '0 2px 6px rgba(0,0,0,0.4)' }}
             >
               Olá {currentAccount?.nome?.split(' ')[0] ?? 'Visitante'}
             </h1>
-            <p 
+            <p
               className="text-white/95 text-[11px] font-medium tracking-[0.18em] uppercase mt-2.5 font-behind not-italic"
               style={{ textShadow: '0 2px 5px rgba(0,0,0,0.5)' }}
             >
@@ -148,7 +148,7 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
       {/* Next Activity Section (Less rounded [rounded-[28px]] and larger, using third color #FEF9ED) */}
       <div className="mt-4 shrink-0 relative z-10">
         {nextEvent ? (
-          <motion.div 
+          <motion.div
             onClick={() => onNavigate('eventos')}
             whileTap={{ scale: 0.98 }}
             className="relative overflow-hidden rounded-[28px] bg-[#FEF9ED] shadow-[0_12px_28px_rgba(65,65,65,0.08)] p-6 cursor-pointer group"
@@ -159,7 +159,7 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
                 <span className="text-[8px] font-black tracking-widest text-[#1565c0] opacity-80 leading-none">{monthStr}</span>
                 <span className="text-xl font-bold text-[#1565c0] leading-none mt-1">{dayStr}</span>
               </div>
-              
+
               <div className="flex-1 min-w-0">
                 <span className="inline-block px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider bg-green-500/10 text-green-700">
                   {nextEvent.category}
@@ -171,7 +171,7 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
                   <span className="truncate">{nextEvent.time} · {nextEvent.location}</span>
                 </div>
               </div>
-              
+
               <ChevronRight className="h-4 w-4 text-[#414141]/30 group-hover:text-[#1565c0] group-hover:translate-x-0.5 transition-all" />
             </div>
           </motion.div>
