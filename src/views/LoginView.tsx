@@ -379,7 +379,7 @@ export default function LoginView() {
             <img
               src="/img/login/danca.webp"
               alt=""
-              className={`h-full w-full object-contain object-right-bottom transition-all duration-[1200ms] ${isT7CA ? 'opacity-[0.22] hue-rotate-[200deg] saturate-[1.5] brightness-[0.85]' : 'opacity-[0.24]'
+              className={`h-full w-full object-contain object-right-bottom transition-all duration-[1200ms] ${isT7CA ? 'opacity-[1] hue-rotate-[200deg] saturate-[1.5] brightness-[0.85]' : 'opacity-[1]'
                 }`}
             />
           </div>
