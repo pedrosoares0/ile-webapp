@@ -329,7 +329,13 @@ export default function DivindadesView({ onToggleMenu, onBack, onModalToggle }: 
       className={`flex flex-col min-h-screen relative overflow-x-hidden z-10 ${selectedDivindade ? 'h-[100dvh] overflow-hidden' : ''}`}
     >
       {/* Aurora Backdrop Effect (Vivid Light/Dark Blue glows pushed closer to the top) */}
-      <div className="absolute inset-x-0 top-0 h-[38dvh] pointer-events-none overflow-hidden z-0 select-none">
+      <div 
+        className="absolute inset-x-0 top-0 h-[35dvh] pointer-events-none overflow-hidden z-0 select-none"
+        style={{
+          maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 100%)'
+        }}
+      >
         {/* Strong Dark Blue Glow */}
         <div 
           className="absolute w-[68vw] h-[68vw] rounded-full bg-gradient-to-br from-[#0d47a1]/85 to-[#1565c0]/45 blur-[50px] -top-[35%] -left-[10%] animate-[pulse_6s_ease-in-out_infinite]"

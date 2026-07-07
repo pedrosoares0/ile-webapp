@@ -392,7 +392,7 @@ export default function LoginView() {
                 animate={{ opacity: 0.35 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 1.2 }}
-                className="absolute inset-x-0 bottom-0 h-28 pointer-events-none overflow-hidden z-0 select-none"
+                className="absolute inset-x-0 bottom-0 pointer-events-none z-0 select-none"
               >
                 <div className="absolute -bottom-10 left-1/4 w-32 h-32 rounded-full bg-[#0d47a1] blur-[30px] animate-[pulse_4s_infinite]" />
                 <div className="absolute -bottom-14 right-1/4 w-36 h-36 rounded-full bg-[#00b0ff] blur-[35px] animate-[pulse_5s_infinite_1.2s]" />

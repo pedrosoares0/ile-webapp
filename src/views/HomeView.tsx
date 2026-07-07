@@ -75,7 +75,13 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
       className="flex flex-col h-full w-full p-4 pb-6 box-border overflow-hidden relative z-10"
     >
       {/* Aurora Backdrop Effect behind the main card (More vivid and stronger Light/Dark Blue glows) */}
-      <div className="absolute inset-x-0 top-0 h-[52dvh] pointer-events-none overflow-hidden z-0 select-none">
+      <div 
+        className="absolute inset-x-0 top-0 h-[45dvh] pointer-events-none overflow-hidden z-0 select-none"
+        style={{
+          maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 100%)'
+        }}
+      >
         {/* Strong Dark Blue Glow */}
         <div
           className="absolute w-[72vw] h-[72vw] rounded-full bg-gradient-to-br from-[#0d47a1]/85 to-[#1565c0]/45 blur-[60px] -top-[18%] -left-[12%] animate-[pulse_6s_ease-in-out_infinite]"
