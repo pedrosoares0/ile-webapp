@@ -1036,7 +1036,7 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
                 onChange={(event) => setEventForm({ ...eventForm, type: event.target.value as EventType })}
                 className={selectClass}
               >
-                {EVENT_TYPES.map((type) => (
+                {EVENT_TYPES.map((type: string) => (
                   <option key={type} value={type}>
                     {type}
                   </option>
@@ -1050,7 +1050,7 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
                 onChange={(event) => setEventForm({ ...eventForm, category: event.target.value as EventCategory })}
                 className={selectClass}
               >
-                {EVENT_CATEGORIES.map((category) => (
+                {EVENT_CATEGORIES.map((category: string) => (
                   <option key={category} value={category}>
                     {category}
                   </option>

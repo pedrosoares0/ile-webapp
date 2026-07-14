@@ -14,7 +14,7 @@ export const TERREIRO_ACCESS_ROLES = ['terreiro_admin', 'terreiro_user'] as cons
 export type TerreiroAccessRole = (typeof TERREIRO_ACCESS_ROLES)[number];        
 
 export const EVENT_TYPES = ['normal', 'importante'] as const;
-export type EventType = (typeof EVENT_TYPES)[number];
+export type EventType = string;
 
 export const EVENT_CATEGORIES = [
   'Religioso',
@@ -24,7 +24,7 @@ export const EVENT_CATEGORIES = [
   'Estudo',
   'Administrativo',
 ] as const;
-export type EventCategory = (typeof EVENT_CATEGORIES)[number];
+export type EventCategory = string;
 
 export const PONTO_CATEGORIES = [
   'ORIXÁS',

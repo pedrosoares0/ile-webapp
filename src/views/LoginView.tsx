@@ -2,12 +2,11 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle, Mail, Lock, User, Phone, Hash, MapPin, Compass } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { loadAppData, saveAppData } from '../lib/storage';
+import { supabase } from '../lib/supabase';
 
 const SLIDESHOW_IMAGES = [
   '/img/login/oxalalogin.webp',
   '/img/login/oxumlogin.webp',
-  '/img/login/yabalogin.webp',
   '/img/login/yemanjalogin.webp'
 ];
 
@@ -27,6 +26,7 @@ export default function LoginView() {
   // Member Registration states
   const [regNome, setRegNome] = useState('');
   const [regSobrenome, setRegSobrenome] = useState('');
+  const [regUsername, setRegUsername] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regNumero, setRegNumero] = useState('');
   const [regSenha, setRegSenha] = useState('');
@@ -36,6 +36,7 @@ export default function LoginView() {
   // Terreiro Registration states (Split into 2 Steps)
   const [regStep, setRegStep] = useState(1);
   const [regTerreiroDirigente, setRegTerreiroDirigente] = useState('');
+  const [regTerreiroUsername, setRegTerreiroUsername] = useState('');
   const [regTerreiroNome, setRegTerreiroNome] = useState('');
   const [regTerreiroEmail, setRegTerreiroEmail] = useState('');
   const [regTerreiroCelular, setRegTerreiroCelular] = useState('');
@@ -52,36 +53,90 @@ export default function LoginView() {
     return () => clearInterval(timer);
   }, [currentBg]);
 
-  const loginExamples = useMemo(() => {
-    return [
-      { id: 'global', label: 'ADMIN GERAL', email: 'admin@ile.app', pass: '123456' },
-      { id: 'admin', label: 'T7CA ADMIN', email: 't7ca@ile.app', pass: '123456' },
-      { id: 'user', label: 'USUÁRIO', email: 'ana@ile.app', pass: '123456' },
-      { id: 'hub', label: 'MEMBRO HUB', email: 'hub@ile.app', pass: '123456' }
-    ];
-  }, []);
+  // Smart Terreiro Recognition — debounced lookup against Supabase
+  const [detectedTerreiro, setDetectedTerreiro] = useState<{ id: string; nome: string } | null>(null);
+  const [isDetecting, setIsDetecting] = useState(false);
 
-  const isT7CA = useMemo(() => {
+  const isT7CA = Boolean(detectedTerreiro);
+
+  useEffect(() => {
     const val = email.trim().toLowerCase();
-    if (!val) return false;
+    if (!val || val.length < 2 || isRegister) {
+      setDetectedTerreiro(null);
+      return;
+    }
 
-    // T7CA-specific usernames/emails
-    const prefixes = ['t7ca', 'rodrigo', 'ana'];
+    const timer = setTimeout(async () => {
+      setIsDetecting(true);
+      try {
+        let identifier = val;
 
-    // Exact match for username
-    if (prefixes.includes(val)) return true;
+        // If it looks like a username (no @), resolve to email first
+        if (!val.includes('@')) {
+          const { data: profile } = await supabase
+            .from('accounts')
+            .select('email, terreiro_id')
+            .ilike('username', val)
+            .maybeSingle();
 
-    // Match email prefixes or full emails
-    return prefixes.some(p => {
-      const fullEmail = `${p}@ile.app`;
-      return val === fullEmail || val.startsWith(`${p}@`);
-    });
-  }, [email]);
+          if (profile?.terreiro_id) {
+            // Directly found terreiro via username
+            const { data: terreiro } = await supabase
+              .from('terreiros')
+              .select('id, nome')
+              .eq('id', profile.terreiro_id)
+              .single();
+            setDetectedTerreiro(terreiro ?? null);
+            setIsDetecting(false);
+            return;
+          }
+          // If no terreiro_id, this is a global admin or unknown user
+          setDetectedTerreiro(null);
+          setIsDetecting(false);
+          return;
+        }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+        // It's an email — look up the account
+        const { data: profile } = await supabase
+          .from('accounts')
+          .select('terreiro_id')
+          .ilike('email', identifier)
+          .maybeSingle();
+
+        if (profile?.terreiro_id) {
+          const { data: terreiro } = await supabase
+            .from('terreiros')
+            .select('id, nome')
+            .eq('id', profile.terreiro_id)
+            .single();
+          setDetectedTerreiro(terreiro ?? null);
+        } else {
+          setDetectedTerreiro(null);
+        }
+      } catch {
+        setDetectedTerreiro(null);
+      } finally {
+        setIsDetecting(false);
+      }
+    }, 400); // 400ms debounce
+
+    return () => clearTimeout(timer);
+  }, [email, isRegister]);
+
+  // Short display name for detected terreiro (e.g. "T7CA" from "T7CA - Terreiro de Umbanda...")
+  const detectedShortName = useMemo(() => {
+    if (!detectedTerreiro) return '';
+    const name = detectedTerreiro.nome;
+    // Try to get the short prefix before ' - '
+    const dashIdx = name.indexOf(' - ');
+    return dashIdx > 0 ? name.substring(0, dashIdx).trim() : name.substring(0, 12);
+  }, [detectedTerreiro]);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError(null);
 
-    const result = login(email, password);
+    const result = await login(email, password);
 
     if (!result.success) {
       setError(result.error ?? 'Não foi possível entrar.');
@@ -91,68 +146,86 @@ export default function LoginView() {
     setError(null);
   }
 
-  function handleMemberRegisterSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleMemberRegisterSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (regSenha !== regConfirmaSenha) {
       setError('As senhas não coincidem.');
       return;
     }
 
-    const data = loadAppData();
+    // Check if username is already taken
+    if (regUsername.trim()) {
+      const { data: existingUser, error: lookupError } = await supabase
+        .from('accounts')
+        .select('id')
+        .ilike('username', regUsername.trim())
+        .maybeSingle();
 
-    // Check if email already exists
-    const emailExists = data.accounts.some(
-      (acc) => acc.email.trim().toLowerCase() === regEmail.trim().toLowerCase()
-    );
-    if (emailExists) {
-      setError('Este e-mail já está cadastrado.');
-      return;
+      if (lookupError || existingUser) {
+        setError('Este nome de usuário já está em uso.');
+        return;
+      }
     }
 
     // Resolve Terreiro Code if provided
     let matchedTerreiroId = '';
     if (regCodigoTerreiro.trim()) {
       const code = regCodigoTerreiro.trim().toLowerCase();
-      const matched = data.terreiros.find(
-        (t) => t.id.toLowerCase() === code || t.nome.toLowerCase().includes(code)
-      );
-      if (!matched) {
+      // Fetch matching terreiro from Supabase
+      const { data: matchedTerreiro, error: findError } = await supabase
+        .from('terreiros')
+        .select('*')
+        .or(`id.ilike.%${code}%,nome.ilike.%${code}%`)
+        .limit(1);
+
+      if (findError || !matchedTerreiro || matchedTerreiro.length === 0) {
         setError('Código do Terreiro não encontrado. Deixe em branco se quiser se cadastrar no Hub Geral.');
         return;
       }
-      matchedTerreiroId = matched.id;
+      matchedTerreiroId = matchedTerreiro[0].id;
     }
 
-    const newAccountId = `account_membro_${Date.now()}`;
     const newUserId = `user_membro_${Date.now()}`;
 
-    const newAccount = {
-      id: newAccountId,
-      nome: regNome,
+    // Register user in Supabase Auth
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: regEmail.trim(),
       password: regSenha,
-      scope: (matchedTerreiroId ? 'terreiro' : 'global') as 'terreiro' | 'global',
-      role: 'terreiro_user' as 'terreiro_user',
-      terreiroId: matchedTerreiroId,
-      userId: newUserId,
-      createdAt: new Date().toISOString()
-    };
+      options: {
+        data: {
+          nome: regNome,
+          username: regUsername.trim().toLowerCase(),
+          scope: matchedTerreiroId ? 'terreiro' : 'global',
+          role: 'terreiro_user',
+          terreiroId: matchedTerreiroId,
+          userId: newUserId,
+        }
+      }
+    });
 
-    const newUser = {
-      id: newUserId,
-      nome: `${regNome} ${regSobrenome}`,
-      email: regEmail.trim(),
-      telefone: regNumero,
-      role: 'membro' as 'membro',
-      status: 'ativo' as 'ativo',
-      terreiroId: matchedTerreiroId,
-      accessAccountId: newAccountId,
-      createdAt: new Date().toISOString()
-    };
+    if (signUpError) {
+      setError(signUpError.message);
+      return;
+    }
 
-    data.accounts.push(newAccount);
-    data.users.push(newUser);
-    saveAppData(data);
+    // Insert user info into public.users table
+    if (signUpData.user) {
+      const { error: dbError } = await supabase.from('users').insert({
+        id: newUserId,
+        nome: `${regNome} ${regSobrenome}`,
+        email: regEmail.trim(),
+        telefone: regNumero,
+        role: 'membro',
+        status: 'ativo',
+        terreiro_id: matchedTerreiroId || null,
+        access_account_id: signUpData.user.id,
+      });
+
+      if (dbError) {
+        setError(dbError.message);
+        return;
+      }
+    }
 
     alert(
       matchedTerreiroId
@@ -168,6 +241,7 @@ export default function LoginView() {
     // Clear registration fields
     setRegNome('');
     setRegSobrenome('');
+    setRegUsername('');
     setRegEmail('');
     setRegNumero('');
     setRegSenha('');
@@ -175,56 +249,69 @@ export default function LoginView() {
     setRegCodigoTerreiro('');
   }
 
-  function handleTerreiroRegisterSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleTerreiroRegisterSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (regTerreiroSenha !== regTerreiroConfirmaSenha) {
       setError('As senhas não coincidem.');
       return;
     }
 
-    const data = loadAppData();
+    // Check if admin username is already taken
+    if (regTerreiroUsername.trim()) {
+      const { data: existingUser, error: lookupError } = await supabase
+        .from('accounts')
+        .select('id')
+        .ilike('username', regTerreiroUsername.trim())
+        .maybeSingle();
 
-    // Check if email already exists
-    const emailExists = data.accounts.some(
-      (acc) => acc.email.trim().toLowerCase() === regTerreiroEmail.trim().toLowerCase()
-    );
-    if (emailExists) {
-      setError('Este e-mail administrativo já está cadastrado.');
-      return;
+      if (lookupError || existingUser) {
+        setError('Este nome de usuário do administrador já está em uso.');
+        return;
+      }
     }
 
     // Generate unique short code for invite, e.g. T4891
     const newTerreiroId = 'T' + Math.floor(1000 + Math.random() * 9000);
-    const newAccountId = `account_admin_${Date.now()}`;
 
-    const newTerreiro = {
-      id: newTerreiroId,
-      nome: regTerreiroNome,
-      cidade: regTerreiroCidade,
-      estado: regTerreiroEstado.toUpperCase(),
-      dirigente: regTerreiroDirigente,
-      contato: regTerreiroCelular,
-      observacoes: 'Terreiro cadastrado pelo portal público.',
-      ativo: true,
-      accessAccountId: newAccountId,
-      createdAt: new Date().toISOString()
-    };
-
-    const newAccount = {
-      id: newAccountId,
-      nome: regTerreiroDirigente,
+    // Register admin user in Supabase Auth
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: regTerreiroEmail.trim(),
       password: regTerreiroSenha,
-      scope: 'terreiro' as 'terreiro',
-      role: 'terreiro_admin' as 'terreiro_admin',
-      terreiroId: newTerreiroId,
-      userId: null,
-      createdAt: new Date().toISOString()
-    };
+      options: {
+        data: {
+          nome: regTerreiroDirigente,
+          username: regTerreiroUsername.trim().toLowerCase(),
+          scope: 'terreiro',
+          role: 'terreiro_admin',
+          terreiroId: newTerreiroId,
+        }
+      }
+    });
 
-    data.terreiros.push(newTerreiro);
-    data.accounts.push(newAccount);
-    saveAppData(data);
+    if (signUpError) {
+      setError(signUpError.message);
+      return;
+    }
+
+    // Insert new Terreiro details
+    if (signUpData.user) {
+      const { error: dbError } = await supabase.from('terreiros').insert({
+        id: newTerreiroId,
+        nome: regTerreiroNome,
+        cidade: regTerreiroCidade,
+        estado: regTerreiroEstado.toUpperCase(),
+        dirigente: regTerreiroDirigente,
+        contato: regTerreiroCelular,
+        observacoes: 'Terreiro cadastrado pelo portal público.',
+        ativo: true,
+        access_account_id: signUpData.user.id,
+      });
+
+      if (dbError) {
+        setError(dbError.message);
+        return;
+      }
+    }
 
     alert(`Terreiro cadastrado com sucesso!\nCódigo de convite para seus membros: ${newTerreiroId}`);
 
@@ -236,6 +323,7 @@ export default function LoginView() {
 
     // Clear fields
     setRegTerreiroDirigente('');
+    setRegTerreiroUsername('');
     setRegTerreiroNome('');
     setRegTerreiroEmail('');
     setRegTerreiroCelular('');
@@ -282,7 +370,7 @@ export default function LoginView() {
             exit={{ opacity: 0, y: -10 }}
             className="relative z-20 mx-4 mb-3 flex justify-center items-center h-14"
           >
-            <motion.div
+          <motion.div
               layout
               className="h-11 flex items-center"
               transition={{ type: 'spring', stiffness: 120, damping: 20 }}
@@ -290,59 +378,70 @@ export default function LoginView() {
               <img
                 src="/img/logo-ile.webp"
                 alt="Ilê"
-                className={`h-9 object-contain transition-all duration-[250ms] ease-[0.23,1,0.32,1] ${isT7CA ? 'hue-rotate-[212deg] saturate-[2] brightness-[0.8]' : ''
-                  }`}
+                className="h-9 object-contain"
                 style={{
                   filter: 'brightness(0) saturate(100%) invert(95%) sepia(10%) saturate(541%) hue-rotate(332deg) brightness(97%) contrast(89%)'
                 }}
-
               />
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Quick Access Panel (collapsible, hidden in registration mode) */}
+      {/* Quick Access Floating Avatars (elegant, minimal) */}
       <AnimatePresence>
         {!isRegister && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="relative z-20 mx-4 mb-4 flex flex-col items-center overflow-hidden"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            className="relative z-20 mx-4 mb-4"
           >
             <button
               onClick={() => setShowQuickAccess(!showQuickAccess)}
-              className="text-[10px] font-bold text-black/80 hover:text-black transition-colors uppercase tracking-[0.18em] bg-white/70 hover:bg-white/85 backdrop-blur-md px-4 py-2 rounded-full border border-white/40 shadow-lg flex items-center gap-2"
+              className="mx-auto flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.22em] text-white/70 hover:text-white transition-colors focus:outline-none"
             >
-              <span className={`h-1.5 w-1.5 rounded-full transition-colors duration-500 ${isT7CA ? 'bg-[#00b0ff]' : 'bg-[#8B0000]'}`} />
-              {showQuickAccess ? 'Ocultar Credenciais' : 'Acessos de Teste'}
+              <span className={`h-1 w-1 rounded-full transition-colors duration-500 ${showQuickAccess ? 'bg-green-400' : 'bg-white/40'}`} />
+              Credenciais
             </button>
 
             <AnimatePresence>
               {showQuickAccess && (
                 <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  initial={{ opacity: 0, y: 6, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
-                  className="mt-3 w-full bg-white/75 backdrop-blur-xl rounded-2xl border border-white/35 p-3 shadow-2xl z-20"
+                  exit={{ opacity: 0, y: 6, scale: 0.95 }}
+                  transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                  className="mt-2.5 flex justify-center gap-3"
                 >
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {loginExamples.map((hint) => (
-                      <button
-                        key={hint.id}
-                        onClick={() => {
-                          setEmail(hint.email);
-                          setPassword(hint.pass);
-                        }}
-                        className="rounded-xl bg-white/40 hover:bg-white/60 border border-white/40 p-2 text-center text-black/80 hover:text-black transition-all active:scale-95 flex flex-col items-center justify-center gap-0.5 shadow-sm"
-                      >
-                        <span className="block text-[8px] font-black uppercase tracking-wider text-black/45">{hint.label}</span>
-                        <span className="block text-[10px] font-mono opacity-80 truncate max-w-full font-medium">{hint.email.split('@')[0]}</span>
-                      </button>
-                    ))}
-                  </div>
+                  {[
+                    { logo: '/img/logo-ile.webp', label: 'Adm Ilê', user: 'admin', pass: '123456', isIle: true },
+                    { logo: '/img/logo-T7CA.png', label: 'Erick', user: 'erick', pass: '123456', isIle: false },
+                    { logo: '/img/logo-T7CA.png', label: 'Membro', user: 'membro', pass: '123456', isIle: false },
+                  ].map((hint, i) => (
+                    <motion.button
+                      key={hint.user}
+                      initial={{ opacity: 0, scale: 0.5 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.05 }}
+                      onClick={() => {
+                        setEmail(hint.user);
+                        setPassword(hint.pass);
+                      }}
+                      className="group flex flex-col items-center gap-1.5 focus:outline-none"
+                    >
+                      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 backdrop-blur-xl border border-white/20 shadow-lg group-hover:bg-white/25 group-active:scale-90 transition-all overflow-hidden">
+                        <img
+                          src={hint.logo}
+                          alt={hint.label}
+                          className={`h-6 w-6 object-contain ${hint.isIle ? 'brightness-0 invert opacity-80' : ''}`}
+                        />
+                      </span>
+                      <span className="text-[8px] font-bold text-white/60 tracking-wider uppercase group-hover:text-white/90 transition-colors">
+                        {hint.label}
+                      </span>
+                    </motion.button>
+                  ))}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -374,15 +473,7 @@ export default function LoginView() {
             }}
           />
 
-          {/* Watermark Dança */}
-          <div className="absolute right-0 bottom-0 top-0 w-[55%] overflow-hidden pointer-events-none select-none z-0">
-            <img
-              src="/img/login/danca.webp"
-              alt=""
-              className={`h-full w-full object-contain object-right-bottom transition-all duration-[1200ms] ${isT7CA ? 'opacity-[1] hue-rotate-[200deg] saturate-[1.5] brightness-[0.85]' : 'opacity-[1]'
-                }`}
-            />
-          </div>
+          {/* Watermark Dança Removed */}
 
           {/* Aurora Effect inside Card Footer */}
           <AnimatePresence>
@@ -551,8 +642,21 @@ export default function LoginView() {
                         ? 'text-[#0d47a1] border-[#0d47a1]/15 focus:border-[#0d47a1]/40 focus:bg-white focus:ring-4 focus:ring-[#0d47a1]/5'
                         : 'text-[#414141] border-[#8B0000]/15 focus:border-[#8B0000]/40 focus:bg-white focus:ring-4 focus:ring-[#8B0000]/5'
                         }`}
-                      placeholder="Email"
+                      placeholder="Email ou Usuário"
                     />
+                    {/* Detecting indicator */}
+                    <AnimatePresence>
+                      {isDetecting && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.5 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.5 }}
+                          className="absolute right-4 top-1/2 -translate-y-1/2"
+                        >
+                          <div className="h-3.5 w-3.5 rounded-full border-2 border-[#0d47a1]/30 border-t-[#0d47a1] animate-spin" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   {/* Password Input */}
@@ -595,7 +699,7 @@ export default function LoginView() {
                 >
                   <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
                   <span className="relative flex items-center justify-center gap-2">
-                    {isT7CA ? 'ENTRAR NO T7CA' : 'ENTRAR'}
+                    {detectedTerreiro ? `ENTRAR NO ${detectedShortName}` : 'ENTRAR'}
                   </span>
                 </motion.button>
 
@@ -661,6 +765,19 @@ export default function LoginView() {
                         placeholder="Sobrenome"
                       />
                     </div>
+                  </div>
+
+                  {/* Username */}
+                  <div className="group relative">
+                    <User className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8B0000]/25 group-focus-within:text-[#8B0000]" />
+                    <input
+                      required
+                      type="text"
+                      value={regUsername}
+                      onChange={(e) => setRegUsername(e.target.value.replace(/\s+/g, '').toLowerCase())}
+                      className="w-full rounded-[22px] bg-white/90 py-3 pl-10 pr-4 text-[14px] font-medium outline-none transition-all placeholder:text-[#414141]/25 border border-[#8B0000]/15 focus:border-[#8B0000]/40 focus:bg-white focus:ring-4 focus:ring-[#8B0000]/5 text-[#414141] shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]"
+                      placeholder="Nome de Usuário (login)"
+                    />
                   </div>
 
                   {/* Email */}
@@ -886,6 +1003,19 @@ export default function LoginView() {
                           onChange={(e) => setRegTerreiroDirigente(e.target.value)}
                           className="w-full rounded-[22px] bg-white/95 py-3 pl-10 pr-4 text-[14px] font-medium outline-none transition-all placeholder:text-[#414141]/25 border border-[#8B0000]/15 focus:border-[#8B0000]/40 focus:bg-white focus:ring-4 focus:ring-[#8B0000]/5 text-[#414141] shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]"
                           placeholder="Nome do Dirigente"
+                        />
+                      </div>
+
+                      {/* Username Admin */}
+                      <div className="group relative">
+                        <User className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8B0000]/35 group-focus-within:text-[#8B0000]" />
+                        <input
+                          required
+                          type="text"
+                          value={regTerreiroUsername}
+                          onChange={(e) => setRegTerreiroUsername(e.target.value.replace(/\s+/g, '').toLowerCase())}
+                          className="w-full rounded-[22px] bg-white/95 py-3 pl-10 pr-4 text-[14px] font-medium outline-none transition-all placeholder:text-[#414141]/25 border border-[#8B0000]/15 focus:border-[#8B0000]/40 focus:bg-white focus:ring-4 focus:ring-[#8B0000]/5 text-[#414141] shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]"
+                          placeholder="Nome de Usuário Admin (login)"
                         />
                       </div>
 

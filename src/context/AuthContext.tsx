@@ -1,103 +1,90 @@
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
-import { seedAppData } from '../data/seed';
-import { loadAppData } from '../lib/storage';
+import { supabase } from '../lib/supabase';
 import { AuthSession } from '../types';
-
-const SESSION_STORAGE_KEY = 'ile.auth-session.v1';
 
 interface AuthContextValue {
   session: AuthSession | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => { success: boolean; error?: string };
-  logout: () => void;
+  login: (emailOrUsername: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-function loadSession() {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
-  try {
-    const raw = window.localStorage.getItem(SESSION_STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as AuthSession) : null;
-  } catch {
-    return null;
-  }
-}
-
-function findAccountByCredentials(email: string, password: string) {
-  const normalizedEmail = email.trim().toLowerCase();
-  const data = loadAppData();
-
-  const directMatch = data.accounts.find(
-    (currentAccount) =>
-      currentAccount.email.trim().toLowerCase() === normalizedEmail &&
-      currentAccount.password === password,
-  );
-
-  if (directMatch) {
-    return directMatch;
-  }
-
-  const seededAliases = seedAppData.accounts.filter(
-    (account) =>
-      account.scope === 'terreiro' &&
-      !account.userId &&
-      account.email.trim().toLowerCase() === normalizedEmail,
-  );
-
-  for (const alias of seededAliases) {
-    const scopedAccount = data.accounts.find(
-      (currentAccount) =>
-        currentAccount.scope === 'terreiro' &&
-        currentAccount.terreiroId === alias.terreiroId &&
-        currentAccount.password === password,
-    );
-
-    if (scopedAccount) {
-      return scopedAccount;
-    }
-  }
-
-  return null;
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<AuthSession | null>(() => loadSession());
+  const [session, setSession] = useState<AuthSession | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
+    // Get the initial active session
+    supabase.auth.getSession().then(({ data: { session: activeSession } }) => {
+      if (activeSession) {
+        setSession({ accountId: activeSession.user.id });
+      }
+    });
 
-    if (!session) {
-      window.localStorage.removeItem(SESSION_STORAGE_KEY);
-      return;
-    }
+    // Listen for auth state changes (sign in, sign out, etc.)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, activeSession) => {
+      if (activeSession) {
+        setSession({ accountId: activeSession.user.id });
+      } else {
+        setSession(null);
+      }
+    });
 
-    window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
-  }, [session]);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       session,
       isAuthenticated: Boolean(session?.accountId),
-      login: (email, password) => {
-        const account = findAccountByCredentials(email, password);
+      login: async (emailOrUsername, password) => {
+        let emailToAuth = emailOrUsername.trim();
 
-        if (!account) {
+        // If the identifier doesn't look like an email, treat it as a username
+        if (!emailToAuth.includes('@')) {
+          const { data: profile, error: lookupError } = await supabase
+            .from('accounts')
+            .select('email')
+            .ilike('username', emailToAuth)
+            .maybeSingle();
+
+          if (lookupError || !profile) {
+            return {
+              success: false,
+              error: 'Nome de usuário não encontrado.',
+            };
+          }
+          emailToAuth = profile.email;
+        }
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: emailToAuth,
+          password,
+        });
+
+        if (error) {
+          let errorMsg = error.message;
+          if (error.message === 'Invalid login credentials') {
+            errorMsg = 'Usuário/E-mail ou senha inválidos.';
+          }
           return {
             success: false,
-            error: 'E-mail ou senha inválidos.',
+            error: errorMsg,
           };
         }
 
-        setSession({ accountId: account.id });
+        setSession({ accountId: data.user.id });
         return { success: true };
       },
-      logout: () => setSession(null),
+      logout: async () => {
+        await supabase.auth.signOut();
+        setSession(null);
+      },
     }),
     [session],
   );

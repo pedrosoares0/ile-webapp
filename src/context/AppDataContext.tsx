@@ -1,36 +1,29 @@
-import { createContext, ReactNode, useContext, useEffect, useMemo, useReducer } from 'react';
-import { loadAppData, saveAppData } from '../lib/storage';
+import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './AuthContext';
-import { AccessAccount, AppData, AppUser, Ponto, Terreiro, TerreiroEvent } from '../types';
-import { sortEvents } from '../lib/date';
+import { AccessAccount, AppUser, Ponto, Terreiro, TerreiroEvent } from '../types';
+import { supabase } from '../lib/supabase';
 
-type AppAction =
-  | { type: 'save-terreiro'; payload: Terreiro }
-  | { type: 'delete-terreiro'; payload: string }
-  | { type: 'save-account'; payload: AccessAccount }
-  | { type: 'delete-account'; payload: string }
-  | { type: 'save-user'; payload: AppUser }
-  | { type: 'delete-user'; payload: string }
-  | { type: 'save-event'; payload: TerreiroEvent }
-  | { type: 'delete-event'; payload: string }
-  | { type: 'save-ponto'; payload: Ponto }
-  | { type: 'delete-ponto'; payload: string };
-
-interface AppDataContextValue extends AppData {
+interface AppDataContextValue {
+  terreiros: Terreiro[];
+  accounts: AccessAccount[];
+  users: AppUser[];
+  events: TerreiroEvent[];
+  pontos: Ponto[];
   currentAccount: AccessAccount | null;
   isGlobalAdmin: boolean;
   isTerreiroAdmin: boolean;
   canAccessCadastros: boolean;
-  saveTerreiro: (terreiro: Terreiro) => void;
-  deleteTerreiro: (terreiroId: string) => void;
-  saveAccount: (account: AccessAccount) => void;
-  deleteAccount: (accountId: string) => void;
-  saveUser: (user: AppUser) => void;
-  deleteUser: (userId: string) => void;
-  saveEvent: (event: TerreiroEvent) => void;
-  deleteEvent: (eventId: string) => void;
-  savePonto: (ponto: Ponto) => void;
-  deletePonto: (pontoId: string) => void;
+  isLoading: boolean;
+  saveTerreiro: (terreiro: Terreiro) => Promise<void>;
+  deleteTerreiro: (terreiroId: string) => Promise<void>;
+  saveAccount: (account: AccessAccount) => Promise<void>;
+  deleteAccount: (accountId: string) => Promise<void>;
+  saveUser: (user: AppUser) => Promise<void>;
+  deleteUser: (userId: string) => Promise<void>;
+  saveEvent: (event: TerreiroEvent) => Promise<void>;
+  deleteEvent: (eventId: string) => Promise<void>;
+  savePonto: (ponto: Ponto) => Promise<void>;
+  deletePonto: (pontoId: string) => Promise<void>;
 }
 
 const AppDataContext = createContext<AppDataContextValue | undefined>(undefined);
@@ -45,131 +38,207 @@ function upsertById<T extends { id: string }>(items: T[], nextItem: T) {
   return [nextItem, ...items];
 }
 
-function reducer(state: AppData, action: AppAction): AppData {
-  switch (action.type) {
-    case 'save-terreiro':
-      return {
-        ...state,
-        terreiros: upsertById(state.terreiros, action.payload).sort((left, right) =>
-          left.nome.localeCompare(right.nome),
-        ),
-      };
-    case 'delete-terreiro':
-      return {
-        ...state,
-        terreiros: state.terreiros.filter((terreiro) => terreiro.id !== action.payload),
-      };
-    case 'save-account':
-      return {
-        ...state,
-        accounts: upsertById(state.accounts, action.payload).sort((left, right) =>
-          left.nome.localeCompare(right.nome),
-        ),
-      };
-    case 'delete-account':
-      return {
-        ...state,
-        accounts: state.accounts.filter((account) => account.id !== action.payload),
-      };
-    case 'save-user':
-      return {
-        ...state,
-        users: upsertById(state.users, action.payload).sort((left, right) =>
-          left.nome.localeCompare(right.nome),
-        ),
-      };
-    case 'delete-user':
-      return {
-        ...state,
-        users: state.users.filter((user) => user.id !== action.payload),
-      };
-    case 'save-event':
-      return {
-        ...state,
-        events: sortEvents(upsertById(state.events, action.payload)),
-      };
-    case 'delete-event':
-      return {
-        ...state,
-        events: state.events.filter((event) => event.id !== action.payload),
-      };
-    case 'save-ponto':
-      return {
-        ...state,
-        pontos: upsertById(state.pontos, action.payload).sort((left, right) =>
-          left.titulo.localeCompare(right.titulo),
-        ),
-      };
-    case 'delete-ponto':
-      return {
-        ...state,
-        pontos: state.pontos.filter((ponto) => ponto.id !== action.payload),
-      };
-    default:
-      return state;
-  }
-}
-
 export function AppDataProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, undefined, loadAppData);
   const { session } = useAuth();
 
+  const [terreiros, setTerreiros] = useState<Terreiro[]>([]);
+  const [accounts, setAccounts] = useState<AccessAccount[]>([]);
+  const [users, setUsers] = useState<AppUser[]>([]);
+  const [events, setEvents] = useState<TerreiroEvent[]>([]);
+  const [pontos, setPontos] = useState<Ponto[]>([]);
+  const [currentAccount, setCurrentAccount] = useState<AccessAccount | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const isGlobalAdmin = useMemo(() => currentAccount?.role === 'global_admin', [currentAccount]);
+  const isTerreiroAdmin = useMemo(() => isGlobalAdmin || currentAccount?.role === 'terreiro_admin', [isGlobalAdmin, currentAccount]);
+  const canAccessCadastros = isTerreiroAdmin;
+
   useEffect(() => {
-    saveAppData(state);
-  }, [state]);
+    if (!session?.accountId) {
+      setCurrentAccount(null);
+      setTerreiros([]);
+      setAccounts([]);
+      setUsers([]);
+      setEvents([]);
+      setPontos([]);
+      setIsLoading(false);
+      return;
+    }
 
-  const value = useMemo<AppDataContextValue>(() => {
-    const currentAccount =
-      state.accounts.find((account) => account.id === session?.accountId) ?? null;
-    const isGlobalAdmin = currentAccount?.role === 'global_admin';
-    const isTerreiroAdmin = isGlobalAdmin || currentAccount?.role === 'terreiro_admin';
-    const canAccessCadastros = isTerreiroAdmin;
-    const scopedTerreiroId = currentAccount?.scope === 'terreiro' ? currentAccount.terreiroId : null;
-    const isAllowedTerreiro = (terreiroId: string) => isGlobalAdmin || scopedTerreiroId === terreiroId;
-    const canManageScopedData = Boolean(isTerreiroAdmin);
-    const getScopedUser = (userId: string) => state.users.find((user) => user.id === userId);
-    const getScopedEvent = (eventId: string) => state.events.find((event) => event.id === eventId);
-    const getScopedPonto = (pontoId: string) => state.pontos.find((ponto) => ponto.id === pontoId);
-    const getScopedAccount = (accountId: string) => state.accounts.find((account) => account.id === accountId);
-    const canManageAccount = (account: AccessAccount) => {
-      if (!currentAccount) {
-        return false;
+    // Set loading immediately (synchronously) to prevent the safety-check
+    // in App.tsx from seeing isLoading=false + currentAccount=null and
+    // triggering a premature logout.
+    setIsLoading(true);
+
+    const loadData = async () => {
+      try {
+        // 1. Fetch current user account profile
+        const { data: profile, error: profileError } = await supabase
+          .from('accounts')
+          .select('*')
+          .eq('id', session.accountId)
+          .single();
+
+        if (profileError || !profile) {
+          console.error('Error fetching profile:', profileError);
+          setIsLoading(false);
+          return;
+        }
+
+        const mappedAccount: AccessAccount = {
+          id: profile.id,
+          nome: profile.nome || '',
+          email: profile.email || '',
+          password: '', // We don't expose password values from database
+          scope: profile.scope,
+          role: profile.role,
+          terreiroId: profile.terreiro_id || '',
+          userId: profile.user_id,
+          createdAt: profile.created_at,
+        };
+
+        setCurrentAccount(mappedAccount);
+
+        const isGlobalAdminUser = mappedAccount.role === 'global_admin';
+        const isHubUser = mappedAccount.role === 'terreiro_user' && !mappedAccount.terreiroId;
+        const scopedTerreiroId = mappedAccount.terreiroId;
+
+        // 2. Fetch Terreiros
+        let terreirosData: any[] = [];
+        if (isGlobalAdminUser || isHubUser) {
+          const { data } = await supabase.from('terreiros').select('*').order('nome');
+          terreirosData = data || [];
+        } else if (scopedTerreiroId) {
+          const { data } = await supabase.from('terreiros').select('*').eq('id', scopedTerreiroId);
+          terreirosData = data || [];
+        }
+        setTerreiros(
+          terreirosData.map((t) => ({
+            id: t.id,
+            nome: t.nome,
+            cidade: t.cidade || '',
+            estado: t.estado || '',
+            dirigente: t.dirigente || '',
+            contato: t.contato || '',
+            observacoes: t.observacoes || '',
+            ativo: t.ativo,
+            accessAccountId: t.access_account_id || '',
+            createdAt: t.created_at,
+          }))
+        );
+
+        // 3. Fetch Accounts Profiles
+        let accountsData: any[] = [];
+        if (isGlobalAdminUser) {
+          const { data } = await supabase.from('accounts').select('*').order('nome');
+          accountsData = data || [];
+        } else if (mappedAccount.role === 'terreiro_admin' && scopedTerreiroId) {
+          const { data } = await supabase
+            .from('accounts')
+            .select('*')
+            .or(`id.eq.${session.accountId},terreiro_id.eq.${scopedTerreiroId}`);
+          accountsData = data || [];
+        } else {
+          accountsData = [profile];
+        }
+        setAccounts(
+          accountsData.map((acc) => ({
+            id: acc.id,
+            nome: acc.nome || '',
+            email: acc.email || '',
+            password: '',
+            scope: acc.scope,
+            role: acc.role,
+            terreiroId: acc.terreiro_id || '',
+            userId: acc.user_id,
+            createdAt: acc.created_at,
+          }))
+        );
+
+        // 4. Fetch Users
+        let usersData: any[] = [];
+        if (isGlobalAdminUser) {
+          const { data } = await supabase.from('users').select('*').order('nome');
+          usersData = data || [];
+        } else if (scopedTerreiroId) {
+          const { data } = await supabase.from('users').select('*').eq('terreiro_id', scopedTerreiroId);
+          usersData = data || [];
+        }
+        setUsers(
+          usersData.map((u) => ({
+            id: u.id,
+            nome: u.nome,
+            email: u.email || '',
+            telefone: u.telefone || '',
+            role: u.role,
+            status: u.status,
+            terreiroId: u.terreiro_id || '',
+            accessAccountId: u.access_account_id,
+            createdAt: u.created_at,
+          }))
+        );
+
+        // 5. Fetch Events
+        let eventsData: any[] = [];
+        if (isGlobalAdminUser || isHubUser) {
+          const { data } = await supabase.from('events').select('*');
+          eventsData = data || [];
+        } else if (scopedTerreiroId) {
+          const { data } = await supabase.from('events').select('*').eq('terreiro_id', scopedTerreiroId);
+          eventsData = data || [];
+        }
+        setEvents(
+          eventsData.map((e) => ({
+            id: e.id,
+            date: new Date(e.date + 'T12:00:00'), // prevent local timezone shift
+            title: e.title,
+            time: e.time || '',
+            location: e.location || '',
+            type: e.type,
+            category: e.category,
+            terreiroId: e.terreiro_id,
+            description: e.description || '',
+            createdAt: e.created_at,
+          })).sort((a, b) => a.date.getTime() - b.date.getTime())
+        );
+
+        // 6. Fetch Pontos
+        let pontosData: any[] = [];
+        if (isGlobalAdminUser || isHubUser) {
+          const { data } = await supabase.from('pontos').select('*').order('titulo');
+          pontosData = data || [];
+        } else if (scopedTerreiroId) {
+          const { data } = await supabase
+            .from('pontos')
+            .select('*')
+            .eq('terreiro_id', scopedTerreiroId)
+            .order('titulo');
+          pontosData = data || [];
+        }
+        setPontos(
+          pontosData.map((p) => ({
+            id: p.id,
+            titulo: p.titulo,
+            categoria: p.categoria,
+            youtubeUrl: p.youtube_url || '',
+            descricao: p.descricao || '',
+            thumbnail: p.thumbnail || '',
+            terreiroId: p.terreiro_id,
+            letra: p.letra || '',
+            createdAt: p.created_at,
+          }))
+        );
+      } catch (err) {
+        console.error('Error loading data:', err);
+      } finally {
+        setIsLoading(false);
       }
-
-      if (isGlobalAdmin) {
-        return true;
-      }
-
-      return (
-        currentAccount.role === 'terreiro_admin' &&
-        account.scope === 'terreiro' &&
-        account.terreiroId === scopedTerreiroId &&
-        Boolean(account.userId)
-      );
     };
 
-    const isHubUser = currentAccount?.role === 'terreiro_user' && !currentAccount?.terreiroId;
+    loadData();
+  }, [session?.accountId]);
 
-    const terreiros = (isGlobalAdmin || isHubUser)
-      ? state.terreiros
-      : state.terreiros.filter((terreiro) => scopedTerreiroId === terreiro.id);
-    const accounts = isGlobalAdmin
-      ? state.accounts
-      : currentAccount?.role === 'terreiro_admin'
-        ? state.accounts.filter(
-            (account) => account.id === currentAccount?.id || account.terreiroId === scopedTerreiroId,
-          )
-        : state.accounts.filter((account) => account.id === currentAccount?.id);
-    const users = isGlobalAdmin
-      ? state.users
-      : state.users.filter((user) => scopedTerreiroId === user.terreiroId);
-    const events = (isGlobalAdmin || isHubUser)
-      ? state.events
-      : state.events.filter((event) => scopedTerreiroId === event.terreiroId);
-    const pontos = (isGlobalAdmin || isHubUser)
-      ? state.pontos
-      : state.pontos.filter((ponto) => scopedTerreiroId === ponto.terreiroId);
-
+  const value = useMemo<AppDataContextValue>(() => {
     return {
       terreiros,
       accounts,
@@ -180,89 +249,128 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       isGlobalAdmin,
       isTerreiroAdmin,
       canAccessCadastros,
-      saveTerreiro: (terreiro) => {
-        if (!isGlobalAdmin) {
-          return;
-        }
+      isLoading,
 
-        dispatch({ type: 'save-terreiro', payload: terreiro });
+      saveTerreiro: async (terreiro) => {
+        if (!isGlobalAdmin) return;
+        const { error } = await supabase.from('terreiros').upsert({
+          id: terreiro.id,
+          nome: terreiro.nome,
+          cidade: terreiro.cidade,
+          estado: terreiro.estado,
+          dirigente: terreiro.dirigente,
+          contato: terreiro.contato,
+          observacoes: terreiro.observacoes,
+          ativo: terreiro.ativo,
+          access_account_id: terreiro.accessAccountId || null,
+        });
+        if (!error) {
+          setTerreiros((prev) => upsertById(prev, terreiro).sort((a, b) => a.nome.localeCompare(b.nome)));
+        }
       },
-      deleteTerreiro: (terreiroId) => {
-        if (!isGlobalAdmin) {
-          return;
-        }
 
-        dispatch({ type: 'delete-terreiro', payload: terreiroId });
+      deleteTerreiro: async (terreiroId) => {
+        if (!isGlobalAdmin) return;
+        const { error } = await supabase.from('terreiros').delete().eq('id', terreiroId);
+        if (!error) {
+          setTerreiros((prev) => prev.filter((t) => t.id !== terreiroId));
+        }
       },
-      saveAccount: (account) => {
-        const existingAccount = getScopedAccount(account.id);
-        const targetAccount = existingAccount ? { ...existingAccount, ...account } : account;
 
-        if (!canManageAccount(targetAccount)) {
-          return;
+      saveAccount: async (account) => {
+        const { error } = await supabase.from('accounts').upsert({
+          id: account.id,
+          nome: account.nome,
+          email: account.email,
+          scope: account.scope,
+          role: account.role,
+          terreiro_id: account.terreiroId || null,
+          user_id: account.userId || null,
+        });
+        if (!error) {
+          setAccounts((prev) => upsertById(prev, account).sort((a, b) => a.nome.localeCompare(b.nome)));
         }
-
-        dispatch({ type: 'save-account', payload: targetAccount });
       },
-      deleteAccount: (accountId) => {
-        const account = getScopedAccount(accountId);
 
-        if (!account || accountId === currentAccount?.id || !canManageAccount(account)) {
-          return;
+      deleteAccount: async (accountId) => {
+        if (accountId === currentAccount?.id) return;
+        const { error } = await supabase.from('accounts').delete().eq('id', accountId);
+        if (!error) {
+          setAccounts((prev) => prev.filter((acc) => acc.id !== accountId));
         }
-
-        dispatch({ type: 'delete-account', payload: accountId });
       },
-      saveUser: (user) => {
-        if (!currentAccount || !canManageScopedData || !isAllowedTerreiro(user.terreiroId)) {
-          return;
-        }
 
-        dispatch({ type: 'save-user', payload: user });
+      saveUser: async (user) => {
+        const { error } = await supabase.from('users').upsert({
+          id: user.id,
+          nome: user.nome,
+          email: user.email,
+          telefone: user.telefone,
+          role: user.role,
+          status: user.status,
+          terreiro_id: user.terreiroId || null,
+          access_account_id: user.accessAccountId || null,
+        });
+        if (!error) {
+          setUsers((prev) => upsertById(prev, user).sort((a, b) => a.nome.localeCompare(b.nome)));
+        }
       },
-      deleteUser: (userId) => {
-        const user = getScopedUser(userId);
 
-        if (!currentAccount || !canManageScopedData || !user || !isAllowedTerreiro(user.terreiroId)) {
-          return;
+      deleteUser: async (userId) => {
+        const { error } = await supabase.from('users').delete().eq('id', userId);
+        if (!error) {
+          setUsers((prev) => prev.filter((u) => u.id !== userId));
         }
-
-        dispatch({ type: 'delete-user', payload: userId });
       },
-      saveEvent: (event) => {
-        if (!currentAccount || !canManageScopedData || !isAllowedTerreiro(event.terreiroId)) {
-          return;
-        }
 
-        dispatch({ type: 'save-event', payload: event });
+      saveEvent: async (event) => {
+        const { error } = await supabase.from('events').upsert({
+          id: event.id,
+          date: event.date.toISOString().split('T')[0],
+          title: event.title,
+          time: event.time,
+          location: event.location,
+          type: event.type,
+          category: event.category,
+          terreiro_id: event.terreiroId,
+          description: event.description,
+        });
+        if (!error) {
+          setEvents((prev) => upsertById(prev, event).sort((a, b) => a.date.getTime() - b.date.getTime()));
+        }
       },
-      deleteEvent: (eventId) => {
-        const event = getScopedEvent(eventId);
 
-        if (!currentAccount || !canManageScopedData || !event || !isAllowedTerreiro(event.terreiroId)) {
-          return;
+      deleteEvent: async (eventId) => {
+        const { error } = await supabase.from('events').delete().eq('id', eventId);
+        if (!error) {
+          setEvents((prev) => prev.filter((e) => e.id !== eventId));
         }
-
-        dispatch({ type: 'delete-event', payload: eventId });
       },
-      savePonto: (ponto) => {
-        if (!currentAccount || !canManageScopedData || !isAllowedTerreiro(ponto.terreiroId)) {
-          return;
-        }
 
-        dispatch({ type: 'save-ponto', payload: ponto });
+      savePonto: async (ponto) => {
+        const { error } = await supabase.from('pontos').upsert({
+          id: ponto.id,
+          titulo: ponto.titulo,
+          categoria: ponto.categoria,
+          youtube_url: ponto.youtubeUrl,
+          descricao: ponto.descricao,
+          thumbnail: ponto.thumbnail,
+          terreiro_id: ponto.terreiroId,
+          letra: ponto.letra,
+        });
+        if (!error) {
+          setPontos((prev) => upsertById(prev, ponto).sort((a, b) => a.titulo.localeCompare(b.titulo)));
+        }
       },
-      deletePonto: (pontoId) => {
-        const ponto = getScopedPonto(pontoId);
 
-        if (!currentAccount || !canManageScopedData || !ponto || !isAllowedTerreiro(ponto.terreiroId)) {
-          return;
+      deletePonto: async (pontoId) => {
+        const { error } = await supabase.from('pontos').delete().eq('id', pontoId);
+        if (!error) {
+          setPontos((prev) => prev.filter((p) => p.id !== pontoId));
         }
-
-        dispatch({ type: 'delete-ponto', payload: pontoId });
       },
     };
-  }, [session?.accountId, state]);
+  }, [terreiros, accounts, users, events, pontos, currentAccount, isGlobalAdmin, isTerreiroAdmin, canAccessCadastros, isLoading]);
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
 }

@@ -7,7 +7,6 @@ import LoginView from './views/LoginView'
 import CadastrosView from './views/CadastrosView'
 import HubView from './views/HubView'
 import BurgerMenu from './components/BurgerMenu'
-import LiquidNavbar from './components/LiquidNavbar'
 import { ViewType } from './types'
 import { useAuth } from './context/AuthContext'
 import { useAppData } from './context/AppDataContext'
@@ -16,16 +15,20 @@ export default function App() {
   const [currentView, setCurrentView] = useState<ViewType>('home')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { isAuthenticated, logout } = useAuth()
-  const { currentAccount } = useAppData()
+  const { currentAccount, isLoading } = useAppData()
 
   const isHubUser = currentAccount?.role === 'terreiro_user' && !currentAccount?.terreiroId;
 
   // Ensure user is logged out if account data is missing (safety check from feat branch)
+  // Uses a timeout to avoid race conditions between AuthContext and AppDataContext
   useEffect(() => {
-    if (isAuthenticated && !currentAccount) {
-      logout()
+    if (!isLoading && isAuthenticated && !currentAccount) {
+      const timer = setTimeout(() => {
+        logout()
+      }, 1500)
+      return () => clearTimeout(timer)
     }
-  }, [currentAccount, isAuthenticated, logout])
+  }, [currentAccount, isAuthenticated, logout, isLoading])
 
   // Reset view to home when logging in or out
   useEffect(() => {
@@ -53,13 +56,6 @@ export default function App() {
         onNavigate={handleNavigate}
       />
 
-      {currentView !== 'home' && !isHubUser && (
-        <LiquidNavbar 
-          currentView={currentView}
-          onNavigate={handleNavigate}
-          onToggleMenu={() => setIsMenuOpen(true)}
-        />
-      )}
 
       <motion.div 
         animate={isMenuOpen ? { filter: 'blur(8px)', scale: 0.98 } : { filter: 'blur(0px)', scale: 1 }}
