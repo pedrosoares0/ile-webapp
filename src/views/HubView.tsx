@@ -161,7 +161,7 @@ export default function HubView({ onToggleMenu }: HubViewProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-      style={{ background: 'linear-gradient(180deg, #F4E8D9 88%, #DBC6AB 100%)' }}
+      style={{ background: '#FFFFFF' }}
       className="h-full w-full box-border overflow-hidden relative z-10"
     >
       {/* Scrollable Container containing Header, Stories, Search and Cards (Insta style) */}

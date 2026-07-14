@@ -196,6 +196,9 @@ export default function EventsView({ onToggleMenu, onBack }: { onToggleMenu: () 
   // Custom premium delete confirmation modal state
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
+  // Schedule confirmation modal state
+  const [pendingEvent, setPendingEvent] = useState<TerreiroEvent | null>(null);
+
   const eventToDelete = useMemo(() => {
     if (!deleteConfirmId) return null;
     return events.find(e => e.id === deleteConfirmId) ?? null;
@@ -286,9 +289,14 @@ export default function EventsView({ onToggleMenu, onBack }: { onToggleMenu: () 
       terreiroId: currentAccount?.terreiroId ? String(currentAccount.terreiroId) : 'terreiro_t7ca',
       createdAt: new Date().toISOString()
     };
-    
-    saveEvent(event);
-    handleCloseForm();
+
+    // If editing, save directly; if creating new, show confirmation
+    if (editingEventId) {
+      saveEvent(event);
+      handleCloseForm();
+    } else {
+      setPendingEvent(event);
+    }
   };
 
   const handleEditClick = (event: TerreiroEvent) => {
@@ -796,11 +804,11 @@ export default function EventsView({ onToggleMenu, onBack }: { onToggleMenu: () 
                 <div className="pt-6 pb-12">
                   <button
                     type="submit"
-                    className="w-full rounded-full py-4 text-base font-bold text-white shadow-md active:scale-[0.98] transition-all"
+                    className="w-full rounded-full py-4 text-base font-bold text-white active:scale-[0.97] transition-transform duration-150 ease-out"
                     style={{
-                      backgroundColor: formAccent.bg,
-                      color: formAccent.text,
-                      boxShadow: `0 6px 18px ${formAccent.bg}35`
+                      background: 'linear-gradient(180deg, #7DD3FC 0%, #38BDF8 40%, #0EA5E9 100%)',
+                      border: '1.5px solid rgba(255,255,255,0.5)',
+                      boxShadow: '0 4px 15px rgba(14,165,233,0.35), inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.08)',
                     }}
                   >
                     {editingEventId ? 'Salvar Alterações' : 'Agendar Evento'}
@@ -857,6 +865,69 @@ export default function EventsView({ onToggleMenu, onBack }: { onToggleMenu: () 
                     className="py-3 rounded-full text-xs font-bold text-white bg-red-600 hover:bg-red-700 active:scale-95 transition-all shadow-sm shadow-red-500/20"
                   >
                     Excluir
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Custom Premium Schedule Confirmation Modal */}
+      <AnimatePresence>
+        {pendingEvent && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setPendingEvent(null)}
+              className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-center justify-center p-6"
+            >
+              <motion.div
+                initial={{ scale: 0.95, y: 10, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.95, y: 10, opacity: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-[340px] rounded-[32px] bg-white p-6 shadow-2xl border border-black/5 flex flex-col items-center text-center"
+              >
+                <div className="h-14 w-14 rounded-full bg-blue-50 flex items-center justify-center mb-4">
+                  <CalendarDays className="h-6 w-6 text-[#1565c0]" />
+                </div>
+
+                <h3 className="text-xl font-bold text-[#414141] font-behind-it">Confirmar Agendamento</h3>
+                <p className="mt-2 text-xs leading-relaxed text-[#414141]/65 font-medium px-1">
+                  Deseja agendar o evento <strong className="text-[#1565c0] font-bold">"{pendingEvent.title}"</strong> para o dia{' '}
+                  <strong className="font-bold">
+                    {new Date(pendingEvent.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}
+                  </strong>{' '}
+                  às <strong className="font-bold">{pendingEvent.time}</strong> em <strong className="font-bold">{pendingEvent.location}</strong>?
+                </p>
+
+                <div className="grid grid-cols-2 gap-3 w-full mt-6">
+                  <button
+                    onClick={() => setPendingEvent(null)}
+                    className="py-3 rounded-full text-xs font-bold text-[#414141] bg-black/[0.03] hover:bg-black/[0.06] active:scale-95 transition-all"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (pendingEvent) {
+                        saveEvent(pendingEvent);
+                        setPendingEvent(null);
+                        handleCloseForm();
+                      }
+                    }}
+                    className="py-3 rounded-full text-xs font-bold text-white active:scale-95 transition-all"
+                    style={{
+                      background: 'linear-gradient(180deg, #7DD3FC 0%, #38BDF8 40%, #0EA5E9 100%)',
+                      boxShadow: '0 4px 15px rgba(14,165,233,0.35), inset 0 1px 0 rgba(255,255,255,0.4)',
+                      border: '1.5px solid rgba(255,255,255,0.5)',
+                    }}
+                  >
+                    Confirmar
                   </button>
                 </div>
               </motion.div>

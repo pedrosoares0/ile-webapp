@@ -8,7 +8,10 @@ import {
   LogOut,
   X,
   BookOpen,
-  ShieldCheck
+  ShieldCheck,
+  Music,
+  HeartHandshake,
+  Bell
 } from 'lucide-react';
 
 interface BurgerMenuProps {
@@ -29,6 +32,9 @@ const MENU_ITEMS: MenuItem[] = [
   { id: 'home', label: 'Início', icon: Home },
   { id: 'divindades', label: 'Divindades', icon: BookOpen },
   { id: 'eventos', label: 'Calendário de Eventos', icon: Calendar },
+  { id: 'pontos', label: 'Músicas & Pontos', icon: Music },
+  { id: 'oracao', label: 'Pedidos de Oração', icon: HeartHandshake },
+  { id: 'avisos', label: 'Avisos & Comunicados', icon: Bell },
   { id: 'cadastros', label: 'Painel Admin', icon: ShieldCheck },
   { id: 'sair', label: 'Desconectar conta', icon: LogOut, isExit: true },
 ];
@@ -68,9 +74,9 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: '100%', opacity: 0.9 }}
             transition={{ type: 'spring', damping: 30, stiffness: 240 }}
-            className="fixed inset-y-0 right-0 z-[70] w-[290px] bg-[#FEF9ED]/95 border-l border-white/40 p-8 shadow-2xl flex flex-col justify-between"
+            className="fixed inset-y-0 right-0 z-[70] w-[290px] bg-white/95 border-l border-zinc-100 p-8 shadow-2xl flex flex-col justify-between"
             style={{
-              boxShadow: '-10px 0 40px rgba(0,0,0,0.08)',
+              boxShadow: '-10px 0 40px rgba(0,0,0,0.04)',
               backdropFilter: 'blur(30px) saturate(1.8)'
             }}
           >
@@ -92,7 +98,7 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
                 </div>
 
                 {/* Brand Identity Card */}
-                <div className="flex flex-col items-center text-center px-2 py-4 mb-8 bg-[#F4E8D9]/40 border border-[#414141]/5 rounded-2xl">
+                <div className="flex flex-col items-center text-center px-2 py-4 mb-8 bg-zinc-50 border border-zinc-100 rounded-2xl">
                   <img src={logoSrc} alt="Logo" className="h-14 w-14 object-contain mb-3" />
                   <h2 className="text-lg font-bold text-[#414141] tracking-widest leading-none font-sans uppercase">
                     {(isGlobalAdmin || isHubUser) ? 'Ilê' : 'T7CA'}

@@ -1,0 +1,45 @@
+# Redesign da Home e Novas Telas - Lista de Tarefas
+
+- [x] Redesenhar os fundos (mudar bege para branco)
+  - [x] Atualizar contêiner raiz no `App.tsx`
+  - [x] Atualizar plano de fundo no `HomeView.tsx`
+  - [x] Atualizar plano de fundo no `HubView.tsx`
+  - [x] Atualizar plano de fundo no `DivindadesView.tsx`
+  - [x] Atualizar cores de fundo no `BurgerMenu.tsx`
+- [x] Corrigir transição do Slideshow da Home (crossfade sem tela preta)
+- [x] Expandir navegação da Home (Grid Bento com 6 botões)
+- [x] Atualizar Roteamento e Links
+  - [x] Configurar novos caminhos em `App.tsx`
+  - [x] Adicionar opções correspondentes no `BurgerMenu.tsx`
+- [x] Desenvolver a Visualização de Pontos (`PontosView.tsx`)
+  - [x] Layout principal, pesquisa e filtros por Orixás/categorias
+  - [x] Formulário de adição de ponto (exclusivo admin)
+  - [x] Reprodutor de música premium integrado com YouTube (estilo Apple Music com Liquid Glass e Letras)
+- [x] Desenvolver a Visualização de Orações (`OracaoView.tsx`)
+  - [x] Formulário de envio de pedido
+  - [x] Feed de orações ativas
+  - [x] Botão de "Mentalizar" (Vela Virtual) com efeito de chama/glow
+- [x] Desenvolver a Visualização de Avisos (`AvisosView.tsx`)
+  - [x] Feed de avisos estilo notificações iOS
+  - [x] Formulário de adição de aviso (exclusivo admin)
+- [x] Testar e Validar
+  - [x] Verificar integridade visual e ausência de tela preta no slideshow
+  - [x] Criar walkthrough de entrega
+  - [x] Integrar ícones animados do Lordicon (Eventos, Música, Orações, Avisos, Divindades, Financeiro)
+  - [x] Implementar transição atrasada em 1000ms após a execução da animação do ícone
+  - [x] Configurar sombras menores e mais fortes nos botões
+  - [x] Simplificar layout: unificar cores dos ícones para preto, simplificar fundos e aprimorar ícones de Orações (flama) e Divindades (livro)
+  - [x] Corrigir URLs dos Lordicons para garantir que todos os 6 carreguem perfeitamente em preto puro
+  - [x] Implementar aurora animada de alto desempenho no background
+  - [x] Adaptar card do admin (Olá pai [Nome], ocultar boas-vindas, aumentar T7CA e incluir botão de copiar código de convite)
+  - [x] Adicionar etiqueta "Próximo evento" e reduzir tamanho do card de eventos
+  - [x] Reduzir tamanho vertical em mobile (`h-[330px] sm:h-[420px]`) para exibir o topo do Bento Grid livre de cortes
+  - [x] Centralizar título "Próximo evento"
+  - [x] Aumentar tempo do slideshow para 6 segundos
+  - [x] Integrar ícone de cópia e criar Toast flutuante "Convite copiado!"
+  - [x] Adicionar opacidade sutil overlay (`text-white/90`) no texto "Olá pai"
+  - [x] Redefinir altura do card principal para `h-[390px]` para ocultar a segunda linha de botões na abertura inicial
+  - [x] Envelopar o texto "Olá pai Erick" em cápsula de vidro escurecida (`bg-black/30 backdrop-blur-md border border-white/10`)
+  - [x] Remover cápsula e tornar texto "Olá pai Erick" translúcido (`text-white/75`)
+  - [x] Tornar texto "Olá pai Erick" menos transparente (`text-white/90`)
+  - [x] Expandir card de convite (`px-6 py-2 text-[12px]`) e deixá-lo mais translúcido (`bg-white/10`)

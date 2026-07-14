@@ -6,6 +6,9 @@ import DivindadesView from './views/DivindadesView'
 import LoginView from './views/LoginView'
 import CadastrosView from './views/CadastrosView'
 import HubView from './views/HubView'
+import PontosView from './views/PontosView'
+import OracaoView from './views/OracaoView'
+import AvisosView from './views/AvisosView'
 import BurgerMenu from './components/BurgerMenu'
 import { ViewType } from './types'
 import { useAuth } from './context/AuthContext'
@@ -46,7 +49,7 @@ export default function App() {
   }
 
   return (
-    <div className={`mx-auto max-w-[430px] bg-[#DBC6AB] relative shadow-2xl overflow-x-hidden font-inter text-[#414141] transition-all duration-300 ${
+    <div className={`mx-auto max-w-[430px] bg-[#FFFFFF] relative shadow-2xl overflow-x-hidden font-inter text-[#414141] transition-all duration-300 ${
       currentView === 'home' ? 'h-[100dvh] overflow-hidden' : 'min-h-screen pb-0'
     }`}>
       <BurgerMenu 
@@ -79,6 +82,12 @@ export default function App() {
             />
           ) : currentView === 'cadastros' ? (
             <CadastrosView key="cadastros" onBack={() => setCurrentView('home')} />
+          ) : currentView === 'pontos' ? (
+            <PontosView key="pontos" onBack={() => setCurrentView('home')} />
+          ) : currentView === 'oracao' ? (
+            <OracaoView key="oracao" onBack={() => setCurrentView('home')} />
+          ) : currentView === 'avisos' ? (
+            <AvisosView key="avisos" onBack={() => setCurrentView('home')} />
           ) : (
             <motion.div 
               key="coming-soon"

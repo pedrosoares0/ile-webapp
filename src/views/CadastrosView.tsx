@@ -852,7 +852,12 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
           </label>
           <button
             type="submit"
-            className="w-full rounded-[28px] bg-[#1565c0] py-6 text-sm font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-[#1565c0]/20"
+            className="w-full rounded-[28px] py-6 text-sm font-black uppercase tracking-[0.2em] text-white active:scale-[0.97] transition-transform duration-150 ease-out"
+            style={{
+              background: 'linear-gradient(180deg, #7DD3FC 0%, #38BDF8 40%, #0EA5E9 100%)',
+              border: '1.5px solid rgba(255,255,255,0.5)',
+              boxShadow: '0 4px 15px rgba(14,165,233,0.35), inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.08)',
+            }}
           >
             {editingTerreiroId ? 'SALVAR TERREIRO' : 'CRIAR TERREIRO'}
           </button>
@@ -983,7 +988,12 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
           </div>
           <button
             type="submit"
-            className="w-full rounded-[28px] bg-[#1565c0] py-6 text-sm font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-[#1565c0]/20"
+            className="w-full rounded-[28px] py-6 text-sm font-black uppercase tracking-[0.2em] text-white active:scale-[0.97] transition-transform duration-150 ease-out"
+            style={{
+              background: 'linear-gradient(180deg, #7DD3FC 0%, #38BDF8 40%, #0EA5E9 100%)',
+              border: '1.5px solid rgba(255,255,255,0.5)',
+              boxShadow: '0 4px 15px rgba(14,165,233,0.35), inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.08)',
+            }}
           >
             {editingUserId ? 'SALVAR USUÁRIO' : 'CRIAR USUÁRIO'}
           </button>
@@ -1092,7 +1102,12 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
           </div>
           <button
             type="submit"
-            className="w-full rounded-[28px] bg-[#1565c0] py-6 text-sm font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-[#1565c0]/20"
+            className="w-full rounded-[28px] py-6 text-sm font-black uppercase tracking-[0.2em] text-white active:scale-[0.97] transition-transform duration-150 ease-out"
+            style={{
+              background: 'linear-gradient(180deg, #7DD3FC 0%, #38BDF8 40%, #0EA5E9 100%)',
+              border: '1.5px solid rgba(255,255,255,0.5)',
+              boxShadow: '0 4px 15px rgba(14,165,233,0.35), inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.08)',
+            }}
           >
             {editingEventId ? 'SALVAR EVENTO' : 'CRIAR EVENTO'}
           </button>

@@ -325,7 +325,7 @@ export default function DivindadesView({ onToggleMenu, onBack, onModalToggle }: 
 
   return (
     <div 
-      style={{ background: 'linear-gradient(180deg, #F4E8D9 88%, #DBC6AB 100%)' }}
+      style={{ background: '#FFFFFF' }}
       className={`flex flex-col min-h-screen relative overflow-x-hidden z-10 ${selectedDivindade ? 'h-[100dvh] overflow-hidden' : ''}`}
     >
       {/* Aurora Backdrop Effect (Vivid Light/Dark Blue glows pushed closer to the top) */}
