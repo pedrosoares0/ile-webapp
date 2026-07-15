@@ -14,7 +14,7 @@ import {
 import EmptyStateCard from '../components/EmptyStateCard';
 import SheetModal from '../components/SheetModal';
 import { useAppData } from '../context/AppDataContext';
-import { formatDateInputValue, sortEvents } from '../lib/date';
+import { formatDateInputValue, sortEvents, parseLocalDate } from '../lib/date';
 import { createId } from '../lib/id';
 import {
   AppUser,
@@ -450,7 +450,7 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
 
     saveEvent({
       id: editingEventId ?? createId('event'),
-      date: new Date(`${eventForm.date}T00:00:00`),
+      date: parseLocalDate(eventForm.date),
       title: eventForm.title.trim(),
       time: eventForm.time,
       location: eventForm.location.trim(),

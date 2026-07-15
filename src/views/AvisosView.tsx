@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAppData } from '../context/AppDataContext';
 import { Notice } from '../types';
+import { parseLocalDate, formatDateYYYYMMDD } from '../lib/date';
 
 export default function AvisosView({ 
   onBack, 
@@ -78,7 +79,7 @@ export default function AvisosView({
     setFormContent(notice.content);
     setFormCategory(notice.category);
     if (notice.date) {
-      setFormDate(new Date(notice.date).toISOString().split('T')[0]);
+      setFormDate(formatDateYYYYMMDD(notice.date));
     } else {
       setFormDate('');
     }
@@ -107,7 +108,7 @@ export default function AvisosView({
       title: formTitle.trim(),
       content: formContent.trim(),
       category: formCategory,
-      date: formDate ? new Date(formDate).toISOString() : '',
+      date: formDate ? parseLocalDate(formDate).toISOString() : '',
       createdAt: existingNotice?.createdAt || new Date().toISOString(),
       terreiroId: currentAccount?.terreiroId || ''
     };
@@ -140,7 +141,7 @@ export default function AvisosView({
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50/50 px-6 pt-12 pb-24 relative overflow-x-hidden z-10">
+    <div className="min-h-[100dvh] bg-zinc-50/50 px-6 safe-pt-view pb-24 relative overflow-x-hidden z-10">
       
       {/* Aurora Backdrop Effect */}
       <div 
@@ -256,7 +257,7 @@ export default function AvisosView({
                         <span>{categoryConfig.label}</span>
                       </span>
                       <span className="text-[10.5px] text-zinc-400 font-bold uppercase tracking-wider">
-                        {new Date(notice.createdAt).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}
+                        {parseLocalDate(notice.createdAt).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}
                       </span>
                     </div>
 
@@ -293,7 +294,7 @@ export default function AvisosView({
                     <div className="mt-4 pt-3.5 border-t border-zinc-100/80 flex items-center gap-1.5 text-zinc-400">
                       <Calendar className="h-3.5 w-3.5 text-zinc-300" />
                       <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-                        Agenda: {new Date(notice.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        Agenda: {parseLocalDate(notice.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </span>
                     </div>
                   )}

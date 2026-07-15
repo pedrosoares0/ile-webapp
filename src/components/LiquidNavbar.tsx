@@ -17,7 +17,7 @@ export default function LiquidNavbar({ currentView, onNavigate }: LiquidNavbarPr
   ];
 
   return (
-    <div className="fixed bottom-6 inset-x-0 z-50 flex justify-center px-4 max-w-[430px] mx-auto pointer-events-none">
+    <div className="fixed safe-bottom-nav inset-x-0 z-50 flex justify-center px-4 max-w-[430px] mx-auto pointer-events-none">
       {/* Apple Liquid Glass Navigation Capsule */}
       <div 
         className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-full pointer-events-auto shadow-[0_10px_30px_rgba(0,0,0,0.05),_0_2px_6px_rgba(0,0,0,0.02)]"
@@ -39,7 +39,9 @@ export default function LiquidNavbar({ currentView, onNavigate }: LiquidNavbarPr
               onClick={() => onNavigate(item.id)}
               whileTap={{ scale: 0.93 }}
               transition={{ type: 'spring', duration: 0.2, bounce: 0 }}
-              className="relative flex flex-col items-center justify-center h-[50px] flex-1 cursor-pointer select-none outline-none border-none bg-transparent"
+              className="relative flex items-center justify-center h-[46px] flex-1 cursor-pointer select-none outline-none border-none bg-transparent"
+              aria-label={item.label}
+              title={item.label}
             >
               {/* Active pill background indicator with spring animation */}
               {isActive && (
@@ -59,23 +61,12 @@ export default function LiquidNavbar({ currentView, onNavigate }: LiquidNavbarPr
               <Icon 
                 className={`relative z-10 transition-all duration-200 ${
                   isActive 
-                    ? 'h-[22px] w-[22px] text-[#1565c0]' 
-                    : 'h-5 w-5 text-[#414141]/35 hover:text-[#414141]/55'
+                    ? 'h-[23px] w-[23px] text-[#1565c0]' 
+                    : 'h-[20px] w-[20px] text-[#414141]/35 hover:text-[#414141]/55'
                 }`} 
                 strokeWidth={isActive ? 2.5 : 1.8}
                 fill="none"
               />
-
-              {/* Label */}
-              <span 
-                className={`relative z-10 mt-1 leading-none select-none transition-all duration-200 ${
-                  isActive 
-                    ? 'text-[10px] font-extrabold text-[#1565c0]' 
-                    : 'text-[9px] font-semibold text-[#414141]/30'
-                }`}
-              >
-                {item.label}
-              </span>
             </motion.button>
           );
         })}

@@ -18,8 +18,9 @@ export default {
         'events-end': '#FCE8C3',
       },
       fontFamily: {
-        'inter': ['Inter', 'sans-serif'],
-        'behind': ['BehindTheNineties', 'sans-serif'],
+        'inter': ['Moderat', 'sans-serif'],
+        'moderat': ['Moderat', 'sans-serif'],
+        'behind': ['Instrument Serif', 'serif'],
       },
     },
   },

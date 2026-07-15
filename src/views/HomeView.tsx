@@ -1,9 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, MapPin, Copy, Check, Megaphone, Flame, Crown, Calendar, Music, PiggyBank } from 'lucide-react';
-import { useEffect, useState, useMemo } from 'react';
+import { Menu, MapPin, Copy, Check, Flame, Crown, Calendar, PiggyBank, Bell, Music } from 'lucide-react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 
 import { ViewType } from '../types';
 import { useAppData } from '../context/AppDataContext';
+import { formatDateYYYYMMDD, parseLocalDate } from '../lib/date';
+
 
 const HERO_BACKGROUNDS = [
   '/img/fundo-hero4.jpg',
@@ -185,7 +187,7 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
   const { currentAccount, events, terreiros } = useAppData();
 
   const isGlobalAdmin = currentAccount?.email === 'admin@ile.app';
-  const logoSrc = isGlobalAdmin ? '/img/logo-ile.webp' : '/img/logo-T7CA.png';
+  const logoSrc = isGlobalAdmin ? '/img/logo-ile.webp' : '/img/logo-T7CA.webp';
 
   const currentTerreiro = useMemo(() => {
     if (!currentAccount) return null;
@@ -205,25 +207,25 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
 
     const terreiroEvents = events.filter(e => !currentAccount || e.terreiroId === currentAccount.terreiroId);
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = formatDateYYYYMMDD(today);
     const limitDate = new Date(today);
     limitDate.setDate(limitDate.getDate() + 7);
-    const limitStr = limitDate.toISOString().split('T')[0];
+    const limitStr = formatDateYYYYMMDD(limitDate);
 
     return terreiroEvents
       .filter(e => {
-        const eDateStr = new Date(e.date).toISOString().split('T')[0];
+        const eDateStr = formatDateYYYYMMDD(e.date);
         return eDateStr >= todayStr && eDateStr <= limitStr;
       })
       .sort((a, b) => {
-        const dateAStr = new Date(a.date).toISOString().split('T')[0];
-        const dateBStr = new Date(b.date).toISOString().split('T')[0];
+        const dateAStr = formatDateYYYYMMDD(a.date);
+        const dateBStr = formatDateYYYYMMDD(b.date);
         if (dateAStr !== dateBStr) return dateAStr.localeCompare(dateBStr);
         return a.time.localeCompare(b.time);
       })
       .map(event => {
         const style = getEventPresetStyle(event.type, event.title);
-        const eDate = new Date(event.date);
+        const eDate = parseLocalDate(event.date);
         return {
           event,
           style,
@@ -242,17 +244,11 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
     return () => clearInterval(timer);
   }, []);
 
-  // Format gender welcome check
-  const isFemale = useMemo(() => {
-    const name = currentAccount?.nome?.toLowerCase() ?? '';
-    return name.endsWith('a') || name.includes('ana') || name.includes('maria') || name.includes('beatriz') || name.includes('julia');
-  }, [currentAccount]);
-
-  const welcomeMsg = isFemale ? 'Seja muito bem vinda!' : 'Seja muito bem-vindo!';
-
   const [activeEventIdxRaw, setActiveEventIdx] = useState(0);
   // Clamp so index is always valid even if events list shrinks
   const activeEventIdx = Math.min(activeEventIdxRaw, Math.max(upcomingEvents.length - 1, 0));
+
+  const isDraggingRef = useRef(false);
 
   const [navigatingTo, setNavigatingTo] = useState<ViewType | null>(null);
   const [copied, setCopied] = useState(false);
@@ -296,12 +292,7 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
     transition: { type: 'spring' as const, duration: 0.35, bounce: 0 }
   };
 
-  // Fill sweep spring — slight bounce since it's momentum-driven
-  const fillSpring = {
-    type: 'spring' as const,
-    duration: 0.7,
-    bounce: 0.1
-  };
+
 
   return (
     <motion.div
@@ -311,7 +302,7 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
       exit={{ opacity: 0, y: -15 }}
       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
       style={{ background: '#FFFFFF' }}
-      className="flex flex-col h-full w-full p-4 pb-32 box-border overflow-y-auto no-scrollbar relative z-10 gap-4"
+      className="flex flex-col h-full w-full safe-pt-home px-4 pb-32 box-border overflow-y-auto no-scrollbar relative z-10 gap-4"
     >
       {/* Aurora Backdrop Style and Animations */}
       <style>{`
@@ -376,7 +367,7 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
             <img src={logoSrc} alt="Logo" className="h-11 w-11 object-contain brightness-110 shrink-0" />
 
             <h2
-              className="text-[19px] sm:text-[22px] font-normal tracking-[0.24em] text-white uppercase font-behind not-italic"
+              className="text-[16px] sm:text-[18px] font-black tracking-[0.18em] text-white uppercase font-inter"
               style={{ textShadow: '0 2px 5px rgba(0,0,0,0.5)' }}
             >
               {terreiroDisplayName}
@@ -405,7 +396,7 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
                 className="text-white/95 text-[11px] font-medium tracking-[0.18em] uppercase mt-1 font-behind not-italic"
                 style={{ textShadow: '0 2px 5px rgba(0,0,0,0.5)' }}
               >
-                {welcomeMsg}
+
               </p>
             )}
             {currentAccount?.role === 'terreiro_admin' && currentTerreiro && (
@@ -458,6 +449,9 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
                     drag={isActive ? "x" : false}
                     dragConstraints={{ left: 0, right: 0 }}
                     dragElastic={0.6}
+                    onDragStart={() => {
+                      isDraggingRef.current = true;
+                    }}
                     onDragEnd={(_, info) => {
                       const swipeThreshold = 50;
                       if (info.offset.x < -swipeThreshold && activeEventIdx < upcomingEvents.length - 1) {
@@ -465,8 +459,12 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
                       } else if (info.offset.x > swipeThreshold && activeEventIdx > 0) {
                         setActiveEventIdx(prev => prev - 1);
                       }
+                      setTimeout(() => {
+                        isDraggingRef.current = false;
+                      }, 50);
                     }}
                     onTap={() => {
+                      if (isDraggingRef.current) return;
                       if (isActive) {
                         onNavigate('eventos');
                       } else {
@@ -518,23 +516,14 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
                               )}
 
                               <h4
-                                className="text-[18.5px] font-bold leading-tight font-behind"
+                                className="text-[28px] sm:text-[32px] font-black leading-tight font-behind tracking-tight"
                                 style={{ color: evStyle.textColor }}
                               >
                                 {ev.title}
                               </h4>
 
-                              {ev.description && (
-                                <p
-                                  className="mt-1 text-[10px] leading-snug font-normal truncate"
-                                  style={{ color: evStyle.theme === 'claro' ? '#414141' : '#FAF4E9' }}
-                                >
-                                  {ev.description}
-                                </p>
-                              )}
-
                               <div
-                                className="flex items-center gap-1 mt-1.5 text-[9.5px] font-bold"
+                                className="flex items-center gap-1 mt-2.5 text-[9.5px] font-bold"
                                 style={{ color: evStyle.theme === 'claro' ? '#757575' : '#FAF4E9', opacity: evStyle.theme === 'claro' ? 1 : 0.6 }}
                               >
                                 <MapPin className="h-2.5 w-2.5" strokeWidth={2.5} style={{ color: evStyle.theme === 'claro' ? '#757575' : evStyle.textColor }} />
@@ -593,27 +582,27 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
         )}
       </div>
 
-      {/* Six Button Apple Music Style Pill Grid */}
+      {/* Six Button Grid (Eventos, Financeiro, Avisos, Divindades, Pontos, Oração) */}
       <div className="grid grid-cols-2 gap-3 shrink-0 relative z-10 pb-6">
         {/* Eventos */}
         <motion.button
           onClick={() => handleNavigate('eventos')}
           whileTap={buttonTapSpring}
-          className="relative overflow-hidden flex items-center gap-3.5 pl-3 pr-4 rounded-full bg-white border border-zinc-100 shadow-[0_8px_18px_rgba(0,0,0,0.08),_0_2px_5px_rgba(0,0,0,0.03)] text-left transition-shadow duration-150 ease-out w-full h-14 active:shadow-[0_4px_10px_rgba(0,0,0,0.06),_0_1px_3px_rgba(0,0,0,0.02)]"
+          className="relative overflow-hidden flex items-center gap-3.5 pl-3 pr-4 rounded-full bg-white border border-zinc-100 shadow-[0_8px_18px_rgba(0,0,0,0.08),_0_2px_5px_rgba(0,0,0,0.03)] text-left transition-shadow duration-150 ease-out w-full h-14 active:shadow-[0_4px_10px_rgba(0,0,0,0.06),_0_1px_3px_rgba(0,0,0,0.02)] cursor-pointer"
         >
           <AnimatePresence>
             {navigatingTo === 'eventos' && (
               <motion.div
-                initial={{ scaleX: 0, opacity: 0 }}
-                animate={{ scaleX: 1, opacity: 1 }}
-                exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                transition={fillSpring}
-                className="absolute left-0 top-0 bottom-0 w-full bg-gradient-to-r from-white/10 via-[#e0f2fe]/40 to-[#bae6fd] z-0 pointer-events-none origin-left rounded-full"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-sky-100/50 z-0 pointer-events-none rounded-full"
+                transition={{ duration: 0.15 }}
               />
             )}
           </AnimatePresence>
           <motion.div
-            animate={navigatingTo === 'eventos' ? { scale: 1.08 } : { scale: 1 }}
+            animate={navigatingTo === 'eventos' ? { scale: 1.05 } : { scale: 1 }}
             transition={{ type: 'spring', duration: 0.4, bounce: 0.15 }}
             className="relative z-10 w-10 h-10 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-center shrink-0"
           >
@@ -624,61 +613,32 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
           </span>
         </motion.button>
 
-        {/* Músicas & Pontos */}
+        {/* Financeiro */}
         <motion.button
-          onClick={() => handleNavigate('pontos')}
+          onClick={() => handleNavigate('financeiro')}
           whileTap={buttonTapSpring}
-          className="relative overflow-hidden flex items-center gap-3.5 pl-3 pr-4 rounded-full bg-white border border-zinc-100 shadow-[0_8px_18px_rgba(0,0,0,0.08),_0_2px_5px_rgba(0,0,0,0.03)] text-left transition-shadow duration-150 ease-out w-full h-14 active:shadow-[0_4px_10px_rgba(0,0,0,0.06),_0_1px_3px_rgba(0,0,0,0.02)]"
+          className="relative overflow-hidden flex items-center gap-3.5 pl-3 pr-4 rounded-full bg-white border border-zinc-100 shadow-[0_8px_18px_rgba(0,0,0,0.08),_0_2px_5px_rgba(0,0,0,0.03)] text-left transition-shadow duration-150 ease-out w-full h-14 active:shadow-[0_4px_10px_rgba(0,0,0,0.06),_0_1px_3px_rgba(0,0,0,0.02)] cursor-pointer"
         >
           <AnimatePresence>
-            {navigatingTo === 'pontos' && (
+            {navigatingTo === 'financeiro' && (
               <motion.div
-                initial={{ scaleX: 0, opacity: 0 }}
-                animate={{ scaleX: 1, opacity: 1 }}
-                exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                transition={fillSpring}
-                className="absolute left-0 top-0 bottom-0 w-full bg-gradient-to-r from-white/10 via-[#ffe4e6]/40 to-[#fecdd3] z-0 pointer-events-none origin-left rounded-full"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-emerald-100/50 z-0 pointer-events-none rounded-full"
+                transition={{ duration: 0.15 }}
               />
             )}
           </AnimatePresence>
           <motion.div
-            animate={navigatingTo === 'pontos' ? { scale: 1.08 } : { scale: 1 }}
+            animate={navigatingTo === 'financeiro' ? { scale: 1.05 } : { scale: 1 }}
             transition={{ type: 'spring', duration: 0.4, bounce: 0.15 }}
             className="relative z-10 w-10 h-10 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-center shrink-0"
           >
-            <Music className="h-5.5 w-5.5 text-zinc-800" strokeWidth={2.2} />
+            <PiggyBank className="h-5.5 w-5.5 text-zinc-800" strokeWidth={2.2} />
           </motion.div>
           <span className="relative z-10 text-[14px] font-extrabold text-zinc-800 tracking-tight leading-none truncate">
-            Pontos
-          </span>
-        </motion.button>
-
-        {/* Pedidos de Oração */}
-        <motion.button
-          onClick={() => handleNavigate('oracao')}
-          whileTap={buttonTapSpring}
-          className="relative overflow-hidden flex items-center gap-3.5 pl-3 pr-4 rounded-full bg-white border border-zinc-100 shadow-[0_8px_18px_rgba(0,0,0,0.08),_0_2px_5px_rgba(0,0,0,0.03)] text-left transition-shadow duration-150 ease-out w-full h-14 active:shadow-[0_4px_10px_rgba(0,0,0,0.06),_0_1px_3px_rgba(0,0,0,0.02)]"
-        >
-          <AnimatePresence>
-            {navigatingTo === 'oracao' && (
-              <motion.div
-                initial={{ scaleX: 0, opacity: 0 }}
-                animate={{ scaleX: 1, opacity: 1 }}
-                exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                transition={fillSpring}
-                className="absolute left-0 top-0 bottom-0 w-full bg-gradient-to-r from-white/10 via-[#fef3c7]/40 to-[#fde68a] z-0 pointer-events-none origin-left rounded-full"
-              />
-            )}
-          </AnimatePresence>
-          <motion.div
-            animate={navigatingTo === 'oracao' ? { scale: 1.08 } : { scale: 1 }}
-            transition={{ type: 'spring', duration: 0.4, bounce: 0.15 }}
-            className="relative z-10 w-10 h-10 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-center shrink-0"
-          >
-            <Flame className="h-5.5 w-5.5 text-zinc-800" strokeWidth={2.2} />
-          </motion.div>
-          <span className="relative z-10 text-[14px] font-extrabold text-zinc-800 tracking-tight leading-none truncate">
-            Orações
+            Financeiro
           </span>
         </motion.button>
 
@@ -686,25 +646,25 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
         <motion.button
           onClick={() => handleNavigate('avisos')}
           whileTap={buttonTapSpring}
-          className="relative overflow-hidden flex items-center gap-3.5 pl-3 pr-4 rounded-full bg-white border border-zinc-100 shadow-[0_8px_18px_rgba(0,0,0,0.08),_0_2px_5px_rgba(0,0,0,0.03)] text-left transition-shadow duration-150 ease-out w-full h-14 active:shadow-[0_4px_10px_rgba(0,0,0,0.06),_0_1px_3px_rgba(0,0,0,0.02)]"
+          className="relative overflow-hidden flex items-center gap-3.5 pl-3 pr-4 rounded-full bg-white border border-zinc-100 shadow-[0_8px_18px_rgba(0,0,0,0.08),_0_2px_5px_rgba(0,0,0,0.03)] text-left transition-shadow duration-150 ease-out w-full h-14 active:shadow-[0_4px_10px_rgba(0,0,0,0.06),_0_1px_3px_rgba(0,0,0,0.02)] cursor-pointer"
         >
           <AnimatePresence>
             {navigatingTo === 'avisos' && (
               <motion.div
-                initial={{ scaleX: 0, opacity: 0 }}
-                animate={{ scaleX: 1, opacity: 1 }}
-                exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                transition={fillSpring}
-                className="absolute left-0 top-0 bottom-0 w-full bg-gradient-to-r from-white/10 via-[#f3e8ff]/40 to-[#e9d5ff] z-0 pointer-events-none origin-left rounded-full"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-purple-100/50 z-0 pointer-events-none rounded-full"
+                transition={{ duration: 0.15 }}
               />
             )}
           </AnimatePresence>
           <motion.div
-            animate={navigatingTo === 'avisos' ? { scale: 1.08 } : { scale: 1 }}
+            animate={navigatingTo === 'avisos' ? { scale: 1.05 } : { scale: 1 }}
             transition={{ type: 'spring', duration: 0.4, bounce: 0.15 }}
             className="relative z-10 w-10 h-10 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-center shrink-0"
           >
-            <Megaphone className="h-5.5 w-5.5 text-zinc-800" strokeWidth={2.2} />
+            <Bell className="h-5.5 w-5.5 text-zinc-800" strokeWidth={2.2} />
           </motion.div>
           <span className="relative z-10 text-[14px] font-extrabold text-zinc-800 tracking-tight leading-none truncate">
             Avisos
@@ -715,21 +675,21 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
         <motion.button
           onClick={() => handleNavigate('divindades')}
           whileTap={buttonTapSpring}
-          className="relative overflow-hidden flex items-center gap-3.5 pl-3 pr-4 rounded-full bg-white border border-zinc-100 shadow-[0_8px_18px_rgba(0,0,0,0.08),_0_2px_5px_rgba(0,0,0,0.03)] text-left transition-shadow duration-150 ease-out w-full h-14 active:shadow-[0_4px_10px_rgba(0,0,0,0.06),_0_1px_3px_rgba(0,0,0,0.02)]"
+          className="relative overflow-hidden flex items-center gap-3.5 pl-3 pr-4 rounded-full bg-white border border-zinc-100 shadow-[0_8px_18px_rgba(0,0,0,0.08),_0_2px_5px_rgba(0,0,0,0.03)] text-left transition-shadow duration-150 ease-out w-full h-14 active:shadow-[0_4px_10px_rgba(0,0,0,0.06),_0_1px_3px_rgba(0,0,0,0.02)] cursor-pointer"
         >
           <AnimatePresence>
             {navigatingTo === 'divindades' && (
               <motion.div
-                initial={{ scaleX: 0, opacity: 0 }}
-                animate={{ scaleX: 1, opacity: 1 }}
-                exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                transition={fillSpring}
-                className="absolute left-0 top-0 bottom-0 w-full bg-gradient-to-r from-white/10 via-[#ecfeff]/40 to-[#cffafe] z-0 pointer-events-none origin-left rounded-full"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-cyan-100/50 z-0 pointer-events-none rounded-full"
+                transition={{ duration: 0.15 }}
               />
             )}
           </AnimatePresence>
           <motion.div
-            animate={navigatingTo === 'divindades' ? { scale: 1.08 } : { scale: 1 }}
+            animate={navigatingTo === 'divindades' ? { scale: 1.05 } : { scale: 1 }}
             transition={{ type: 'spring', duration: 0.4, bounce: 0.15 }}
             className="relative z-10 w-10 h-10 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-center shrink-0"
           >
@@ -740,35 +700,67 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
           </span>
         </motion.button>
 
-        {/* Financeiro */}
+        {/* Pontos */}
         <motion.button
-          onClick={() => handleNavigate('financeiro')}
+          onClick={() => handleNavigate('pontos')}
           whileTap={buttonTapSpring}
-          className="relative overflow-hidden flex items-center gap-3.5 pl-3 pr-4 rounded-full bg-white border border-zinc-100 shadow-[0_8px_18px_rgba(0,0,0,0.08),_0_2px_5px_rgba(0,0,0,0.03)] text-left transition-shadow duration-150 ease-out w-full h-14 active:shadow-[0_4px_10px_rgba(0,0,0,0.06),_0_1px_3px_rgba(0,0,0,0.02)]"
+          className="relative overflow-hidden flex items-center gap-3.5 pl-3 pr-4 rounded-full bg-white border border-zinc-100 shadow-[0_8px_18px_rgba(0,0,0,0.08),_0_2px_5px_rgba(0,0,0,0.03)] text-left transition-shadow duration-150 ease-out w-full h-14 active:shadow-[0_4px_10px_rgba(0,0,0,0.06),_0_1px_3px_rgba(0,0,0,0.02)] cursor-pointer"
         >
           <AnimatePresence>
-            {navigatingTo === 'financeiro' && (
+            {navigatingTo === 'pontos' && (
               <motion.div
-                initial={{ scaleX: 0, opacity: 0 }}
-                animate={{ scaleX: 1, opacity: 1 }}
-                exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                transition={fillSpring}
-                className="absolute left-0 top-0 bottom-0 w-full bg-gradient-to-r from-white/10 via-[#dcfce7]/40 to-[#bbf7d0] z-0 pointer-events-none origin-left rounded-full"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-rose-100/50 z-0 pointer-events-none rounded-full"
+                transition={{ duration: 0.15 }}
               />
             )}
           </AnimatePresence>
           <motion.div
-            animate={navigatingTo === 'financeiro' ? { scale: 1.08 } : { scale: 1 }}
+            animate={navigatingTo === 'pontos' ? { scale: 1.05 } : { scale: 1 }}
             transition={{ type: 'spring', duration: 0.4, bounce: 0.15 }}
             className="relative z-10 w-10 h-10 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-center shrink-0"
           >
-            <PiggyBank className="h-5.5 w-5.5 text-zinc-800" strokeWidth={2.2} />
+            <Music className="h-5.5 w-5.5 text-zinc-800" strokeWidth={2.2} />
           </motion.div>
           <span className="relative z-10 text-[14px] font-extrabold text-zinc-800 tracking-tight leading-none truncate">
-            Financeiro
+            Pontos
+          </span>
+        </motion.button>
+
+        {/* Oração */}
+        <motion.button
+          onClick={() => handleNavigate('oracao')}
+          whileTap={buttonTapSpring}
+          className="relative overflow-hidden flex items-center gap-3.5 pl-3 pr-4 rounded-full bg-white border border-zinc-100 shadow-[0_8px_18px_rgba(0,0,0,0.08),_0_2px_5px_rgba(0,0,0,0.03)] text-left transition-shadow duration-150 ease-out w-full h-14 active:shadow-[0_4px_10px_rgba(0,0,0,0.06),_0_1px_3px_rgba(0,0,0,0.02)] cursor-pointer"
+        >
+          <AnimatePresence>
+            {navigatingTo === 'oracao' && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-amber-100/50 z-0 pointer-events-none rounded-full"
+                transition={{ duration: 0.15 }}
+              />
+            )}
+          </AnimatePresence>
+          <motion.div
+            animate={navigatingTo === 'oracao' ? { scale: 1.05 } : { scale: 1 }}
+            transition={{ type: 'spring', duration: 0.4, bounce: 0.15 }}
+            className="relative z-10 w-10 h-10 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-center shrink-0"
+          >
+            <Flame className="h-5.5 w-5.5 text-zinc-800" strokeWidth={2.2} />
+          </motion.div>
+          <span className="relative z-10 text-[14px] font-extrabold text-zinc-800 tracking-tight leading-none truncate">
+            Oração
           </span>
         </motion.button>
       </div>
+
+      {/* Bottom Spacer to prevent navbar overlay on mobile */}
+      <div className="h-28 shrink-0 w-full" />
 
       {/* Lordicon Definitions */}
       <svg width="0" height="0" className="absolute pointer-events-none">

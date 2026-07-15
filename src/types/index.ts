@@ -134,3 +134,15 @@ export interface Notice {
   terreiroId: string;
 }
 
+export interface PrayerRequest {
+  id: string;
+  name: string;
+  type: 'Saúde e cura' | 'Abertura de caminhos' | 'Defesa e descarrego' | 'Família e amor' | 'Outros';
+  content: string;
+  answered: boolean;
+  answeredAt: string | null;
+  accountId: string;
+  terreiroId: string;
+  createdAt: string;
+}
+

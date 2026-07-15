@@ -16,6 +16,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useAppData } from '../context/AppDataContext';
+import { parseLocalDate } from '../lib/date';
 
 interface HubViewProps {
   onToggleMenu: () => void;
@@ -36,7 +37,7 @@ const MOCK_STORIES = [
     id: 'story_t7ca',
     terreiroId: 'terreiro_t7ca',
     terreiroNome: 'T7CA',
-    avatar: '/img/logo-T7CA.png',
+    avatar: '/img/logo-T7CA.webp',
     title: 'Gira de Baianos',
     image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDyiPfE85MG4_7MptuepDfcOhZZ6dtithSCSpCBsE4qkKE1CUWdNr9Ad4&s=10',
     activityDescription: 'Preparação para a Gira de Baianos com rezas, cânticos e defumação de ervas. Venha receber essa energia alegre!',
@@ -276,7 +277,7 @@ export default function HubView({ onToggleMenu }: HubViewProps) {
               const isT7ca = terreiro.id === 'terreiro_t7ca';
               const isJurema = terreiro.id === 'terreiro_jurema';
               const houseLogo = isT7ca
-                ? '/img/logo-T7CA.png'
+                ? '/img/logo-T7CA.webp'
                 : isJurema
                   ? 'https://instagram.fssa25-1.fna.fbcdn.net/v/t51.2885-19/209113156_403111601011697_1176465365621516809_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=instagram.fssa25-1.fna.fbcdn.net&_nc_cat=105&_nc_oc=Q6cZ2gFJD5LW-m5DS4Qxid6x6WOAUflfgzGYfA8XoNu_NtLFLBqedWjoWQeKAt_D464QZes&_nc_ohc=cEuhaaJj98oQ7kNvwEoOYCv&_nc_gid=e10g7JHqewu6aRIFJM_vyQ&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AQCU68VMwh4_QojFFO0-_hGsney_rZrO-gxwgkX8GzOJ6w&oe=6A4D8D33&_nc_sid=8b3546'
                   : '/img/login/icone.webp';
@@ -541,7 +542,7 @@ export default function HubView({ onToggleMenu }: HubViewProps) {
                         <div className="space-y-2.5">
                           {selectedTerreiroEvents.length > 0 ? (
                             selectedTerreiroEvents.map((evt: any) => {
-                              const dateObj = new Date(evt.date);
+                              const dateObj = parseLocalDate(evt.date);
                               const day = dateObj.toLocaleDateString('pt-BR', { day: '2-digit' });
                               const month = dateObj.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '').toUpperCase();
 

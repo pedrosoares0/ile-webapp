@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, ArrowLeft, X, BookOpen, Wind, Droplets, Hammer, Zap, CloudLightning, Trees, Sparkles, Waves, ShieldAlert, Compass, Rainbow, Smile, Calendar, Palette, Sparkle, Heart, Youtube } from 'lucide-react';
+import { Menu, ArrowLeft, X, BookOpen, Wind, Droplets, Hammer, Zap, CloudLightning, Trees, Sparkles, Waves, ShieldAlert, Compass, Rainbow, Smile, Calendar, Palette, Sparkle, Heart, Youtube, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 interface Divindade {
@@ -17,6 +17,7 @@ interface Divindade {
   simbolo: string;
   historia: string;
   youtubeId: string;
+  slideshowImagens?: string[];
 }
 
 const itemVariants = {
@@ -58,7 +59,8 @@ function SparksEffect({ cor }: { cor: string }) {
 
   return (
     <div className="absolute inset-x-0 bottom-0 h-[120px] pointer-events-none overflow-hidden z-20 select-none">
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes rise-sparks {
           0% {
             transform: translateY(0) scale(1);
@@ -115,7 +117,12 @@ const DIVINDADES: Divindade[] = [
     cores: 'Branco e Prateado',
     simbolo: 'Opaxorô (Cajado de metal branco)',
     historia: 'Oxalá é o Orixá da paz, da pureza e da criação. É o pai de todos os seres e o regente do branco. Representa a sabedoria e a calma necessária para a evolução espiritual.',
-    youtubeId: '3k_mQyYvAoo'
+    youtubeId: '3k_mQyYvAoo',
+    slideshowImagens: [
+      '/img/divindades/oxala.jpg',
+      'https://i.pinimg.com/736x/8b/d4/fd/8bd4fdf8288aa8ba22a0aec393ab2559.jpg',
+      'https://i.pinimg.com/736x/bc/5c/4e/bc5c4ef46a6cb39512a1d0b18e65cbe0.jpg'
+    ]
   },
   {
     id: 'ogum',
@@ -130,8 +137,13 @@ const DIVINDADES: Divindade[] = [
     diaSemana: 'Terça-feira',
     cores: 'Azul Escuro, Verde ou Vermelho (a depender da linha)',
     simbolo: 'Espada e ferramentas de ferro',
-    historia: 'Ogum é o Orixá do ferro, da guerra, da tecnologia e dos caminhos. Vencedor de demandas, rege a coragem, a lei divina e a proteção dos guerreiros.',
-    youtubeId: 'x0R7h5UvWzo'
+    historia: 'Ogum é o Orixá do ferro, da guerra, da tecnologia and dos caminhos. Vencedor de demandas, rege a coragem, a lei divina e a proteção dos guerreiros.',
+    youtubeId: 'x0R7h5UvWzo',
+    slideshowImagens: [
+      '/img/divindades/ogum.jpg',
+      'https://i.pinimg.com/1200x/76/eb/6f/76eb6f2ecc6623e05d77a7a5703cf9ad.jpg',
+      'https://i.pinimg.com/1200x/3e/a3/0e/3ea30e790a628e16c71f4e315fe37628.jpg'
+    ]
   },
   {
     id: 'oxossi',
@@ -147,7 +159,12 @@ const DIVINDADES: Divindade[] = [
     cores: 'Verde e Azul-Turquesa',
     simbolo: 'Ofá (Arco e flecha) e Eruequerê',
     historia: 'Oxóssi é o caçador das matas. Rege a busca pelo conhecimento, a fartura, a alimentação e a sintonia fina com as forças da natureza selvagem.',
-    youtubeId: 'kHlDk-N1M5E'
+    youtubeId: 'kHlDk-N1M5E',
+    slideshowImagens: [
+      '/img/divindades/oxossi.jpg',
+      'https://i.pinimg.com/736x/b4/a6/f1/b4a6f15198b448e95092f57e0f5f858f.jpg',
+      'https://i.pinimg.com/1200x/2e/c8/e6/2ec8e6d609f8281a3b3c5af4ba835e67.jpg'
+    ]
   },
   {
     id: 'xango',
@@ -163,7 +180,12 @@ const DIVINDADES: Divindade[] = [
     cores: 'Marrom e Vermelho',
     simbolo: 'Oxê (Machado de duas lâminas)',
     historia: 'Xangô é o rei da justiça divina, do equilíbrio e das leis. Rege o fogo, os trovões e as pedreiras. Ensina a imparcialidade, a sabedoria de liderança e a dignidade.',
-    youtubeId: 'b-G4iG-P0tE'
+    youtubeId: 'b-G4iG-P0tE',
+    slideshowImagens: [
+      '/img/divindades/xango.jpg',
+      'https://i.pinimg.com/1200x/2c/6a/bb/2c6abb62711b1f62dc9c4acb99431055.jpg',
+      'https://i.pinimg.com/1200x/2c/6a/bb/2c6abb62711b1f62dc9c4acb99431055.jpg'
+    ]
   },
   {
     id: 'iemanja',
@@ -179,7 +201,12 @@ const DIVINDADES: Divindade[] = [
     cores: 'Azul claro e Branco',
     simbolo: 'Abebé (Espelho metalizado) e Coroa',
     historia: 'Iemanjá é a mãe de quase todos os Orixás. Rege a maternidade, o equilíbrio emocional e as águas do mar. É a protetora dos distribuidores de axé, pescadores e das famílias.',
-    youtubeId: 'Z_d-r1_hJ1E'
+    youtubeId: 'Z_d-r1_hJ1E',
+    slideshowImagens: [
+      '/img/divindades/yemanja.jpg',
+      'https://i.pinimg.com/736x/c5/53/a2/c553a26715308e17979e4a33e5f95cd4.jpg',
+      'https://i.pinimg.com/736x/7b/41/9c/7b419cc6a3fb2c80c4a6a38d40c85fa8.jpg'
+    ]
   },
   {
     id: 'oxum',
@@ -195,7 +222,12 @@ const DIVINDADES: Divindade[] = [
     cores: 'Amarelo e Dourado',
     simbolo: 'Abebé (Espelho metalizado) e Ouro',
     historia: 'Oxum é a deusa do amor, da prosperidade, da beleza e da fertilidade. Rege o ouro, a gestação e o fluxo da sensibilidade emocional e artística dos seres humanos.',
-    youtubeId: 'Jp_M3Jg5M24'
+    youtubeId: 'Jp_M3Jg5M24',
+    slideshowImagens: [
+      '/img/divindades/oxum.jpg',
+      'https://i.pinimg.com/736x/10/44/99/104499e4c210d49f665ab7c9643e1dde.jpg',
+      'https://i.pinimg.com/1200x/01/8b/b3/018bb391b26c1c98852b6c5166c92361.jpg'
+    ]
   },
   {
     id: 'iansa',
@@ -203,7 +235,7 @@ const DIVINDADES: Divindade[] = [
     titulo: 'Rainha dos Ventos',
     cor: '#DD6B20',
     corDestaque: '#9c420e',
-    imagem: '/img/divindades/iansa.jpg',
+    imagem: 'https://i.pinimg.com/1200x/8b/9d/d0/8b9dd0f03253d53e792c68b3ca09f305.jpg',
     saudacao: 'Eparrey!',
     elemento: 'Ar em Movimento (Ventos e Tempestades)',
     sincretismo: 'Santa Bárbara',
@@ -211,7 +243,12 @@ const DIVINDADES: Divindade[] = [
     cores: 'Vermelho, Coral ou Amarelo',
     simbolo: 'Eruexim (Espanador de rabo de cavalo) e Espada',
     historia: 'Iansã ou Oyá é a guerreira dos ventos, tempestades e raios. Rege o direcionamento dos espíritos desencarnados e a força das transformações rápidas na vida.',
-    youtubeId: 'wB6Y4K1Jg1o'
+    youtubeId: 'wB6Y4K1Jg1o',
+    slideshowImagens: [
+      'https://i.pinimg.com/1200x/8b/9d/d0/8b9dd0f03253d53e792c68b3ca09f305.jpg',
+      'https://i.pinimg.com/736x/fe/3a/75/fe3a757b594439bb85c0db119c98702e.jpg',
+      'https://i.pinimg.com/736x/d7/3e/8b/d73e8b3aa172e27c02b4bedffaef35e1.jpg'
+    ]
   },
   {
     id: 'nanaburuque',
@@ -227,7 +264,12 @@ const DIVINDADES: Divindade[] = [
     cores: 'Roxo, Lilás e Branco',
     simbolo: 'Ibiri (Cetro de palha de costa e búzios)',
     historia: 'Nanã é a Orixá mais antiga do panteão. Rege os pântanos, a lama de onde a vida se molda e o portal da reencarnação, decantando memórias de vidas passadas.',
-    youtubeId: 'Qd1NlH5M2K4'
+    youtubeId: 'Qd1NlH5M2K4',
+    slideshowImagens: [
+      '/img/divindades/nana.jpg',
+      'https://i.pinimg.com/736x/e2/4f/3e/e24f3e61565784780351f3c8cdb4f802.jpg',
+      'https://i.pinimg.com/736x/a3/02/3a/a3023af788df9836fb6f84c4e35e1469.jpg'
+    ]
   },
   {
     id: 'obaluae',
@@ -243,7 +285,12 @@ const DIVINDADES: Divindade[] = [
     cores: 'Preto, Branco e Vermelho / Palha',
     simbolo: 'Xaxará (Vassoura de palha de costa)',
     historia: 'Obaluaê ou Omulu é o senhor das doenças e da cura. Ele rege a terra e a passagem entre os mundos. É o protetor da saúde e dos enfermos.',
-    youtubeId: 'Pl8D2E4J5M1'
+    youtubeId: 'Pl8D2E4J5M1',
+    slideshowImagens: [
+      '/img/divindades/obaluae.jpg',
+      'https://i.pinimg.com/736x/29/a7/99/29a799ede855461a8584d032f3e53212.jpg',
+      'https://i.pinimg.com/1200x/8b/eb/81/8beb8150e801e48203a5691d00dc2e59.jpg'
+    ]
   },
   {
     id: 'exu',
@@ -251,7 +298,7 @@ const DIVINDADES: Divindade[] = [
     titulo: 'Senhor do Caminho',
     cor: '#1a1a1a',
     corDestaque: '#c53030',
-    imagem: '/img/divindades/exu.png',
+    imagem: 'https://i.pinimg.com/1200x/38/f1/81/38f18101861125933e2dc730810deb71.jpg',
     saudacao: 'Laroyé!',
     elemento: 'Encruzilhadas',
     sincretismo: 'Santo Antônio (por vezes associado)',
@@ -259,7 +306,12 @@ const DIVINDADES: Divindade[] = [
     cores: 'Preto e Vermelho',
     simbolo: 'Tridente e Ogó (Cetro esculpido)',
     historia: 'Exu é o mensageiro entre os mundos, o dono das encruzilhadas e o princípio de tudo. Ele rege a comunicação, o movimento e o equilíbrio.',
-    youtubeId: 'gR4K1Jg5M2o'
+    youtubeId: 'gR4K1Jg5M2o',
+    slideshowImagens: [
+      'https://i.pinimg.com/1200x/38/f1/81/38f18101861125933e2dc730810deb71.jpg',
+      'https://i.pinimg.com/1200x/35/6c/7f/356c7f98a050b8e14e8d8f786625236f.jpg',
+      'https://i.pinimg.com/1200x/a3/39/d0/a339d0bbb56b17238274d6c1bf5cd17b.jpg'
+    ]
   },
   {
     id: 'oxumare',
@@ -275,7 +327,12 @@ const DIVINDADES: Divindade[] = [
     cores: 'Colorido / Amarelo e Verde',
     simbolo: 'Serpente de metal e Arco-íris',
     historia: 'Oxumarê é o senhor da mobilidade e dos ciclos. Representado pela serpente e pelo arco-íris, ele traz a renovação e a continuidade da vida.',
-    youtubeId: 'kHlDk2J5M1E'
+    youtubeId: 'kHlDk2J5M1E',
+    slideshowImagens: [
+      '/img/divindades/oxumare.jpg',
+      'https://i.pinimg.com/736x/5d/aa/1a/5daa1a88c268be00644daacead4e0091.jpg',
+      'https://i.pinimg.com/736x/f8/7a/52/f87a52d455c98370b11c1eaf3d7efa53.jpg'
+    ]
   },
   {
     id: 'ibeji',
@@ -291,9 +348,64 @@ const DIVINDADES: Divindade[] = [
     cores: 'Rosa, Azul e todas as cores',
     simbolo: 'Brinquedos, Doces e Cabaças',
     historia: 'Os Ibejis representam a dualidade, a pureza e a alegria das crianças. Trazem a sorte, a proteção aos partos e a renovação da esperança.',
-    youtubeId: 'Jp_M3Jg5M24'
+    youtubeId: 'Jp_M3Jg5M24',
+    slideshowImagens: [
+      '/img/divindades/ibeji.jpg',
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRUY30PqVEABZ2gPt8GBlK-4NupI7UrBQ2cD1NpXczGukItLWOJBVMsJJY&s=10',
+      'https://i.pinimg.com/1200x/5c/be/8b/5cbe8bc3b11fe9afd261b424fbf6f7a0.jpg'
+    ]
   }
 ];
+
+export interface OrixaTheme {
+  isDark: boolean;
+  bgGradientStart: string;
+  bgGradientEnd: string;
+  textColor: string;
+  subtextColor: string;
+  accentColor: string;
+  cardBg: string;
+  cardBorder: string;
+  iconBg: string;
+  pillText: string;
+  dividerColor: string;
+}
+
+export const getOrixaTheme = (id: string): OrixaTheme => {
+  const getAccentColor = (id: string) => {
+    switch (id) {
+      case 'oxala': return '#8C7A53';
+      case 'ogum': return '#1A5276';
+      case 'oxossi': return '#1A5F5D';
+      case 'xango': return '#9B1C1C';
+      case 'iemanja': return '#2B6CB0';
+      case 'oxum': return '#976A10';
+      case 'iansa': return '#9C420E';
+      case 'nanaburuque': return '#553C9A';
+      case 'obaluae': return '#2D3748';
+      case 'exu': return '#C53030';
+      case 'oxumare': return '#97266D';
+      case 'ibeji': return '#234E52';
+      default: return '#2B6CB0';
+    }
+  };
+
+  const accentColor = getAccentColor(id);
+
+  return {
+    isDark: false,
+    bgGradientStart: '#FEF9ED',
+    bgGradientEnd: '#FDF3DF',
+    textColor: '#414141',
+    subtextColor: 'rgba(65, 65, 65, 0.65)',
+    accentColor: accentColor,
+    cardBg: 'rgba(255, 255, 255, 0.75)',
+    cardBorder: `${accentColor}22`,
+    iconBg: `${accentColor}12`,
+    pillText: accentColor,
+    dividerColor: `${accentColor}25`
+  };
+};
 
 interface DivindadesViewProps {
   onToggleMenu: () => void;
@@ -304,6 +416,7 @@ interface DivindadesViewProps {
 export default function DivindadesView({ onToggleMenu, onBack, onModalToggle }: DivindadesViewProps) {
   const [selectedDivindade, setSelectedDivindade] = useState<Divindade | null>(null);
   const [direction, setDirection] = useState(0);
+  const [imageIdx, setImageIdx] = useState(0);
 
   useEffect(() => {
     return () => {
@@ -311,8 +424,22 @@ export default function DivindadesView({ onToggleMenu, onBack, onModalToggle }: 
     };
   }, []);
 
+  // Automatic slideshow cross-fade interval
+  useEffect(() => {
+    if (!selectedDivindade) return;
+    const images = selectedDivindade.slideshowImagens || [selectedDivindade.imagem];
+    if (images.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setImageIdx((prev) => (prev + 1) % images.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [selectedDivindade]);
+
   const handleOpenDetail = (divindade: Divindade) => {
     setDirection(0);
+    setImageIdx(0);
     setSelectedDivindade(divindade);
     onModalToggle?.(true);
   };
@@ -321,15 +448,16 @@ export default function DivindadesView({ onToggleMenu, onBack, onModalToggle }: 
     setSelectedDivindade(null);
     onModalToggle?.(false);
     setDirection(0);
+    setImageIdx(0);
   };
 
   return (
-    <div 
+    <div
       style={{ background: '#FFFFFF' }}
-      className={`flex flex-col min-h-screen relative overflow-x-hidden z-10 ${selectedDivindade ? 'h-[100dvh] overflow-hidden' : ''}`}
+      className={`flex flex-col min-h-[100dvh] relative overflow-x-hidden z-10 ${selectedDivindade ? 'h-[100dvh] overflow-hidden' : ''}`}
     >
       {/* Aurora Backdrop Effect (Vivid Light/Dark Blue glows pushed closer to the top) */}
-      <div 
+      <div
         className="absolute inset-x-0 top-0 h-[35dvh] pointer-events-none overflow-hidden z-0 select-none"
         style={{
           maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 100%)',
@@ -337,20 +465,20 @@ export default function DivindadesView({ onToggleMenu, onBack, onModalToggle }: 
         }}
       >
         {/* Strong Dark Blue Glow */}
-        <div 
+        <div
           className="absolute w-[68vw] h-[68vw] rounded-full bg-gradient-to-br from-[#0d47a1]/85 to-[#1565c0]/45 blur-[50px] -top-[35%] -left-[10%] animate-[pulse_6s_ease-in-out_infinite]"
         />
         {/* Strong Light Blue Glow */}
-        <div 
+        <div
           className="absolute w-[75vw] h-[75vw] rounded-full bg-gradient-to-tr from-[#00b0ff]/80 to-[#00e5ff]/35 blur-[60px] -top-[40%] -right-[15%] animate-[pulse_8s_ease-in-out_infinite_1.2s]"
         />
       </div>
 
       {/* Header */}
-      <div className="relative z-20 px-6 pt-12 flex flex-col items-center text-center">
+      <div className="relative z-20 px-6 safe-pt-view flex flex-col items-center text-center">
         <button
           onClick={onBack}
-          className="absolute left-6 top-12 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-[0_6px_20px_rgba(0,0,0,0.08),_0_2px_6px_rgba(0,0,0,0.04)] border border-zinc-100 text-zinc-800 active:scale-95 transition-transform"
+          className="absolute left-6 safe-top-12 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-[0_6px_20px_rgba(0,0,0,0.08),_0_2px_6px_rgba(0,0,0,0.04)] border border-zinc-100 text-zinc-800 active:scale-95 transition-transform"
         >
           <ArrowLeft className="h-5 w-5" strokeWidth={2.2} />
         </button>
@@ -358,7 +486,7 @@ export default function DivindadesView({ onToggleMenu, onBack, onModalToggle }: 
         {/* Right absolute menu button */}
         <button
           onClick={onToggleMenu}
-          className="absolute right-6 top-12 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-[0_6px_20px_rgba(0,0,0,0.08),_0_2px_6px_rgba(0,0,0,0.04)] border border-zinc-100 text-zinc-800 active:scale-95 transition-transform"
+          className="absolute right-6 safe-top-12 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-[0_6px_20px_rgba(0,0,0,0.08),_0_2px_6px_rgba(0,0,0,0.04)] border border-zinc-100 text-zinc-800 active:scale-95 transition-transform"
         >
           <Menu className="h-5 w-5" strokeWidth={2.2} />
         </button>
@@ -367,58 +495,61 @@ export default function DivindadesView({ onToggleMenu, onBack, onModalToggle }: 
         <h1 className="text-4xl font-bold text-[#414141] font-behind-it tracking-wide">
           Divindades
         </h1>
-        
+
         {/* Centered Subtitle */}
         <p className="mt-3.5 text-xs font-semibold text-[#414141]/55 leading-relaxed max-w-[290px] mx-auto">
           Explore a história, saudações, mistérios e fundamentos dos Orixás que guiam nossos passos.
         </p>
       </div>
 
-      {/* Apple Arcade style vertical feed - Tarot Card Collectibles (with inner image frame and details on card bottom) */}
+      {/* Apple Arcade style vertical feed - Tarot Card Collectibles (with full-bleed image and details on card bottom) */}
       <div className="mt-8 px-6 pb-32 grid grid-cols-2 gap-4 relative z-10">
         {DIVINDADES.map((divindade) => (
           <motion.div
             key={divindade.id}
-            layoutId={`card-${divindade.id}`}
             onClick={() => handleOpenDetail(divindade)}
             whileTap={{ scale: 0.96 }}
-            transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
-            className="relative h-[295px] rounded-[22px] bg-[#FEF9ED] p-1.5 flex flex-col shadow-[0_12px_28px_rgba(65,65,65,0.07)] border border-white cursor-pointer group select-none"
+            whileHover={{ y: -5 }}
+            transition={{ type: "spring", stiffness: 350, damping: 20 }}
+            className="relative h-[310px] rounded-[24px] overflow-hidden flex flex-col border border-white/10 cursor-pointer group select-none transition-all duration-300"
+            style={{
+              boxShadow: `0 16px 32px ${divindade.corDestaque}28, 0 4px 12px rgba(0,0,0,0.06)`
+            }}
           >
-            {/* Image container inside the card frame */}
-            <div className="relative flex-1 w-full rounded-[15px] overflow-hidden">
-              <motion.img
-                layoutId={`image-${divindade.id}`}
+            {/* Full-bleed Image */}
+            <div className="absolute inset-0 w-full h-full">
+              <img
                 src={divindade.imagem}
                 alt={divindade.nome}
-                className="absolute inset-0 h-full w-full object-cover object-top filter brightness-[0.95] contrast-[1.02]"
+                className="h-full w-full object-cover object-top filter brightness-[0.93] contrast-[1.02] transition-transform duration-700 group-hover:scale-105"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = `https://via.placeholder.com/200x300?text=${divindade.nome}`;
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
-
-              {/* Soft tint indicator tab on left top */}
-              <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/35 backdrop-blur-md border border-white/20">
-                <div
-                  className="h-1.5 w-1.5 rounded-full shadow-sm"
-                  style={{ backgroundColor: divindade.cor }}
-                />
-                <span className="text-[7.5px] font-black uppercase tracking-wider text-white">
-                  {divindade.saudacao.split(' ')[0]}
-                </span>
-              </div>
+              {/* Softer Vignette Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent z-10" />
             </div>
 
-            {/* Details at the bottom frame of the card */}
-            <div className="pt-3 pb-1 text-center shrink-0">
-              <motion.h3
-                layoutId={`title-${divindade.id}`}
-                className="text-[19px] font-bold text-[#414141] leading-none font-behind-it"
-              >
+            {/* Soft glass greeting tag on top left */}
+            <div className="absolute top-3.5 left-3.5 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/45 backdrop-blur-md border border-white/20 shadow-sm">
+              <div
+                className="h-1.5 w-1.5 rounded-full animate-pulse shadow-sm"
+                style={{ backgroundColor: divindade.cor, boxShadow: `0 0 8px ${divindade.cor}` }}
+              />
+              <span className="text-[8px] font-black uppercase tracking-wider text-white">
+                {divindade.saudacao}
+              </span>
+            </div>
+
+            {/* Details at the bottom inside the card */}
+            <div className="mt-auto p-4 relative z-20 flex flex-col text-left">
+              <h3 className="text-2xl font-bold text-white leading-none font-behind-it drop-shadow-sm">
                 {divindade.nome}
-              </motion.h3>
-              <p className="text-[#1565c0]/65 text-[8.5px] font-black uppercase tracking-widest mt-1.5 truncate">
+              </h3>
+              <p
+                className="text-[9px] font-black uppercase tracking-widest mt-1.5 drop-shadow-sm"
+                style={{ color: divindade.cor === '#e0d8c3' ? '#FAF9F6' : divindade.cor }}
+              >
                 {divindade.titulo}
               </p>
             </div>
@@ -428,257 +559,319 @@ export default function DivindadesView({ onToggleMenu, onBack, onModalToggle }: 
 
       {/* Expanded Detail View (Shared Element Transition modal) */}
       <AnimatePresence>
-        {selectedDivindade && (
-          <div className="fixed inset-0 z-[100] flex justify-center items-end max-w-[430px] mx-auto">
-            {/* Smooth Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={handleCloseDetail}
-              className="absolute inset-0 bg-black/55 backdrop-blur-md"
-            />
+        {selectedDivindade && (() => {
+          const theme = getOrixaTheme(selectedDivindade.id);
+          return (
+            <div className="fixed inset-0 z-[100] flex justify-center items-end max-w-[430px] mx-auto">
+              {/* Smooth Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={handleCloseDetail}
+                className="absolute inset-0 bg-black/60 backdrop-blur-md"
+              />
 
-            {/* Expanding Card Body */}
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: "spring", damping: 30, stiffness: 280 }}
-              className="absolute top-[40px] inset-x-0 bottom-0 bg-[#FEF9ED] rounded-t-[40px] shadow-[0_-15px_40px_rgba(0,0,0,0.2)] flex flex-col overflow-hidden border-t border-black/5"
-            >
-              {/* iOS Drag bar */}
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-black/10 z-50" />
-
-              {/* Float Close Button */}
-              <div className="absolute top-5 right-5 z-50">
-                <button
-                  onClick={handleCloseDetail}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 backdrop-blur-md text-[#414141] shadow-md border border-black/5 active:scale-90 transition-transform"
-                >
-                  <X className="h-5 w-5" strokeWidth={2.2} />
-                </button>
-              </div>
-
-              {/* Swipeable details container wrapper */}
-              <div className="flex-1 relative overflow-hidden flex flex-col">
-                <AnimatePresence initial={false} custom={direction}>
-                  <motion.div
-                    key={selectedDivindade.id}
-                    custom={direction}
-                    variants={{
-                      enter: (dir: number) => ({
-                        x: dir > 0 ? 380 : dir < 0 ? -380 : 0,
-                        opacity: 0.1
-                      }),
-                      center: {
-                        x: 0,
-                        opacity: 1
-                      },
-                      exit: (dir: number) => ({
-                        x: dir < 0 ? 380 : dir > 0 ? -380 : 0,
-                        opacity: 0.1
-                      })
-                    }}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{ type: "spring", stiffness: 220, damping: 25 }}
-                    drag="x"
-                    dragConstraints={{ left: 0, right: 0 }}
-                    dragElastic={0.4}
-                    onDragEnd={(_, info) => {
-                      const threshold = 55;
-                      if (info.offset.x < -threshold) {
-                        // swipe left -> next Orixá
-                        setDirection(1);
-                        const idx = DIVINDADES.findIndex(d => d.id === selectedDivindade.id);
-                        const nextIdx = (idx + 1) % DIVINDADES.length;
-                        setSelectedDivindade(DIVINDADES[nextIdx]);
-                      } else if (info.offset.x > threshold) {
-                        // swipe right -> prev Orixá
-                        setDirection(-1);
-                        const idx = DIVINDADES.findIndex(d => d.id === selectedDivindade.id);
-                        const prevIdx = (idx - 1 + DIVINDADES.length) % DIVINDADES.length;
-                        setSelectedDivindade(DIVINDADES[prevIdx]);
-                      }
-                    }}
-                    className="absolute inset-0 flex flex-col overflow-y-auto no-scrollbar pb-32 select-none cursor-grab active:cursor-grabbing"
-                    style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
-                  >
-                    {/* Hero Header Image */}
-                    <div className="relative h-[420px] w-full overflow-hidden shrink-0">
-                      <motion.img
-                        layoutId={`image-${selectedDivindade.id}`}
-                        src={selectedDivindade.imagem}
-                        alt={selectedDivindade.nome}
-                        className="h-full w-full object-cover object-top filter brightness-[0.98] contrast-[1.01]"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = `https://via.placeholder.com/400x300?text=${selectedDivindade.nome}`;
-                        }}
-                      />
-                      <SparksEffect cor={selectedDivindade.corDestaque} />
-                      <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#FEF9ED] to-transparent" />
-                    </div>
-
-                    {/* Content with dynamic Orixá themed elements and staggered entrance animation */}
-                    <motion.div 
-                      initial="hidden"
-                      animate="visible"
+              {/* Expanding Card Body */}
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: "spring", damping: 30, stiffness: 280 }}
+                className="absolute top-[40px] inset-x-0 bottom-0 rounded-t-[40px] shadow-[0_-15px_40px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden border-t border-white/10"
+                style={{ background: `linear-gradient(to bottom, ${theme.bgGradientStart}, ${theme.bgGradientEnd})` }}
+              >
+                {/* Swipeable details container wrapper */}
+                <div className="flex-1 relative overflow-hidden flex flex-col">
+                  <AnimatePresence initial={false} custom={direction}>
+                    <motion.div
+                      key={selectedDivindade.id}
+                      custom={direction}
                       variants={{
-                        visible: { transition: { staggerChildren: 0.04, delayChildren: 0.1 } },
-                        hidden: {}
+                        enter: (dir: number) => ({
+                          x: dir > 0 ? 380 : dir < 0 ? -380 : 0,
+                          opacity: 0.1
+                        }),
+                        center: {
+                          x: 0,
+                          opacity: 1
+                        },
+                        exit: (dir: number) => ({
+                          x: dir < 0 ? 380 : dir > 0 ? -380 : 0,
+                          opacity: 0.1
+                        })
                       }}
-                      className="px-6 -mt-10 relative z-10"
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      transition={{ type: "spring", stiffness: 220, damping: 25 }}
+                      drag="x"
+                      dragConstraints={{ left: 0, right: 0 }}
+                      dragElastic={0.4}
+                      onDragEnd={(_, info) => {
+                        const threshold = 55;
+                        if (info.offset.x < -threshold) {
+                          // swipe left -> next Orixá
+                          setDirection(1);
+                          setImageIdx(0);
+                          const idx = DIVINDADES.findIndex(d => d.id === selectedDivindade.id);
+                          const nextIdx = (idx + 1) % DIVINDADES.length;
+                          setSelectedDivindade(DIVINDADES[nextIdx]);
+                        } else if (info.offset.x > threshold) {
+                          // swipe right -> prev Orixá
+                          setDirection(-1);
+                          setImageIdx(0);
+                          const idx = DIVINDADES.findIndex(d => d.id === selectedDivindade.id);
+                          const prevIdx = (idx - 1 + DIVINDADES.length) % DIVINDADES.length;
+                          setSelectedDivindade(DIVINDADES[prevIdx]);
+                        }
+                      }}
+                      className="absolute inset-0 flex flex-col overflow-y-auto no-scrollbar pb-32 select-none cursor-grab active:cursor-grabbing"
+                      style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
                     >
-                      <motion.div variants={itemVariants} className="flex items-center gap-2 mb-3">
-                        <div
-                          className="h-2.5 w-10 rounded-full shadow-sm"
-                          style={{ backgroundColor: selectedDivindade.corDestaque }}
-                        />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-[#414141]/50">
-                          Orixá Regente
-                        </span>
+                      {/* Floating Hero Card Header (Detached from borders, larger, rounded-[32px]) */}
+                      {(() => {
+                        const slideshowImages = selectedDivindade.slideshowImagens || [selectedDivindade.imagem];
+                        const currentImage = slideshowImages[imageIdx] || selectedDivindade.imagem;
+                        return (
+                          <div className="relative h-[500px] mx-4 mt-5 overflow-hidden shrink-0 select-none bg-black/10 rounded-[32px] shadow-[0_16px_40px_rgba(0,0,0,0.18)] border border-white/20">
+                            <AnimatePresence mode="popLayout">
+                              <motion.img
+                                key={currentImage}
+                                src={currentImage}
+                                initial={{ opacity: 0, scale: 1.03 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.97 }}
+                                transition={{ duration: 1.0, ease: "easeInOut" }}
+                                className="absolute inset-0 h-full w-full object-cover object-top filter brightness-[0.85] contrast-[1.01]"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = `https://via.placeholder.com/400x300?text=${selectedDivindade.nome}`;
+                                }}
+                              />
+                            </AnimatePresence>
+
+                            <SparksEffect cor={theme.accentColor} />
+
+                            {/* Close Button Inside Card */}
+                            <div className="absolute top-4 right-4 z-50">
+                              <button
+                                onClick={handleCloseDetail}
+                                className="flex h-9 w-9 items-center justify-center rounded-full bg-black/35 backdrop-blur-md text-white border border-white/10 active:scale-90 transition-all hover:bg-black/50"
+                              >
+                                <X className="h-4.5 w-4.5" strokeWidth={2.5} />
+                              </button>
+                            </div>
+
+                            {/* Solid Dark Text Contrast Vignette */}
+                            <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/70 via-black/15 to-transparent z-10 pointer-events-none" />
+
+                            {/* Cinematic Overlay Text with Anchor left-border */}
+                            <div 
+                              className="absolute bottom-8 left-6 z-20 flex flex-col text-left border-l-[3px] pl-3.5"
+                              style={{ borderColor: theme.accentColor }}
+                            >
+                              <motion.div 
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="flex flex-col text-left"
+                              >
+                                <span 
+                                  className="text-[10px] font-black uppercase tracking-[0.25em] drop-shadow-md leading-none mb-1"
+                                  style={{ color: '#FFFFFF' }}
+                                >
+                                  {selectedDivindade.titulo}
+                                </span>
+                              </motion.div>
+
+                              <motion.h2
+                                initial={{ opacity: 0, y: 15 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="text-5xl font-bold leading-none font-behind-it drop-shadow-2xl"
+                                style={{
+                                  backgroundImage: `linear-gradient(to bottom, #FFFFFF 50%, color-mix(in srgb, ${theme.accentColor} 35%, #FFFFFF) 100%)`,
+                                  WebkitBackgroundClip: 'text',
+                                  WebkitTextFillColor: 'transparent',
+                                  backgroundClip: 'text'
+                                }}
+                              >
+                                {selectedDivindade.nome}
+                              </motion.h2>
+                              
+                              <motion.p 
+                                initial={{ opacity: 0, y: 15 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="text-[15px] font-black tracking-wide italic mt-2.5 font-serif"
+                                style={{ 
+                                  color: '#FFFFFF',
+                                  textShadow: `0 2px 10px rgba(0,0,0,0.5), 0 0 14px ${theme.accentColor}70`
+                                }}
+                              >
+                                "{selectedDivindade.saudacao}"
+                              </motion.p>
+                            </div>
+
+                            {/* Manual slide indicators (Left/Right Chevrons grouped in bottom-right corner) */}
+                            {slideshowImages.length > 1 && (
+                              <div className="absolute bottom-8 right-6 z-30 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/10 shadow-lg">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setImageIdx((prev) => (prev - 1 + slideshowImages.length) % slideshowImages.length);
+                                  }}
+                                  className="flex h-7.5 w-7.5 items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/10 active:scale-90 transition-all select-none"
+                                >
+                                  <ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.5} />
+                                </button>
+                                <div className="h-3 w-[1px] bg-white/25" />
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setImageIdx((prev) => (prev + 1) % slideshowImages.length);
+                                  }}
+                                  className="flex h-7.5 w-7.5 items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/10 active:scale-90 transition-all select-none"
+                                >
+                                  <ChevronRight className="h-4.5 w-4.5" strokeWidth={2.5} />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+
+                      {/* Content with dynamic Orixá themed elements and staggered entrance animation */}
+                      <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        variants={{
+                          visible: { transition: { staggerChildren: 0.04, delayChildren: 0.1 } },
+                          hidden: {}
+                        }}
+                        className="px-6 relative z-10 pt-6"
+                      >
+
+                        {/* Bento Grid layout for details (Apple/Airbnb grid strategy themed dynamically with icons) */}
+                        <div className="grid grid-cols-2 gap-4 mt-8">
+                          {/* Elemento */}
+                          <motion.div
+                            variants={itemVariants}
+                            className="p-5 rounded-[24px] border flex flex-col gap-2.5 justify-between backdrop-blur-md"
+                            style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <span className="p-1 rounded-md" style={{ backgroundColor: theme.iconBg, color: theme.accentColor }}>
+                                {getElementIcon(selectedDivindade.id)}
+                              </span>
+                              <span className={`text-[8px] font-black uppercase tracking-widest ${theme.isDark ? 'text-white/40' : 'text-[#414141]/50'}`}>Elemento</span>
+                            </div>
+                            <span className={`text-sm font-bold block leading-tight ${theme.isDark ? 'text-white' : 'text-[#414141]'}`}>{selectedDivindade.elemento}</span>
+                          </motion.div>
+
+                          {/* Dia da Semana */}
+                          <motion.div
+                            variants={itemVariants}
+                            className="p-5 rounded-[24px] border flex flex-col gap-2.5 justify-between backdrop-blur-md"
+                            style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <span className="p-1 rounded-md" style={{ backgroundColor: theme.iconBg, color: theme.accentColor }}>
+                                <Calendar className="h-4 w-4" />
+                              </span>
+                              <span className={`text-[8px] font-black uppercase tracking-widest ${theme.isDark ? 'text-white/40' : 'text-[#414141]/50'}`}>Dia da Semana</span>
+                            </div>
+                            <span className={`text-sm font-bold block leading-tight ${theme.isDark ? 'text-white' : 'text-[#414141]'}`}>{selectedDivindade.diaSemana}</span>
+                          </motion.div>
+
+                          {/* Cores */}
+                          <motion.div
+                            variants={itemVariants}
+                            className="p-5 rounded-[24px] border col-span-2 flex flex-col gap-2.5 backdrop-blur-md"
+                            style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <span className="p-1 rounded-md" style={{ backgroundColor: theme.iconBg, color: theme.accentColor }}>
+                                <Palette className="h-4 w-4" />
+                              </span>
+                              <span className={`text-[8px] font-black uppercase tracking-widest ${theme.isDark ? 'text-white/40' : 'text-[#414141]/50'}`}>Cores da Guia</span>
+                            </div>
+                            <span className={`text-sm font-bold block leading-tight ${theme.isDark ? 'text-white' : 'text-[#414141]'}`}>{selectedDivindade.cores}</span>
+                          </motion.div>
+
+                          {/* Símbolo */}
+                          <motion.div
+                            variants={itemVariants}
+                            className="p-5 rounded-[24px] border col-span-2 flex flex-col gap-2.5 backdrop-blur-md"
+                            style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <span className="p-1 rounded-md" style={{ backgroundColor: theme.iconBg, color: theme.accentColor }}>
+                                <Sparkle className="h-4 w-4" />
+                              </span>
+                              <span className={`text-[8px] font-black uppercase tracking-widest ${theme.isDark ? 'text-white/40' : 'text-[#414141]/50'}`}>Símbolo Sagrado</span>
+                            </div>
+                            <span className={`text-sm font-bold block leading-tight ${theme.isDark ? 'text-white' : 'text-[#414141]'}`}>{selectedDivindade.simbolo}</span>
+                          </motion.div>
+
+                          {/* Sincretismo */}
+                          <motion.div
+                            variants={itemVariants}
+                            className="p-5 rounded-[24px] border col-span-2 flex flex-col gap-2.5 backdrop-blur-md"
+                            style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <span className="p-1 rounded-md" style={{ backgroundColor: theme.iconBg, color: theme.accentColor }}>
+                                <Heart className="h-4 w-4" />
+                              </span>
+                              <span className={`text-[8px] font-black uppercase tracking-widest ${theme.isDark ? 'text-white/40' : 'text-[#414141]/50'}`}>Sincretismo Católico</span>
+                            </div>
+                            <span className={`text-sm font-bold block leading-tight ${theme.isDark ? 'text-white' : 'text-[#414141]'}`}>{selectedDivindade.sincretismo}</span>
+                          </motion.div>
+
+                          {/* História / Fundamento (Large full span text) */}
+                          <motion.div
+                            variants={itemVariants}
+                            className="col-span-2 p-6 rounded-[28px] border mt-2 relative overflow-hidden backdrop-blur-md"
+                            style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
+                          >
+                            <div className="absolute left-0 top-6 bottom-6 w-1 rounded-full" style={{ backgroundColor: theme.accentColor }} />
+                            <h3 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 mb-3" style={{ color: theme.accentColor }}>
+                              <BookOpen className="h-4 w-4" style={{ color: theme.accentColor }} />
+                              <span>História & Fundamentos</span>
+                            </h3>
+                            <p className={`text-xs leading-relaxed font-medium whitespace-pre-line ${theme.isDark ? 'text-white/80' : 'text-[#414141]/85'}`}>
+                              {selectedDivindade.historia}
+                            </p>
+                          </motion.div>
+
+                          {/* YouTube Video Player Embed */}
+                          <motion.div
+                            variants={itemVariants}
+                            className="col-span-2 p-5 rounded-[28px] border mt-4 relative overflow-hidden flex flex-col gap-3 backdrop-blur-md"
+                            style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
+                          >
+                            <h3 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5" style={{ color: theme.accentColor }}>
+                              <Youtube className="h-4 w-4" style={{ color: theme.accentColor }} />
+                              <span>Conheça a História em Vídeo</span>
+                            </h3>
+                            <div className="relative w-full rounded-[18px] overflow-hidden aspect-video shadow-lg border border-black/10 bg-black">
+                              <iframe
+                                src={`https://www.youtube.com/embed/${selectedDivindade.youtubeId}`}
+                                title={`História de ${selectedDivindade.nome}`}
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowFullScreen
+                                className="absolute inset-0 w-full h-full"
+                              />
+                            </div>
+                          </motion.div>
+                        </div>
                       </motion.div>
-
-                      <motion.h2
-                        variants={itemVariants}
-                        layoutId={`title-${selectedDivindade.id}`}
-                        className="text-5xl font-bold text-[#414141] leading-none font-behind-it"
-                      >
-                        {selectedDivindade.nome}
-                      </motion.h2>
-                      
-                      <motion.p 
-                        variants={itemVariants}
-                        className="text-sm font-bold uppercase tracking-wider mt-2.5 italic"
-                        style={{ color: selectedDivindade.corDestaque }}
-                      >
-                        "{selectedDivindade.saudacao}"
-                      </motion.p>
-
-                      {/* Bento Grid layout for details (Apple/Airbnb grid strategy themed dynamically with icons) */}
-                      <div className="grid grid-cols-2 gap-4 mt-8">
-                        {/* Elemento */}
-                        <motion.div 
-                          variants={itemVariants}
-                          className="p-5 rounded-[24px] border flex flex-col gap-2.5 justify-between"
-                          style={{ backgroundColor: `${selectedDivindade.cor}12`, borderColor: `${selectedDivindade.corDestaque}28` }}
-                        >
-                          <div className="flex items-center gap-1.5">
-                            <span className="p-1 rounded-md" style={{ backgroundColor: `${selectedDivindade.corDestaque}18`, color: selectedDivindade.corDestaque }}>
-                              {getElementIcon(selectedDivindade.id)}
-                            </span>
-                            <span className="text-[8px] font-black uppercase tracking-widest text-[#414141]/50">Elemento</span>
-                          </div>
-                          <span className="text-sm font-bold text-[#414141] block leading-tight">{selectedDivindade.elemento}</span>
-                        </motion.div>
-
-                        {/* Dia da Semana */}
-                        <motion.div 
-                          variants={itemVariants}
-                          className="p-5 rounded-[24px] border flex flex-col gap-2.5 justify-between"
-                          style={{ backgroundColor: `${selectedDivindade.cor}12`, borderColor: `${selectedDivindade.corDestaque}28` }}
-                        >
-                          <div className="flex items-center gap-1.5">
-                            <span className="p-1 rounded-md" style={{ backgroundColor: `${selectedDivindade.corDestaque}18`, color: selectedDivindade.corDestaque }}>
-                              <Calendar className="h-4 w-4" />
-                            </span>
-                            <span className="text-[8px] font-black uppercase tracking-widest text-[#414141]/50">Dia da Semana</span>
-                          </div>
-                          <span className="text-sm font-bold text-[#414141] block leading-tight">{selectedDivindade.diaSemana}</span>
-                        </motion.div>
-
-                        {/* Cores */}
-                        <motion.div 
-                          variants={itemVariants}
-                          className="p-5 rounded-[24px] border col-span-2 flex flex-col gap-2.5"
-                          style={{ backgroundColor: `${selectedDivindade.cor}12`, borderColor: `${selectedDivindade.corDestaque}28` }}
-                        >
-                          <div className="flex items-center gap-1.5">
-                            <span className="p-1 rounded-md" style={{ backgroundColor: `${selectedDivindade.corDestaque}18`, color: selectedDivindade.corDestaque }}>
-                              <Palette className="h-4 w-4" />
-                            </span>
-                            <span className="text-[8px] font-black uppercase tracking-widest text-[#414141]/50">Cores da Guia</span>
-                          </div>
-                          <span className="text-sm font-bold text-[#414141] block leading-tight">{selectedDivindade.cores}</span>
-                        </motion.div>
-
-                        {/* Símbolo */}
-                        <motion.div 
-                          variants={itemVariants}
-                          className="p-5 rounded-[24px] border col-span-2 flex flex-col gap-2.5"
-                          style={{ backgroundColor: `${selectedDivindade.cor}12`, borderColor: `${selectedDivindade.corDestaque}28` }}
-                        >
-                          <div className="flex items-center gap-1.5">
-                            <span className="p-1 rounded-md" style={{ backgroundColor: `${selectedDivindade.corDestaque}18`, color: selectedDivindade.corDestaque }}>
-                              <Sparkle className="h-4 w-4" />
-                            </span>
-                            <span className="text-[8px] font-black uppercase tracking-widest text-[#414141]/50">Símbolo Sagrado</span>
-                          </div>
-                          <span className="text-sm font-bold text-[#414141] block leading-tight">{selectedDivindade.simbolo}</span>
-                        </motion.div>
-
-                        {/* Sincretismo */}
-                        <motion.div 
-                          variants={itemVariants}
-                          className="p-5 rounded-[24px] border col-span-2 flex flex-col gap-2.5"
-                          style={{ backgroundColor: `${selectedDivindade.corDestaque}12`, borderColor: `${selectedDivindade.corDestaque}35` }}
-                        >
-                          <div className="flex items-center gap-1.5">
-                            <span className="p-1 rounded-md" style={{ backgroundColor: `${selectedDivindade.corDestaque}22`, color: selectedDivindade.corDestaque }}>
-                              <Heart className="h-4 w-4" />
-                            </span>
-                            <span className="text-[8px] font-black uppercase tracking-widest text-[#414141]/50" style={{ color: selectedDivindade.corDestaque }}>Sincretismo Católico</span>
-                          </div>
-                          <span className="text-sm font-bold block leading-tight" style={{ color: selectedDivindade.corDestaque }}>{selectedDivindade.sincretismo}</span>
-                        </motion.div>
-
-                        {/* História / Fundamento (Large full span text) */}
-                        <motion.div 
-                          variants={itemVariants}
-                          className="col-span-2 p-6 rounded-[28px] border mt-2 relative overflow-hidden"
-                          style={{ backgroundColor: `${selectedDivindade.corDestaque}08`, borderColor: `${selectedDivindade.corDestaque}1E` }}
-                        >
-                          <div className="absolute left-0 top-6 bottom-6 w-1 rounded-full" style={{ backgroundColor: selectedDivindade.corDestaque }} />
-                          <h3 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 mb-3" style={{ color: selectedDivindade.corDestaque }}>
-                            <BookOpen className="h-4 w-4" style={{ color: selectedDivindade.corDestaque }} />
-                            <span>História & Fundamentos</span>
-                          </h3>
-                          <p className="text-xs leading-relaxed text-[#414141]/85 font-medium whitespace-pre-line">
-                            {selectedDivindade.historia}
-                          </p>
-                        </motion.div>
-
-                        {/* YouTube Video Player Embed */}
-                        <motion.div 
-                          variants={itemVariants}
-                          className="col-span-2 p-5 rounded-[28px] border mt-4 relative overflow-hidden flex flex-col gap-3"
-                          style={{ backgroundColor: `${selectedDivindade.corDestaque}08`, borderColor: `${selectedDivindade.corDestaque}1E` }}
-                        >
-                          <h3 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5" style={{ color: selectedDivindade.corDestaque }}>
-                            <Youtube className="h-4 w-4" style={{ color: selectedDivindade.corDestaque }} />
-                            <span>Conheça a História em Vídeo</span>
-                          </h3>
-                          <div className="relative w-full rounded-[18px] overflow-hidden aspect-video shadow-sm border border-black/5 bg-black">
-                            <iframe
-                              src={`https://www.youtube.com/embed/${selectedDivindade.youtubeId}`}
-                              title={`História de ${selectedDivindade.nome}`}
-                              frameBorder="0"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                              allowFullScreen
-                              className="absolute inset-0 w-full h-full"
-                            />
-                          </div>
-                        </motion.div>
-                      </div>
                     </motion.div>
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            </motion.div>
-          </div>
-        )}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            </div>
+          );
+        })()}
       </AnimatePresence>
     </div>
   );

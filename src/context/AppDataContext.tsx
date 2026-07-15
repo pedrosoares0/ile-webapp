@@ -1,7 +1,9 @@
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './AuthContext';
-import { AccessAccount, AppUser, Ponto, Terreiro, TerreiroEvent, Notice } from '../types';
+import { AccessAccount, AppUser, Ponto, Terreiro, TerreiroEvent, Notice, PrayerRequest } from '../types';
 import { supabase } from '../lib/supabase';
+import { parseLocalDate, formatDateYYYYMMDD } from '../lib/date';
+
 
 interface AppDataContextValue {
   terreiros: Terreiro[];
@@ -27,6 +29,9 @@ interface AppDataContextValue {
   deletePonto: (pontoId: string) => Promise<void>;
   saveNotice: (notice: Notice) => Promise<void>;
   deleteNotice: (noticeId: string) => Promise<void>;
+  prayers: PrayerRequest[];
+  savePrayer: (prayer: PrayerRequest) => Promise<void>;
+  answerPrayer: (prayerId: string) => Promise<void>;
 }
 
 const AppDataContext = createContext<AppDataContextValue | undefined>(undefined);
@@ -50,6 +55,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<TerreiroEvent[]>([]);
   const [pontos, setPontos] = useState<Ponto[]>([]);
   const [notices, setNotices] = useState<Notice[]>([]);
+  const [prayers, setPrayers] = useState<PrayerRequest[]>([]);
   const [currentAccount, setCurrentAccount] = useState<AccessAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -65,6 +71,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setUsers([]);
       setEvents([]);
       setPontos([]);
+      setNotices([]);
+      setPrayers([]);
       setIsLoading(false);
       return;
     }
@@ -194,7 +202,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         setEvents(
           eventsData.map((e) => ({
             id: e.id,
-            date: new Date(e.date + 'T12:00:00'), // prevent local timezone shift
+            date: parseLocalDate(e.date + 'T12:00:00'), // prevent local timezone shift
             title: e.title,
             time: e.time || '',
             location: e.location || '',
@@ -257,6 +265,45 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             terreiroId: n.terreiro_id,
           }))
         );
+
+        // 8. Fetch Prayer Requests
+        let prayersData: any[] = [];
+        if (isGlobalAdminUser || isHubUser) {
+          const { data } = await supabase.from('prayer_requests').select('*').order('created_at', { ascending: false });
+          prayersData = data || [];
+        } else if (scopedTerreiroId) {
+          if (mappedAccount.role === 'terreiro_admin') {
+            // Pai (Admin/Dirigente): sees all prayer requests from the terreiro
+            const { data } = await supabase
+              .from('prayer_requests')
+              .select('*')
+              .eq('terreiro_id', scopedTerreiroId)
+              .order('created_at', { ascending: false });
+            prayersData = data || [];
+          } else {
+            // Filho (Membro): sees only their own prayer requests
+            const { data } = await supabase
+              .from('prayer_requests')
+              .select('*')
+              .eq('terreiro_id', scopedTerreiroId)
+              .eq('account_id', mappedAccount.id)
+              .order('created_at', { ascending: false });
+            prayersData = data || [];
+          }
+        }
+        setPrayers(
+          prayersData.map((p) => ({
+            id: p.id,
+            name: p.name,
+            type: p.type,
+            content: p.content,
+            answered: p.answered,
+            answeredAt: p.answered_at,
+            accountId: p.account_id,
+            terreiroId: p.terreiro_id,
+            createdAt: p.created_at,
+          }))
+        );
       } catch (err) {
         console.error('Error loading data:', err);
       } finally {
@@ -275,6 +322,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       events,
       pontos,
       notices,
+      prayers,
       currentAccount,
       isGlobalAdmin,
       isTerreiroAdmin,
@@ -356,7 +404,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       saveEvent: async (event) => {
         const { error } = await supabase.from('events').upsert({
           id: event.id,
-          date: event.date.toISOString().split('T')[0],
+          date: formatDateYYYYMMDD(event.date),
           title: event.title,
           time: event.time,
           location: event.location,
@@ -420,8 +468,42 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           setNotices((prev) => prev.filter((n) => n.id !== noticeId));
         }
       },
+ 
+      savePrayer: async (prayer) => {
+        const { error } = await supabase.from('prayer_requests').upsert({
+          id: prayer.id,
+          name: prayer.name,
+          type: prayer.type,
+          content: prayer.content,
+          answered: prayer.answered,
+          answered_at: prayer.answeredAt,
+          account_id: prayer.accountId,
+          terreiro_id: prayer.terreiroId,
+          created_at: prayer.createdAt,
+        });
+        if (!error) {
+          setPrayers((prev) => upsertById(prev, prayer).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+        }
+      },
+
+      answerPrayer: async (prayerId) => {
+        const answeredAt = new Date().toISOString();
+        const { error } = await supabase
+          .from('prayer_requests')
+          .update({
+            answered: true,
+            answered_at: answeredAt,
+          })
+          .eq('id', prayerId);
+        
+        if (!error) {
+          setPrayers((prev) => 
+            prev.map(p => p.id === prayerId ? { ...p, answered: true, answeredAt } : p)
+          );
+        }
+      },
     };
-  }, [terreiros, accounts, users, events, pontos, notices, currentAccount, isGlobalAdmin, isTerreiroAdmin, canAccessCadastros, isLoading]);
+  }, [terreiros, accounts, users, events, pontos, notices, prayers, currentAccount, isGlobalAdmin, isTerreiroAdmin, canAccessCadastros, isLoading]);
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
 }

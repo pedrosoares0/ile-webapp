@@ -5,6 +5,8 @@ import { Clock, MapPin, Plus, CalendarDays, X, Menu, AlertCircle, ArrowLeft, Tra
 import '../styles/Calendar.css';
 import { TerreiroEvent } from '../types';
 import { useAppData } from '../context/AppDataContext';
+import { formatDateYYYYMMDD, parseLocalDate } from '../lib/date';
+
 
 // Definition of Preset Styles mapping to the cards design
 interface PresetStyle {
@@ -239,10 +241,10 @@ export default function EventsView({ onToggleMenu, onBack }: { onToggleMenu: () 
 
   const tileContent = ({ date, view }: { date: Date; view: string }) => {
     if (view === 'month') {
-      const formattedDate = date.toISOString().split('T')[0];
+      const formattedDate = formatDateYYYYMMDD(date);
       const hasEvents = events.some(e => {
         const matchTerreiro = !currentAccount || e.terreiroId === currentAccount.terreiroId;
-        const eDateStr = new Date(e.date).toISOString().split('T')[0];
+        const eDateStr = formatDateYYYYMMDD(e.date);
         return matchTerreiro && eDateStr === formattedDate;
       });
       return hasEvents ? (
@@ -254,13 +256,13 @@ export default function EventsView({ onToggleMenu, onBack }: { onToggleMenu: () 
     return null;
   };
 
-  const selectedDateString = selectedDate.toISOString().split('T')[0];
+  const selectedDateString = formatDateYYYYMMDD(selectedDate);
 
   const selectedDayEvents = useMemo(() => {
     return events
       .filter(e => {
         const matchTerreiro = !currentAccount || e.terreiroId === currentAccount.terreiroId;
-        const eDateStr = new Date(e.date).toISOString().split('T')[0];
+        const eDateStr = formatDateYYYYMMDD(e.date);
         return matchTerreiro && eDateStr === selectedDateString;
       })
       .sort((a, b) => a.time.localeCompare(b.time));
@@ -285,7 +287,7 @@ export default function EventsView({ onToggleMenu, onBack }: { onToggleMenu: () 
       type: activePreset.id, // Save active styling key here
       category: formCategory === 'Nenhum' ? '' : formCategory,
       description: formDescription,
-      date: new Date(`${selectedDateString}T00:00:00`),
+      date: parseLocalDate(selectedDateString),
       terreiroId: currentAccount?.terreiroId ? String(currentAccount.terreiroId) : 'terreiro_t7ca',
       createdAt: new Date().toISOString()
     };
@@ -334,7 +336,7 @@ export default function EventsView({ onToggleMenu, onBack }: { onToggleMenu: () 
   };
 
   return (
-    <div className="min-h-screen bg-white px-6 pt-12 pb-32 relative">
+    <div className="min-h-[100dvh] bg-white px-6 safe-pt-view pb-32 relative">
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
@@ -411,7 +413,7 @@ export default function EventsView({ onToggleMenu, onBack }: { onToggleMenu: () 
                   const style = getEventPresetStyle(event.type, event.title);
                   
                   // Split month and day from event.date
-                  const eDate = new Date(event.date);
+                  const eDate = parseLocalDate(event.date);
                   const monthName = eDate.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '').toUpperCase();
                   const dayNum = eDate.toLocaleDateString('pt-BR', { day: 'numeric' });
 
@@ -900,7 +902,7 @@ export default function EventsView({ onToggleMenu, onBack }: { onToggleMenu: () 
                 <p className="mt-2 text-xs leading-relaxed text-[#414141]/65 font-medium px-1">
                   Deseja agendar o evento <strong className="text-[#1565c0] font-bold">"{pendingEvent.title}"</strong> para o dia{' '}
                   <strong className="font-bold">
-                    {new Date(pendingEvent.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}
+                    {parseLocalDate(pendingEvent.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}
                   </strong>{' '}
                   às <strong className="font-bold">{pendingEvent.time}</strong> em <strong className="font-bold">{pendingEvent.location}</strong>?
                 </p>

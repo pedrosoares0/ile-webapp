@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import HomeView from './views/HomeView'
 import EventsView from './views/EventsView'
 import DivindadesView from './views/DivindadesView'
@@ -23,7 +23,7 @@ export default function App() {
   const { currentAccount, isLoading } = useAppData()
 
   const isHubUser = currentAccount?.role === 'terreiro_user' && !currentAccount?.terreiroId;
-  const showNavbar = isAuthenticated && !isHubUser && currentView !== 'pontos' && !hideNavbar;
+  const showNavbar = isAuthenticated && !isHubUser && !hideNavbar;
 
   // Reset navbar hidden state when view changes
   useEffect(() => {
@@ -58,7 +58,7 @@ export default function App() {
 
   return (
     <div className={`mx-auto max-w-[430px] bg-[#FFFFFF] relative shadow-2xl overflow-x-hidden font-inter text-[#414141] transition-all duration-300 ${
-      currentView === 'home' ? 'h-[100dvh] overflow-hidden' : 'min-h-screen pb-0'
+      currentView === 'home' ? 'h-[100dvh] overflow-hidden' : 'min-h-[100dvh] pb-0'
     }`}>
       <BurgerMenu 
         isOpen={isMenuOpen} 
@@ -71,9 +71,8 @@ export default function App() {
       <motion.div 
         animate={isMenuOpen ? { filter: 'blur(8px)', scale: 0.98 } : { filter: 'blur(0px)', scale: 1 }}
         transition={{ duration: 0.3 }}
-        className={`w-full flex flex-col ${currentView === 'home' ? 'h-full' : 'min-h-screen'}`}
+        className={`w-full flex flex-col ${currentView === 'home' ? 'h-full' : 'min-h-[100dvh]'}`}
       >
-        <AnimatePresence mode="wait">
           {currentView === 'home' ? (
             isHubUser ? (
               <HubView key="hub" onToggleMenu={() => setIsMenuOpen(true)} />
@@ -122,7 +121,6 @@ export default function App() {
               </button>
             </motion.div>
           )}
-        </AnimatePresence>
       </motion.div>
 
       {showNavbar && (

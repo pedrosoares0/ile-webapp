@@ -66,7 +66,7 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
 
   const isGlobalAdmin = currentAccount?.email === 'admin@ile.app';
   const isHubUser = currentAccount?.role === 'terreiro_user' && !currentAccount?.terreiroId;
-  const logoSrc = (isGlobalAdmin || isHubUser) ? '/img/login/icone.webp' : '/img/logo-T7CA.png';
+  const logoSrc = (isGlobalAdmin || isHubUser) ? '/img/login/icone.webp' : '/img/logo-T7CA.webp';
 
   const filteredMenuItems = MENU_ITEMS.filter(item => {
     if (isHubUser) {

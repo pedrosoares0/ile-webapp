@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Ponto, PontoCategory, PONTO_CATEGORIES } from '../types';
 import { useAppData } from '../context/AppDataContext';
+import { parseLocalDate } from '../lib/date';
 
 // Helper to extract YouTube video ID
 function getYoutubeId(url: string) {
@@ -180,7 +181,7 @@ export default function PontosView({ onBack, onToggleMenu }: { onBack: () => voi
       await deletePonto(pontoId);
     }
   };  return (
-    <div className="min-h-screen bg-white px-6 pt-12 pb-8 relative overflow-x-hidden z-10">
+    <div className="min-h-[100dvh] bg-white px-6 safe-pt-view pb-8 relative overflow-x-hidden z-10">
       
       {/* Aurora Backdrop Effect at top */}
       <div 
@@ -422,7 +423,7 @@ export default function PontosView({ onBack, onToggleMenu }: { onBack: () => voi
                       </p>
                       {ponto.createdAt && (
                         <p className="text-[10px] text-zinc-300 font-medium mt-1">
-                          {new Date(ponto.createdAt).toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          {parseLocalDate(ponto.createdAt).toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </p>
                       )}
                     </div>
