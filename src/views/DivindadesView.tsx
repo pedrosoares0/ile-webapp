@@ -162,7 +162,7 @@ const DIVINDADES: Divindade[] = [
     youtubeId: 'kHlDk-N1M5E',
     slideshowImagens: [
       '/img/divindades/oxossi.jpg',
-      'https://i.pinimg.com/736x/b4/a6/f1/b4a6f15198b448e95092f57e0f5f858f.jpg',
+      'https://i.pinimg.com/1200x/4e/bd/a9/4ebda944168ba0d243bb8399f0c7fba5.jpg',
       'https://i.pinimg.com/1200x/2e/c8/e6/2ec8e6d609f8281a3b3c5af4ba835e67.jpg'
     ]
   },
@@ -666,16 +666,16 @@ export default function DivindadesView({ onToggleMenu, onBack, onModalToggle }: 
                             <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/70 via-black/15 to-transparent z-10 pointer-events-none" />
 
                             {/* Cinematic Overlay Text with Anchor left-border */}
-                            <div 
+                            <div
                               className="absolute bottom-8 left-6 z-20 flex flex-col text-left border-l-[3px] pl-3.5"
                               style={{ borderColor: theme.accentColor }}
                             >
-                              <motion.div 
+                              <motion.div
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 className="flex flex-col text-left"
                               >
-                                <span 
+                                <span
                                   className="text-[10px] font-black uppercase tracking-[0.25em] drop-shadow-md leading-none mb-1"
                                   style={{ color: '#FFFFFF' }}
                                 >
@@ -696,12 +696,12 @@ export default function DivindadesView({ onToggleMenu, onBack, onModalToggle }: 
                               >
                                 {selectedDivindade.nome}
                               </motion.h2>
-                              
-                              <motion.p 
+
+                              <motion.p
                                 initial={{ opacity: 0, y: 15 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 className="text-[15px] font-black tracking-wide italic mt-2.5 font-serif"
-                                style={{ 
+                                style={{
                                   color: '#FFFFFF',
                                   textShadow: `0 2px 10px rgba(0,0,0,0.5), 0 0 14px ${theme.accentColor}70`
                                 }}
