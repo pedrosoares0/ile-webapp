@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   Trash2,
   Users,
-  ChevronLeft,
+  ArrowLeft,
 } from 'lucide-react';
 import EmptyStateCard from '../components/EmptyStateCard';
 import SheetModal from '../components/SheetModal';
@@ -492,9 +492,9 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
       <div className="mb-6 flex items-center">
         <button 
           onClick={onBack}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm border border-black/[0.03] text-[#414141] active:scale-95 transition-transform"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-[0_6px_20px_rgba(0,0,0,0.08),_0_2px_6px_rgba(0,0,0,0.04)] border border-zinc-100 text-zinc-800 active:scale-95 transition-transform"
         >
-          <ChevronLeft className="h-5 w-5" strokeWidth={2.5} />
+          <ArrowLeft className="h-5 w-5" strokeWidth={2.2} />
         </button>
       </div>
 

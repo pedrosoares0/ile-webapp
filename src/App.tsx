@@ -10,6 +10,7 @@ import PontosView from './views/PontosView'
 import OracaoView from './views/OracaoView'
 import AvisosView from './views/AvisosView'
 import BurgerMenu from './components/BurgerMenu'
+import LiquidNavbar from './components/LiquidNavbar'
 import { ViewType } from './types'
 import { useAuth } from './context/AuthContext'
 import { useAppData } from './context/AppDataContext'
@@ -17,10 +18,17 @@ import { useAppData } from './context/AppDataContext'
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewType>('home')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [hideNavbar, setHideNavbar] = useState(false)
   const { isAuthenticated, logout } = useAuth()
   const { currentAccount, isLoading } = useAppData()
 
   const isHubUser = currentAccount?.role === 'terreiro_user' && !currentAccount?.terreiroId;
+  const showNavbar = isAuthenticated && !isHubUser && currentView !== 'pontos' && !hideNavbar;
+
+  // Reset navbar hidden state when view changes
+  useEffect(() => {
+    setHideNavbar(false)
+  }, [currentView])
 
   // Ensure user is logged out if account data is missing (safety check from feat branch)
   // Uses a timeout to avoid race conditions between AuthContext and AppDataContext
@@ -83,11 +91,16 @@ export default function App() {
           ) : currentView === 'cadastros' ? (
             <CadastrosView key="cadastros" onBack={() => setCurrentView('home')} />
           ) : currentView === 'pontos' ? (
-            <PontosView key="pontos" onBack={() => setCurrentView('home')} />
+            <PontosView key="pontos" onBack={() => setCurrentView('home')} onToggleMenu={() => setIsMenuOpen(true)} />
           ) : currentView === 'oracao' ? (
             <OracaoView key="oracao" onBack={() => setCurrentView('home')} />
           ) : currentView === 'avisos' ? (
-            <AvisosView key="avisos" onBack={() => setCurrentView('home')} />
+            <AvisosView 
+              key="avisos" 
+              onBack={() => setCurrentView('home')} 
+              onToggleMenu={() => setIsMenuOpen(true)} 
+              onToggleNavbar={setHideNavbar}
+            />
           ) : (
             <motion.div 
               key="coming-soon"
@@ -111,6 +124,13 @@ export default function App() {
           )}
         </AnimatePresence>
       </motion.div>
+
+      {showNavbar && (
+        <LiquidNavbar 
+          currentView={currentView} 
+          onNavigate={handleNavigate} 
+        />
+      )}
     </div>
   )
 }

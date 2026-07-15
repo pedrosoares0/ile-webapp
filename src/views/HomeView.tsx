@@ -311,7 +311,7 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
       exit={{ opacity: 0, y: -15 }}
       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
       style={{ background: '#FFFFFF' }}
-      className="flex flex-col h-full w-full p-4 pb-6 box-border overflow-y-auto no-scrollbar relative z-10 gap-4"
+      className="flex flex-col h-full w-full p-4 pb-32 box-border overflow-y-auto no-scrollbar relative z-10 gap-4"
     >
       {/* Aurora Backdrop Style and Animations */}
       <style>{`
@@ -443,42 +443,53 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
             >
               {upcomingEvents.map((item, idx) => {
                 const offset = idx - activeEventIdx;
-                if (offset < 0 || offset > 2) return null;
+                if (offset < -1 || offset > 2) return null;
 
                 const isActive = offset === 0;
-                const stackScale = 1 - offset * 0.04;
-                const stackY = offset * 8;
-                const stackOpacity = 1 - offset * 0.25;
+                const isPreSwiped = offset === -1;
+                const stackScale = isPreSwiped ? 0.96 : 1 - offset * 0.04;
+                const stackY = isPreSwiped ? 0 : offset * 8;
+                const stackOpacity = isPreSwiped ? 0 : 1 - offset * 0.25;
                 const { event: ev, style: evStyle, date: evDate } = item;
 
                 return (
                   <motion.div
                     key={ev.id}
+                    drag={isActive ? "x" : false}
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={0.6}
+                    onDragEnd={(_, info) => {
+                      const swipeThreshold = 50;
+                      if (info.offset.x < -swipeThreshold && activeEventIdx < upcomingEvents.length - 1) {
+                        setActiveEventIdx(prev => prev + 1);
+                      } else if (info.offset.x > swipeThreshold && activeEventIdx > 0) {
+                        setActiveEventIdx(prev => prev - 1);
+                      }
+                    }}
+                    onTap={() => {
+                      if (isActive) {
+                        onNavigate('eventos');
+                      } else {
+                        setActiveEventIdx(idx);
+                      }
+                    }}
                     animate={{
+                      x: isActive ? 0 : (isPreSwiped ? -360 : 0),
                       y: stackY,
                       scale: stackScale,
-                      opacity: stackOpacity,
+                      opacity: isPreSwiped ? 0 : stackOpacity,
                     }}
-                    transition={{ type: 'spring', duration: 0.5, bounce: 0.12 }}
-                    className="absolute left-0 right-0 top-0"
+                    transition={{ type: 'spring', duration: 0.45, bounce: 0.08 }}
+                    className="absolute left-0 right-0 top-0 select-none touch-pan-y"
                     style={{
                       transformOrigin: 'center top',
                       zIndex: upcomingEvents.length - offset,
                       pointerEvents: isActive ? 'auto' : 'auto',
+                      cursor: 'pointer',
                     }}
                   >
                     {/* Mystical-glow animated border — same as hero card */}
-                    <div
-                      className="mystical-glow rounded-[28px] shadow-[0_8px_18px_rgba(0,0,0,0.08),_0_2px_5px_rgba(0,0,0,0.03)]"
-                      onClick={() => {
-                        if (isActive) {
-                          onNavigate('eventos');
-                        } else {
-                          setActiveEventIdx(idx);
-                        }
-                      }}
-                      style={{ cursor: 'pointer' }}
-                    >
+                    <div className="mystical-glow rounded-[28px] shadow-[0_8px_18px_rgba(0,0,0,0.08),_0_2px_5px_rgba(0,0,0,0.03)]">
                       <div
                         className="mystical-glow-content group relative overflow-hidden p-4 min-h-[105px] flex flex-col justify-center"
                         style={{ backgroundColor: evStyle.bgColor, borderRadius: 'inherit' }}

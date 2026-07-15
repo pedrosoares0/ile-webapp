@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Plus, X, Flame, Heart, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Plus, X, Flame, Heart, Sparkles, CheckCircle2 } from 'lucide-react';
 import { useAppData } from '../context/AppDataContext';
 
 interface PrayerRequest {
@@ -153,14 +153,14 @@ export default function OracaoView({ onBack }: { onBack: () => void }) {
       <div className="relative flex items-center justify-between h-14 w-full z-10 mb-8">
         <button 
           onClick={onBack}
-          className="absolute left-0 flex h-11 w-11 items-center justify-center rounded-full bg-[#FAF8F5] shadow-xs border border-black/[0.03] text-[#414141] active:scale-95 transition-transform"
+          className="absolute left-0 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-[0_6px_20px_rgba(0,0,0,0.08),_0_2px_6px_rgba(0,0,0,0.04)] border border-zinc-100 text-zinc-800 active:scale-95 transition-transform"
         >
-          <ChevronLeft className="h-5 w-5" strokeWidth={2.2} />
+          <ArrowLeft className="h-5 w-5" strokeWidth={2.2} />
         </button>
         
-        <div className="w-full text-center">
+        <div className="w-full text-center px-14">
           <h1 className="text-3xl font-bold text-amber-700 leading-none font-behind-it">Corrente de Oração</h1>
-          <p className="text-[10px] font-bold text-[#414141]/40 uppercase tracking-[0.2em] mt-1.5">
+          <p className="text-[9px] font-bold text-[#414141]/40 uppercase tracking-[0.2em] mt-1.5 leading-relaxed">
             Pedidos e Mentalizações da Casa
           </p>
         </div>

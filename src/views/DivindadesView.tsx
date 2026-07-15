@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, ChevronLeft, X, BookOpen, Wind, Droplets, Hammer, Zap, CloudLightning, Trees, Sparkles, Waves, ShieldAlert, Compass, Rainbow, Smile, Calendar, Palette, Sparkle, Heart, Youtube } from 'lucide-react';
+import { Menu, ArrowLeft, X, BookOpen, Wind, Droplets, Hammer, Zap, CloudLightning, Trees, Sparkles, Waves, ShieldAlert, Compass, Rainbow, Smile, Calendar, Palette, Sparkle, Heart, Youtube } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 interface Divindade {
@@ -348,20 +348,19 @@ export default function DivindadesView({ onToggleMenu, onBack, onModalToggle }: 
 
       {/* Header */}
       <div className="relative z-20 px-6 pt-12 flex flex-col items-center text-center">
-        {/* Left absolute back button */}
         <button
           onClick={onBack}
-          className="absolute left-6 top-12 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm border border-black/[0.03] text-[#414141] active:scale-95 transition-transform"
+          className="absolute left-6 top-12 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-[0_6px_20px_rgba(0,0,0,0.08),_0_2px_6px_rgba(0,0,0,0.04)] border border-zinc-100 text-zinc-800 active:scale-95 transition-transform"
         >
-          <ChevronLeft className="h-5 w-5" strokeWidth={2.5} />
+          <ArrowLeft className="h-5 w-5" strokeWidth={2.2} />
         </button>
 
         {/* Right absolute menu button */}
         <button
           onClick={onToggleMenu}
-          className="absolute right-6 top-12 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm border border-black/[0.03] text-[#414141] active:scale-95 transition-transform"
+          className="absolute right-6 top-12 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-[0_6px_20px_rgba(0,0,0,0.08),_0_2px_6px_rgba(0,0,0,0.04)] border border-zinc-100 text-zinc-800 active:scale-95 transition-transform"
         >
-          <Menu className="h-5 w-5" strokeWidth={2} />
+          <Menu className="h-5 w-5" strokeWidth={2.2} />
         </button>
 
         {/* Centered Title */}

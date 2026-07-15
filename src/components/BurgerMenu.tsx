@@ -8,7 +8,6 @@ import {
   LogOut,
   X,
   BookOpen,
-  ShieldCheck,
   Music,
   HeartHandshake,
   Bell
@@ -35,9 +34,31 @@ const MENU_ITEMS: MenuItem[] = [
   { id: 'pontos', label: 'Músicas & Pontos', icon: Music },
   { id: 'oracao', label: 'Pedidos de Oração', icon: HeartHandshake },
   { id: 'avisos', label: 'Avisos & Comunicados', icon: Bell },
-  { id: 'cadastros', label: 'Painel Admin', icon: ShieldCheck },
   { id: 'sair', label: 'Desconectar conta', icon: LogOut, isExit: true },
 ];
+
+// Apple staggered entry variants for items
+const containerVariants = {
+  open: {
+    transition: { staggerChildren: 0.05, delayChildren: 0.1 }
+  },
+  closed: {
+    transition: { staggerChildren: 0.03, staggerDirection: -1 }
+  }
+};
+
+const itemVariants = {
+  open: {
+    x: 0,
+    opacity: 1,
+    transition: { type: 'spring', stiffness: 300, damping: 25 }
+  },
+  closed: {
+    x: 20,
+    opacity: 0,
+    transition: { duration: 0.2, ease: 'easeInOut' }
+  }
+};
 
 export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }: BurgerMenuProps) {
   const { logout } = useAuth();
@@ -59,57 +80,69 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop Blur with smooth fade */}
+          {/* Backdrop Blur with premium smooth fade */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
             onClick={onClose}
-            className="fixed inset-0 z-[60] bg-black/20 backdrop-blur-sm"
+            className="fixed inset-0 z-[60] bg-black/10 backdrop-blur-md"
           />
 
-          {/* Menu Drawer - Editorial Refined Light-Glass Vibe */}
+          {/* Menu Drawer - Apple Frosted Glass Vibe */}
           <motion.div
-            initial={{ x: '100%', opacity: 0.9 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: '100%', opacity: 0.9 }}
-            transition={{ type: 'spring', damping: 30, stiffness: 240 }}
-            className="fixed inset-y-0 right-0 z-[70] w-[290px] bg-white/95 border-l border-zinc-100 p-8 shadow-2xl flex flex-col justify-between"
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 32, stiffness: 280 }}
+            className="fixed inset-y-0 right-0 z-[70] w-[300px] bg-white/70 border-l border-white/20 p-6 flex flex-col justify-between shadow-2xl overflow-y-auto no-scrollbar"
             style={{
-              boxShadow: '-10px 0 40px rgba(0,0,0,0.04)',
-              backdropFilter: 'blur(30px) saturate(1.8)'
+              backdropFilter: 'blur(30px) saturate(190%)',
+              WebkitBackdropFilter: 'blur(30px) saturate(190%)',
+              boxShadow: '-10px 0 50px rgba(0,0,0,0.06)'
             }}
           >
-            {/* Top Glossy Reflection Sheen */}
-            <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
+            {/* Ambient inner soft glow */}
+            <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-transparent pointer-events-none z-0" />
 
-            <div className="flex flex-col h-full justify-between z-10">
+            <div className="flex flex-col h-full justify-between z-10 relative">
               
               {/* Top Section */}
               <div>
                 {/* Close Button Header Row */}
-                <div className="flex justify-end mb-6">
+                <div className="flex justify-between items-center mb-6">
+                  <span className="text-[10px] font-black tracking-[0.2em] text-[#414141]/30 uppercase">Navegação</span>
                   <button 
                     onClick={onClose}
-                    className="flex h-9 w-9 items-center justify-center rounded-full bg-black/[0.03] text-[#414141]/40 active:scale-90 transition-all hover:bg-black/[0.06] hover:text-[#414141]/75"
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-black/[0.04] text-[#414141]/50 active:scale-90 transition-transform duration-100 ease-out hover:bg-black/[0.08]"
                   >
                     <X className="h-4.5 w-4.5" />
                   </button>
                 </div>
 
-                {/* Brand Identity Card */}
-                <div className="flex flex-col items-center text-center px-2 py-4 mb-8 bg-zinc-50 border border-zinc-100 rounded-2xl">
-                  <img src={logoSrc} alt="Logo" className="h-14 w-14 object-contain mb-3" />
-                  <h2 className="text-lg font-bold text-[#414141] tracking-widest leading-none font-sans uppercase">
+                {/* Brand Identity Card - Floating frosted glass card */}
+                <div className="flex flex-col items-center text-center px-4 py-5 mb-8 bg-white/40 border border-white/40 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.02)] backdrop-blur-xs">
+                  <div className="relative mb-3">
+                    <div className="absolute inset-0 rounded-full bg-[#1565c0]/5 blur-md" />
+                    <img src={logoSrc} alt="Logo" className="relative h-14 w-14 object-contain" />
+                  </div>
+                  <h2 className="text-[16px] font-bold text-[#242424] tracking-[0.25em] leading-none uppercase">
                     {(isGlobalAdmin || isHubUser) ? 'Ilê' : 'T7CA'}
                   </h2>
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#414141]/40 mt-1.5">
+                  <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#414141]/40 mt-2">
                     {isGlobalAdmin ? 'Portal Administrativo' : isHubUser ? 'Hub de Terreiros' : 'Terreiro de Umbanda'}
                   </p>
                 </div>
 
-                {/* Clean Typographic Links */}
-                <div className="space-y-1.5">
+                {/* Staggered Navigation Links */}
+                <motion.div 
+                  variants={containerVariants}
+                  initial="closed"
+                  animate="open"
+                  exit="closed"
+                  className="space-y-1"
+                >
                   {filteredMenuItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = currentView === item.id;
@@ -118,7 +151,8 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
                     return (
                       <motion.button
                         key={item.id}
-                        whileTap={{ scale: 0.98 }}
+                        variants={itemVariants}
+                        whileTap={{ scale: 0.97 }}
                         onClick={() => {
                           if (isExit) {
                             logout();
@@ -128,49 +162,49 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
                             onClose();
                           }
                         }}
-                        className={`group relative flex w-full items-center gap-4 rounded-xl px-4 py-3.5 transition-all duration-300 ${
+                        className={`group relative flex w-full items-center gap-4 rounded-2xl px-4 py-3.5 transition-all duration-200 ${
                           isActive 
-                            ? 'text-[#1565c0] bg-[#1565c0]/5 border border-[#1565c0]/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)] font-bold' 
+                            ? 'text-[#1565c0] bg-white border border-black/[0.03] shadow-[0_4px_12px_rgba(0,0,0,0.03)] font-bold' 
                             : isExit 
-                              ? 'text-red-600/70 hover:bg-red-500/5 hover:text-red-700 border border-transparent' 
-                              : 'text-[#414141]/75 hover:bg-black/[0.02] hover:text-[#414141] border border-transparent'
+                              ? 'text-red-500 hover:bg-red-50/50 hover:text-red-600 border border-transparent' 
+                              : 'text-[#414141]/75 hover:bg-white/40 hover:text-[#242424] border border-transparent'
                         }`}
                       >
-                        {/* Left Active Indicator Bar */}
+                        {/* Selected vertical bar indicator */}
                         {isActive && (
                           <motion.div 
                             layoutId="active-menu-bar"
-                            className="absolute left-0 top-1/4 bottom-1/4 w-1 rounded-r-md bg-[#1565c0]"
+                            className="absolute left-1.5 top-3.5 bottom-3.5 w-1 rounded-full bg-[#1565c0]"
                             transition={{ type: "spring", stiffness: 350, damping: 30 }}
                           />
                         )}
 
                         <Icon 
-                          className={`h-4.5 w-4.5 transition-colors duration-300 ${
+                          className={`h-4.5 w-4.5 transition-transform duration-200 group-hover:scale-105 ${
                             isActive 
                               ? 'text-[#1565c0]' 
                               : isExit 
-                                ? 'text-red-600/60 group-hover:text-red-600' 
-                                : 'text-[#414141]/45 group-hover:text-[#414141]/70'
+                                ? 'text-red-400 group-hover:text-red-500' 
+                                : 'text-[#414141]/40 group-hover:text-[#242424]'
                           }`} 
                           strokeWidth={isActive ? 2.5 : 2} 
                         />
                         
-                        <span className="text-[13.5px] font-semibold tracking-wide text-left leading-none font-sans">
+                        <span className="text-[13.5px] font-semibold tracking-wide text-left leading-none">
                           {item.label}
                         </span>
                       </motion.button>
                     );
                   })}
-                </div>
+                </motion.div>
               </div>
 
               {/* Bottom Metadata & Versioning */}
-              <div className="border-t border-black/[0.05] pt-6 text-center">
-                <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-[#414141]/35">
+              <div className="border-t border-black/[0.04] pt-6 text-center">
+                <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#414141]/35">
                   Ilê WebApp · v1.4.0
                 </p>
-                <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-[#414141]/20 mt-1">
+                <p className="text-[8px] font-black uppercase tracking-[0.15em] text-[#414141]/20 mt-1">
                   Protegido por Axé e Lei
                 </p>
               </div>

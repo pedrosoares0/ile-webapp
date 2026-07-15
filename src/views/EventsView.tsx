@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import Calendar from 'react-calendar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, MapPin, Plus, CalendarDays, X, Menu, AlertCircle, ChevronLeft, Trash2, Pencil } from 'lucide-react';
+import { Clock, MapPin, Plus, CalendarDays, X, Menu, AlertCircle, ArrowLeft, Trash2, Pencil } from 'lucide-react';
 import '../styles/Calendar.css';
 import { TerreiroEvent } from '../types';
 import { useAppData } from '../context/AppDataContext';
@@ -334,7 +334,7 @@ export default function EventsView({ onToggleMenu, onBack }: { onToggleMenu: () 
   };
 
   return (
-    <div className="min-h-screen bg-white px-6 pt-12 pb-16 relative">
+    <div className="min-h-screen bg-white px-6 pt-12 pb-32 relative">
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
@@ -343,25 +343,25 @@ export default function EventsView({ onToggleMenu, onBack }: { onToggleMenu: () 
       >
         {/* Centralized Header with Brand Theme Colors */}
         <div className="relative flex items-center justify-between h-14 w-full">
-          <button 
-            onClick={onBack}
-            className="absolute left-0 flex h-11 w-11 items-center justify-center rounded-full bg-[#FAF8F5] shadow-xs border border-black/[0.03] text-[#414141] active:scale-95 transition-transform z-10"
-          >
-            <ChevronLeft className="h-5 w-5" strokeWidth={2} />
-          </button>
+        <button 
+          onClick={onBack}
+          className="absolute left-0 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-[0_6px_20px_rgba(0,0,0,0.08),_0_2px_6px_rgba(0,0,0,0.04)] border border-zinc-100 text-zinc-800 active:scale-95 transition-transform z-10"
+        >
+          <ArrowLeft className="h-5 w-5" strokeWidth={2.2} />
+        </button>
           
-          <div className="w-full text-center">
+          <div className="w-full text-center px-14">
             <h1 className="text-3xl font-bold text-[#1565c0] leading-tight font-behind-it">Calendário</h1>
-            <p className="text-[10px] font-bold text-[#414141]/40 uppercase tracking-[0.2em] mt-0.5">
+            <p className="text-[9px] font-bold text-[#414141]/40 uppercase tracking-[0.2em] mt-0.5 leading-relaxed">
               {currentTerreiro?.nome ?? 'Agenda da Comunidade'}
             </p>
           </div>
           
           <button 
             onClick={onToggleMenu}
-            className="absolute right-0 flex h-11 w-11 items-center justify-center rounded-full bg-[#FAF8F5] shadow-xs border border-black/[0.03] text-[#414141] active:scale-95 transition-transform z-10"
+            className="absolute right-0 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-[0_6px_20px_rgba(0,0,0,0.08),_0_2px_6px_rgba(0,0,0,0.04)] border border-zinc-100 text-zinc-800 active:scale-95 transition-transform z-10"
           >
-            <Menu className="h-5 w-5" strokeWidth={2} />
+            <Menu className="h-5 w-5" strokeWidth={2.2} />
           </button>
         </div>
 
@@ -547,9 +547,9 @@ export default function EventsView({ onToggleMenu, onBack }: { onToggleMenu: () 
             <div className="px-6 pt-12 pb-5 relative flex items-center justify-between border-b border-black/[0.04] bg-white sticky top-0 z-20 h-28">
               <button 
                 onClick={handleCloseForm}
-                className="absolute left-6 flex h-11 w-11 items-center justify-center rounded-full bg-[#FAF8F5] shadow-xs border border-black/[0.03] text-[#414141] active:scale-95 transition-transform z-10"
+                className="absolute left-6 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-[0_6px_20px_rgba(0,0,0,0.08),_0_2px_6px_rgba(0,0,0,0.04)] border border-zinc-100 text-zinc-800 active:scale-95 transition-transform z-10"
               >
-                <ChevronLeft className="h-5 w-5" strokeWidth={2} />
+                <ArrowLeft className="h-5 w-5" strokeWidth={2.2} />
               </button>
               
               <div className="w-full text-center">

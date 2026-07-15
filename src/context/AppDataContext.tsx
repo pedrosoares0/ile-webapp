@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './AuthContext';
-import { AccessAccount, AppUser, Ponto, Terreiro, TerreiroEvent } from '../types';
+import { AccessAccount, AppUser, Ponto, Terreiro, TerreiroEvent, Notice } from '../types';
 import { supabase } from '../lib/supabase';
 
 interface AppDataContextValue {
@@ -9,6 +9,7 @@ interface AppDataContextValue {
   users: AppUser[];
   events: TerreiroEvent[];
   pontos: Ponto[];
+  notices: Notice[];
   currentAccount: AccessAccount | null;
   isGlobalAdmin: boolean;
   isTerreiroAdmin: boolean;
@@ -24,6 +25,8 @@ interface AppDataContextValue {
   deleteEvent: (eventId: string) => Promise<void>;
   savePonto: (ponto: Ponto) => Promise<void>;
   deletePonto: (pontoId: string) => Promise<void>;
+  saveNotice: (notice: Notice) => Promise<void>;
+  deleteNotice: (noticeId: string) => Promise<void>;
 }
 
 const AppDataContext = createContext<AppDataContextValue | undefined>(undefined);
@@ -46,6 +49,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [events, setEvents] = useState<TerreiroEvent[]>([]);
   const [pontos, setPontos] = useState<Ponto[]>([]);
+  const [notices, setNotices] = useState<Notice[]>([]);
   const [currentAccount, setCurrentAccount] = useState<AccessAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -228,6 +232,31 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             createdAt: p.created_at,
           }))
         );
+
+        // 7. Fetch Notices
+        let noticesData: any[] = [];
+        if (isGlobalAdminUser || isHubUser) {
+          const { data } = await supabase.from('notices').select('*').order('created_at', { ascending: false });
+          noticesData = data || [];
+        } else if (scopedTerreiroId) {
+          const { data } = await supabase
+            .from('notices')
+            .select('*')
+            .eq('terreiro_id', scopedTerreiroId)
+            .order('created_at', { ascending: false });
+          noticesData = data || [];
+        }
+        setNotices(
+          noticesData.map((n) => ({
+            id: n.id,
+            title: n.title,
+            content: n.content,
+            category: n.category,
+            date: n.date || '',
+            createdAt: n.created_at,
+            terreiroId: n.terreiro_id,
+          }))
+        );
       } catch (err) {
         console.error('Error loading data:', err);
       } finally {
@@ -245,6 +274,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       users,
       events,
       pontos,
+      notices,
       currentAccount,
       isGlobalAdmin,
       isTerreiroAdmin,
@@ -369,8 +399,29 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           setPontos((prev) => prev.filter((p) => p.id !== pontoId));
         }
       },
+
+      saveNotice: async (notice) => {
+        const { error } = await supabase.from('notices').upsert({
+          id: notice.id,
+          title: notice.title,
+          content: notice.content,
+          category: notice.category,
+          date: notice.date || null,
+          terreiro_id: notice.terreiroId,
+        });
+        if (!error) {
+          setNotices((prev) => upsertById(prev, notice).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+        }
+      },
+
+      deleteNotice: async (noticeId) => {
+        const { error } = await supabase.from('notices').delete().eq('id', noticeId);
+        if (!error) {
+          setNotices((prev) => prev.filter((n) => n.id !== noticeId));
+        }
+      },
     };
-  }, [terreiros, accounts, users, events, pontos, currentAccount, isGlobalAdmin, isTerreiroAdmin, canAccessCadastros, isLoading]);
+  }, [terreiros, accounts, users, events, pontos, notices, currentAccount, isGlobalAdmin, isTerreiroAdmin, canAccessCadastros, isLoading]);
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
 }

@@ -1,20 +1,22 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ChevronLeft, 
+  ArrowLeft, 
+  Menu,
   Search, 
   Plus, 
   Play, 
-  Pause, 
   Music, 
   Trash2, 
+  Pencil,
   X, 
-  Maximize2, 
-  Minimize2, 
-  Volume2, 
-  VolumeX, 
   BookOpen, 
-  AlertCircle
+  AlertCircle,
+  Link,
+  Tag,
+  AlignLeft,
+  MoreHorizontal
 } from 'lucide-react';
 import { Ponto, PontoCategory, PONTO_CATEGORIES } from '../types';
 import { useAppData } from '../context/AppDataContext';
@@ -22,7 +24,7 @@ import { useAppData } from '../context/AppDataContext';
 // Helper to extract YouTube video ID
 function getYoutubeId(url: string) {
   if (!url) return '';
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
   const match = url.match(regExp);
   return (match && match[2].length === 11) ? match[2] : '';
 }
@@ -31,35 +33,58 @@ function buildYoutubeThumbnail(videoId: string) {
   return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : '';
 }
 
-export default function PontosView({ onBack }: { onBack: () => void }) {
+export default function PontosView({ onBack, onToggleMenu }: { onBack: () => void; onToggleMenu: () => void }) {
   const { pontos, savePonto, deletePonto, currentAccount, isTerreiroAdmin } = useAppData();
 
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<PontoCategory | 'TODOS'>('TODOS');
 
-  // Form states (Add Ponto)
+  // Form states (Add/Edit Ponto)
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingPontoId, setEditingPontoId] = useState<string | null>(null);
   const [formTitle, setFormTitle] = useState('');
   const [formYoutubeUrl, setFormYoutubeUrl] = useState('');
   const [formCategory, setFormCategory] = useState<PontoCategory>('OUTROS');
   const [formDescription, setFormDescription] = useState('');
-  const [formLyrics, setFormLyrics] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Player states
-  const [activePonto, setActivePonto] = useState<Ponto | null>(null);
-  const [isPlayerExpanded, setIsPlayerExpanded] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [showVideo, setShowVideo] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+  // Active ponto (expanded inline with video)
+  const [activePontoId, setActivePontoId] = useState<string | null>(null);
 
-  // Track Simulated Progress bar for YouTube
-  const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Drag-scroll for categories list
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
 
-  // Filtered Points based on Search and Selected Category
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setIsDragging(true);
+    setStartX(e.pageX - el.offsetLeft);
+    setScrollLeft(el.scrollLeft);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const el = scrollRef.current;
+    if (!el) return;
+    const x = e.pageX - el.offsetLeft;
+    const walk = (x - startX) * 1.5; // Scroll speed multiplier
+    el.scrollLeft = scrollLeft - walk;
+  };
+
+  // Filtered Points
   const terreiroPontos = useMemo(() => {
     return pontos.filter(p => !currentAccount || p.terreiroId === currentAccount.terreiroId);
   }, [pontos, currentAccount]);
@@ -74,39 +99,40 @@ export default function PontosView({ onBack }: { onBack: () => void }) {
     });
   }, [terreiroPontos, searchQuery, selectedCategory]);
 
-  // Simulate audio progress when playing
-  useEffect(() => {
-    if (isPlaying) {
-      progressTimerRef.current = setInterval(() => {
-        setCurrentTime((prev) => {
-          if (prev >= 180) { // reset or cap at 3 mins if duration is mocked
-            return 0;
-          }
-          return prev + 1;
-        });
-      }, 1000);
-    } else {
-      if (progressTimerRef.current) {
-        clearInterval(progressTimerRef.current);
-      }
-    }
-    return () => {
-      if (progressTimerRef.current) clearInterval(progressTimerRef.current);
-    };
-  }, [isPlaying]);
-
-  // Format time (e.g. 02:45)
-  const formatTime = (secs: number) => {
-    const mins = Math.floor(secs / 60);
-    const remainingSecs = secs % 60;
-    return `${mins.toString().padStart(2, '0')}:${remainingSecs.toString().padStart(2, '0')}`;
+  const handleTogglePonto = (pontoId: string) => {
+    setActivePontoId(prev => prev === pontoId ? null : pontoId);
   };
 
-  const handlePlayPonto = (ponto: Ponto) => {
-    setActivePonto(ponto);
-    setIsPlaying(true);
-    setCurrentTime(0);
-    setDuration(180); // 3 mins default simulation
+  useEffect(() => {
+    if (activePontoId) {
+      setTimeout(() => {
+        const el = document.getElementById(`ponto-card-${activePontoId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 250); // Generous timing to allow animation layout to expand
+    }
+  }, [activePontoId]);
+
+  const handleCloseForm = () => {
+    setFormTitle('');
+    setFormYoutubeUrl('');
+    setFormCategory('OUTROS');
+    setFormDescription('');
+    setFormError(null);
+    setEditingPontoId(null);
+    setShowAddForm(false);
+  };
+
+  const handleEditClick = (ponto: Ponto, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setFormTitle(ponto.titulo);
+    setFormYoutubeUrl(ponto.youtubeUrl);
+    setFormCategory(ponto.categoria);
+    setFormDescription(ponto.descricao || '');
+    setFormError(null);
+    setEditingPontoId(ponto.id);
+    setShowAddForm(true);
   };
 
   const handleSavePonto = async (e: React.FormEvent) => {
@@ -123,27 +149,23 @@ export default function PontosView({ onBack }: { onBack: () => void }) {
       return;
     }
 
+    const existingPonto = editingPontoId ? pontos.find(p => p.id === editingPontoId) : null;
+
     const newPonto: Ponto = {
-      id: `ponto_${Date.now()}`,
+      id: editingPontoId || `ponto_${Date.now()}`,
       titulo: formTitle.trim(),
       categoria: formCategory,
       youtubeUrl: formYoutubeUrl.trim(),
       descricao: formDescription.trim(),
       thumbnail: buildYoutubeThumbnail(videoId),
       terreiroId: currentAccount?.terreiroId || '',
-      letra: formLyrics.trim(),
-      createdAt: new Date().toISOString()
+      letra: existingPonto?.letra || '',
+      createdAt: existingPonto?.createdAt || new Date().toISOString()
     };
 
     try {
       await savePonto(newPonto);
-      // Reset form
-      setFormTitle('');
-      setFormYoutubeUrl('');
-      setFormCategory('OUTROS');
-      setFormDescription('');
-      setFormLyrics('');
-      setShowAddForm(false);
+      handleCloseForm();
     } catch (err) {
       setFormError('Erro ao salvar o ponto. Tente novamente.');
     }
@@ -152,18 +174,13 @@ export default function PontosView({ onBack }: { onBack: () => void }) {
   const handleDeletePonto = async (pontoId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm('Tem certeza que deseja excluir este ponto permanentemente?')) {
-      if (activePonto?.id === pontoId) {
-        setActivePonto(null);
-        setIsPlaying(false);
+      if (activePontoId === pontoId) {
+        setActivePontoId(null);
       }
       await deletePonto(pontoId);
     }
-  };
-
-  const activeVideoId = activePonto ? getYoutubeId(activePonto.youtubeUrl) : '';
-
-  return (
-    <div className="min-h-screen bg-white px-6 pt-12 pb-24 relative overflow-x-hidden z-10">
+  };  return (
+    <div className="min-h-screen bg-white px-6 pt-12 pb-8 relative overflow-x-hidden z-10">
       
       {/* Aurora Backdrop Effect at top */}
       <div 
@@ -175,36 +192,41 @@ export default function PontosView({ onBack }: { onBack: () => void }) {
       >
         <div className="absolute w-[70vw] h-[70vw] rounded-full bg-gradient-to-br from-[#0d47a1]/70 to-[#1565c0]/35 blur-[60px] -top-[18%] -left-[10%] animate-[pulse_8s_ease-in-out_infinite]" />
         <div className="absolute w-[80vw] h-[80vw] rounded-full bg-gradient-to-tr from-[#00b0ff]/60 to-[#00e5ff]/25 blur-[70px] -top-[20%] -right-[15%] animate-[pulse_10s_ease-in-out_infinite_2s]" />
-      </div>
-
-      {/* Header Row */}
+      </div>      {/* Header Row */}
       <div className="relative flex items-center justify-between h-14 w-full z-10 mb-8">
         <button 
           onClick={onBack}
-          className="absolute left-0 flex h-11 w-11 items-center justify-center rounded-full bg-[#FAF8F5] shadow-xs border border-black/[0.03] text-[#414141] active:scale-95 transition-transform"
+          className="absolute left-0 flex h-11 w-11 items-center justify-center rounded-full bg-white/85 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.04),_0_1px_2px_rgba(0,0,0,0.02)] border border-zinc-200/40 text-zinc-800 hover:bg-white active:scale-95 transition-all"
         >
-          <ChevronLeft className="h-5 w-5" strokeWidth={2.2} />
+          <ArrowLeft className="h-5 w-5" strokeWidth={2.2} />
         </button>
         
-        <div className="w-full text-center">
-          <h1 className="text-3xl font-bold text-[#1565c0] leading-none font-behind-it">Curimba</h1>
-          <p className="text-[10px] font-bold text-[#414141]/40 uppercase tracking-[0.2em] mt-1.5">
+        <div className="w-full text-center px-14">
+          <h1 className="text-2xl font-black bg-gradient-to-r from-zinc-800 to-[#1565c0] bg-clip-text text-transparent leading-none font-behind-it">Curimba</h1>
+          <p className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-[0.25em] mt-2 leading-none">
             Pontos e Cantos Sagrados
           </p>
         </div>
+
+        <button 
+          onClick={onToggleMenu}
+          className="absolute right-0 flex h-11 w-11 items-center justify-center rounded-full bg-white/85 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.04),_0_1px_2px_rgba(0,0,0,0.02)] border border-zinc-200/40 text-zinc-800 hover:bg-white active:scale-95 transition-all"
+        >
+          <Menu className="h-5 w-5" strokeWidth={2.2} />
+        </button>
       </div>
 
-      {/* Search Input Bar (Airbnb Inspired) */}
-      <div className="relative w-full z-10 mb-6 shadow-xs border border-zinc-100/80 rounded-2xl bg-zinc-50/50 focus-within:bg-white focus-within:border-[#1565c0]/30 transition-all duration-300">
+      {/* Search Input Bar */}
+      <div className="relative w-full z-10 mb-6 shadow-[0_8px_32px_rgba(0,0,0,0.03)] border border-zinc-200/50 rounded-2xl bg-white/70 backdrop-blur-md focus-within:bg-white focus-within:border-[#1565c0]/35 focus-within:shadow-[0_8px_32px_rgba(21,101,192,0.04)] transition-all duration-300">
         <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-          <Search className="h-4.5 w-4.5 text-[#414141]/40" />
+          <Search className="h-4.5 w-4.5 text-zinc-400" />
         </div>
         <input
           type="text"
           placeholder="Buscar ponto pelo título ou guia..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-11 pr-4 py-3.5 bg-transparent border-0 rounded-2xl text-[14px] text-[#414141] focus:ring-0 focus:outline-hidden font-medium"
+          className="w-full pl-11 pr-4 py-3.5 bg-transparent border-0 rounded-2xl text-[14px] text-zinc-700 focus:ring-0 focus:outline-hidden font-medium"
         />
         {searchQuery && (
           <button 
@@ -216,14 +238,21 @@ export default function PontosView({ onBack }: { onBack: () => void }) {
         )}
       </div>
 
-      {/* Category Pills (Horizontal Scrollable) */}
-      <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-3 mb-6 relative z-10 -mx-6 px-6">
+      {/* Category Pills */}
+      <div 
+        ref={scrollRef}
+        onMouseDown={handleMouseDown}
+        onMouseLeave={handleMouseLeave}
+        onMouseUp={handleMouseUp}
+        onMouseMove={handleMouseMove}
+        className="flex gap-3 overflow-x-auto no-scrollbar pb-3 mb-6 relative z-10 -mx-6 px-6 select-none cursor-grab active:cursor-grabbing scroll-smooth"
+      >
         <button
           onClick={() => setSelectedCategory('TODOS')}
-          className={`px-4.5 py-2 rounded-full text-xs font-bold transition-all shrink-0 active:scale-95 ${
+          className={`px-5 py-2.5 rounded-full text-[12.5px] font-bold tracking-wide transition-all shrink-0 active:scale-95 ${
             selectedCategory === 'TODOS'
-              ? 'bg-[#1565c0] text-white shadow-md shadow-[#1565c0]/15'
-              : 'bg-zinc-50 border border-zinc-100 text-[#414141]/70 hover:bg-zinc-100'
+              ? 'bg-[#1565c0] text-white border border-transparent shadow-[0_4px_16px_rgba(21,101,192,0.25)]'
+              : 'bg-white border border-zinc-150 text-zinc-600 shadow-[0_4px_12px_rgba(0,0,0,0.05),_0_1px_3px_rgba(0,0,0,0.02)] hover:bg-zinc-50/50'
           }`}
         >
           Todos
@@ -232,10 +261,10 @@ export default function PontosView({ onBack }: { onBack: () => void }) {
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`px-4.5 py-2 rounded-full text-xs font-bold transition-all shrink-0 active:scale-95 ${
+            className={`px-5 py-2.5 rounded-full text-[12.5px] font-bold tracking-wide transition-all shrink-0 active:scale-95 ${
               selectedCategory === cat
-                ? 'bg-[#1565c0] text-white shadow-md shadow-[#1565c0]/15'
-                : 'bg-zinc-50 border border-zinc-100 text-[#414141]/70 hover:bg-zinc-100'
+                ? 'bg-[#1565c0] text-white border border-transparent shadow-[0_4px_16px_rgba(21,101,192,0.25)]'
+                : 'bg-white border border-zinc-150 text-zinc-600 shadow-[0_4px_12px_rgba(0,0,0,0.05),_0_1px_3px_rgba(0,0,0,0.02)] hover:bg-zinc-50/50'
             }`}
           >
             {cat}
@@ -243,74 +272,190 @@ export default function PontosView({ onBack }: { onBack: () => void }) {
         ))}
       </div>
 
-      {/* Points list */}
-      <div className="relative z-10 space-y-4">
+      {/* Sub-Header Row following standard calendar event styling */}
+      <div className="relative z-10 flex items-end justify-between mb-5 px-1 mt-4">
+        <div>
+          <span className="text-[10px] font-black text-[#1565c0] uppercase tracking-[0.25em]">Acervo de Pontos</span>
+          <h3 className="text-xl font-extrabold text-zinc-800 tracking-tight mt-1.5">Cantos Gravados</h3>
+        </div>
+        {isTerreiroAdmin && (
+          <motion.button 
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => {
+              setFormError(null);
+              setShowAddForm(true);
+            }}
+            className="flex h-11 px-4 gap-1.5 items-center justify-center rounded-full bg-gradient-to-r from-[#1565c0] to-[#0d47a1] text-white shadow-[0_4px_16px_rgba(21,101,192,0.22)] border border-[#1565c0]/10 text-xs font-bold transition-all"
+          >
+            <Plus className="h-4 w-4" strokeWidth={2.5} />
+            <span>Novo</span>
+          </motion.button>
+        )}
+      </div>
+
+      {/* Points list — inline expandable cards */}
+      <div className="relative z-10 space-y-4 pb-24">
         {filteredPontos.length > 0 ? (
           filteredPontos.map((ponto) => {
-            const isCurrent = activePonto?.id === ponto.id;
+            const isActive = activePontoId === ponto.id;
+            const videoId = getYoutubeId(ponto.youtubeUrl);
             return (
               <motion.div
                 key={ponto.id}
-                onClick={() => handlePlayPonto(ponto)}
-                whileTap={{ scale: 0.98 }}
-                className={`p-4 rounded-[24px] border transition-all duration-300 cursor-pointer flex items-center gap-4 relative overflow-hidden group ${
-                  isCurrent 
-                    ? 'bg-zinc-50 border-[#1565c0]/25 shadow-xs' 
-                    : 'bg-white border-zinc-100 shadow-[0_4px_16px_rgba(0,0,0,0.01)] hover:border-zinc-200'
+                id={`ponto-card-${ponto.id}`}
+                layout
+                transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+                className={`rounded-3xl transition-all duration-300 border overflow-hidden ${
+                  isActive 
+                    ? 'bg-white border-zinc-200 shadow-[0_12px_40px_rgba(0,0,0,0.06)]' 
+                    : 'bg-white border-zinc-100 shadow-[0_2px_8px_rgba(0,0,0,0.015)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.04)]'
                 }`}
               >
-                {/* Youtube Thumbnail / Cover */}
-                <div className="h-16 w-16 rounded-2xl overflow-hidden bg-zinc-100 relative shrink-0">
-                  {ponto.thumbnail ? (
-                    <img 
-                      src={ponto.thumbnail} 
-                      alt="" 
-                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" 
-                    />
-                  ) : (
-                    <div className="h-full w-full flex items-center justify-center bg-emerald-500/10 text-emerald-600">
-                      <Music className="h-6 w-6" />
+                {isActive ? (
+                  /* Expanded state layout: Video player at the top, info at the bottom */
+                  <div className="flex flex-col p-3.5 pb-4">
+                    {/* 1. Large Video Player at the top */}
+                    <div className="w-full aspect-[4/3] bg-zinc-950 relative rounded-2xl overflow-hidden shadow-sm border border-black/[0.08]">
+                      {videoId ? (
+                        <iframe
+                          src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
+                          title={ponto.titulo}
+                          allow="autoplay; encrypted-media; picture-in-picture"
+                          allowFullScreen
+                          className="absolute inset-0 h-full w-full border-0 object-cover"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center bg-zinc-100 text-zinc-400">
+                          <Music className="h-8 w-8 animate-pulse" />
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {/* Play Overlay indicator */}
-                  <div className="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    {isCurrent && isPlaying ? (
-                      <Pause className="h-5 w-5 text-white fill-white" />
-                    ) : (
-                      <Play className="h-5 w-5 text-white fill-white ml-0.5" />
-                    )}
+                    
+                    {/* 2. Metadata / Details below video */}
+                    <div className="pt-4 px-1 flex flex-col">
+                      <div className="flex items-center justify-between">
+                        <span className="px-3 py-1 rounded-full bg-[#1565c0]/6 border border-[#1565c0]/15 text-[#1565c0] text-[10px] font-black uppercase tracking-widest">
+                          {ponto.categoria}
+                        </span>
+                        
+                        {/* Admin controls in expanded view */}
+                        {isTerreiroAdmin && (
+                          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={(e) => {
+                                handleEditClick(ponto, e);
+                              }}
+                              className="h-8 w-8 rounded-full bg-zinc-50 hover:bg-zinc-100 text-zinc-600 border border-zinc-100 transition-colors flex items-center justify-center active:scale-90"
+                              title="Editar Ponto"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                handleDeletePonto(ponto.id, e);
+                              }}
+                              className="h-8 w-8 rounded-full bg-red-50 hover:bg-red-100 text-red-500 border border-red-100 transition-colors flex items-center justify-center active:scale-90"
+                              title="Excluir Ponto"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <h4 className="text-[16px] font-extrabold text-zinc-900 tracking-tight leading-snug mt-3">
+                        {ponto.titulo}
+                      </h4>
+
+                      {ponto.descricao && (
+                        <p className="text-[12.5px] text-zinc-500 font-medium leading-relaxed mt-2.5">
+                          {ponto.descricao}
+                        </p>
+                      )}
+
+                      <div className="flex items-center justify-center mt-5 pt-4 border-t border-zinc-100/80">
+                        <button
+                          onClick={() => handleTogglePonto(ponto.id)}
+                          className="px-5 py-2 rounded-full bg-zinc-50 border border-zinc-200/85 text-zinc-600 text-[11px] font-extrabold uppercase tracking-widest hover:bg-zinc-100 hover:text-zinc-800 transition-colors active:scale-95 shadow-3xs"
+                        >
+                          Recolher
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  /* Collapsed state layout (Row) */
+                  <div 
+                    onClick={() => handleTogglePonto(ponto.id)}
+                    className="flex items-center gap-4 p-3.5 cursor-pointer active:bg-zinc-50/60 transition-colors"
+                  >
+                    {/* Large thumbnail */}
+                    <div className="h-[72px] w-[72px] rounded-2xl overflow-hidden bg-zinc-100 relative shrink-0 shadow-sm border border-zinc-100">
+                      {ponto.thumbnail ? (
+                        <img 
+                          src={ponto.thumbnail} 
+                          alt="" 
+                          className="h-full w-full object-cover" 
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center bg-[#1565c0]/5 text-[#1565c0]">
+                          <Music className="h-6 w-6" />
+                        </div>
+                      )}
+                      {/* Play icon overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/15">
+                        <div className="h-8 w-8 rounded-full flex items-center justify-center bg-white/80 shadow-md scale-90">
+                          <Play className="h-3.5 w-3.5 ml-0.5 fill-zinc-800 text-zinc-800" />
+                        </div>
+                      </div>
+                    </div>
 
-                {/* Content */}
-                <div className="min-w-0 flex-1">
-                  <span className="inline-block px-2 py-0.5 rounded-[4px] bg-zinc-100 text-[8px] font-black text-zinc-500 uppercase tracking-widest leading-none mb-1.5">
-                    {ponto.categoria}
-                  </span>
-                  <h4 className="text-sm font-bold text-zinc-800 tracking-tight leading-snug truncate">
-                    {ponto.titulo}
-                  </h4>
-                  <p className="text-xs text-zinc-400 font-medium tracking-tight mt-0.5 truncate pr-4">
-                    {ponto.descricao || 'Sem descrição cadastrada'}
-                  </p>
-                </div>
+                    {/* Text content */}
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-[15px] font-bold tracking-tight leading-snug text-zinc-800">
+                        {ponto.titulo}
+                      </h4>
+                      <p className="text-[12px] text-zinc-400 font-medium tracking-tight mt-0.5 truncate pr-2">
+                        {ponto.descricao || ponto.categoria}
+                      </p>
+                      {ponto.createdAt && (
+                        <p className="text-[10px] text-zinc-300 font-medium mt-1">
+                          {new Date(ponto.createdAt).toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      )}
+                    </div>
 
-                {/* Actions: Play and Delete */}
-                <div className="flex items-center gap-2">
-                  {isTerreiroAdmin && (
-                    <button
-                      onClick={(e) => handleDeletePonto(ponto.id, e)}
-                      className="p-2.5 rounded-full text-zinc-400 hover:text-red-600 active:scale-90 hover:bg-red-50/50 transition-colors shrink-0"
-                    >
-                      <Trash2 className="h-4.5 w-4.5" />
-                    </button>
-                  )}
-                </div>
+                    {/* Right action area */}
+                    <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      {isTerreiroAdmin && (
+                        <>
+                          <button
+                            onClick={() => handleEditClick(ponto)}
+                            className="h-8 w-8 rounded-full bg-zinc-50 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 active:scale-90 flex items-center justify-center border border-zinc-100 transition-all"
+                            title="Editar Ponto"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={(e) => handleDeletePonto(ponto.id, e)}
+                            className="h-8 w-8 rounded-full bg-zinc-50 text-zinc-300 hover:bg-red-50 hover:text-red-500 active:scale-90 flex items-center justify-center border border-zinc-100 transition-all"
+                            title="Excluir Ponto"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </>
+                      )}
+                      {!isTerreiroAdmin && <MoreHorizontal className="h-5 w-5 text-zinc-300" />}
+                    </div>
+                  </div>
+                )}
               </motion.div>
             );
           })
         ) : (
-          <div className="rounded-[32px] bg-zinc-50 border border-zinc-100 py-12 px-6 text-center shadow-xs">
+          <div className="rounded-3xl bg-zinc-50 border border-zinc-150 py-12 px-6 text-center shadow-xs">
             <Music className="h-10 w-10 text-zinc-300 mx-auto mb-3" />
             <h4 className="text-sm font-bold text-zinc-800">Nenhum ponto gravado</h4>
             <p className="text-xs text-zinc-400 font-medium mt-1 px-4 leading-relaxed">
@@ -320,46 +465,40 @@ export default function PontosView({ onBack }: { onBack: () => void }) {
         )}
       </div>
 
-      {/* Floating Add Button for Admin */}
-      {isTerreiroAdmin && (
-        <motion.button
-          onClick={() => setShowAddForm(true)}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="fixed right-6 bottom-24 h-14 w-14 rounded-full bg-[#1565c0] text-white flex items-center justify-center shadow-xl shadow-[#1565c0]/20 active:scale-95 transition-all z-40 border border-[#1565c0]/10"
-        >
-          <Plus className="h-6 w-6" strokeWidth={2.5} />
-        </motion.button>
-      )}
-
-      {/* Fullscreen Add Form Drawer/Modal */}
-      <AnimatePresence>
-        {showAddForm && (
-          <>
+      {showAddForm && createPortal(
+        <AnimatePresence>
+          <div className="fixed inset-0 z-[100] flex items-end justify-center pointer-events-none">
             {/* Scrim */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setShowAddForm(false)}
-              className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-xs"
+              onClick={handleCloseForm}
+              className="absolute inset-0 bg-black/60 backdrop-blur-xs pointer-events-auto"
             />
             {/* Modal Body */}
             <motion.div
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 240 }}
-              className="fixed inset-x-0 bottom-0 z-[110] max-h-[85vh] bg-white rounded-t-[40px] border-t border-zinc-100 p-6 flex flex-col shadow-2xl overflow-y-auto no-scrollbar"
+              transition={{ type: 'spring', damping: 32, stiffness: 260 }}
+              className="relative w-full max-w-[430px] z-[110] max-h-[85vh] bg-white rounded-t-[40px] border-t border-zinc-200/50 p-6 pb-8 flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.12)] overflow-y-auto no-scrollbar pointer-events-auto"
             >
               {/* Top Handle Drag indicator */}
               <div className="w-12 h-1 bg-zinc-200 rounded-full mx-auto mb-6 shrink-0" />
 
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-zinc-800 font-behind-it">Adicionar Novo Ponto</h3>
+                <div>
+                  <h3 className="text-xl font-extrabold text-zinc-900 tracking-tight">
+                    {editingPontoId ? 'Editar Canto Sagrado' : 'Novo Canto Sagrado'}
+                  </h3>
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">
+                    {editingPontoId ? 'Atualize as informações do Ponto' : 'Insira as informações do Ponto'}
+                  </p>
+                </div>
                 <button 
-                  onClick={() => setShowAddForm(false)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-zinc-400 active:scale-90"
+                  onClick={handleCloseForm}
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 hover:bg-zinc-200 active:scale-90 transition-all"
                 >
                   <X className="h-4.5 w-4.5" />
                 </button>
@@ -372,331 +511,115 @@ export default function PontosView({ onBack }: { onBack: () => void }) {
                 </div>
               )}
 
-              <form onSubmit={handleSavePonto} className="space-y-5 flex-1 pb-10">
+              <form onSubmit={handleSavePonto} className="space-y-4 flex-1 pb-6">
                 {/* Title */}
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Título do Ponto</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ex: Ponto de Ogum Beira-Mar"
-                    value={formTitle}
-                    onChange={(e) => setFormTitle(e.target.value)}
-                    className="w-full px-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-[13.5px] text-[#414141] font-semibold focus:bg-white focus:border-[#1565c0]/30 focus:ring-0 focus:outline-hidden transition-all duration-300"
-                  />
+                <div className="flex items-center gap-3.5 bg-zinc-50 border border-zinc-150 focus-within:border-[#1565c0]/35 focus-within:bg-white focus-within:shadow-[0_4px_16px_rgba(21,101,192,0.04)] rounded-2xl px-4 py-2.5 transition-all duration-200">
+                  <BookOpen className="h-5 w-5 text-zinc-400 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-[8px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">Título do Ponto</span>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ex: Ponto de Ogum Beira-Mar"
+                      value={formTitle}
+                      onChange={(e) => setFormTitle(e.target.value)}
+                      className="w-full bg-transparent border-0 p-0 text-[13.5px] text-zinc-800 font-bold placeholder-zinc-300 focus:ring-0 focus:outline-hidden"
+                    />
+                  </div>
                 </div>
 
                 {/* YouTube Link */}
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Link do YouTube</label>
-                  <input
-                    type="url"
-                    required
-                    placeholder="Ex: https://www.youtube.com/watch?v=..."
-                    value={formYoutubeUrl}
-                    onChange={(e) => setFormYoutubeUrl(e.target.value)}
-                    className="w-full px-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-[13.5px] text-[#414141] font-semibold focus:bg-white focus:border-[#1565c0]/30 focus:ring-0 focus:outline-hidden transition-all duration-300"
-                  />
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3.5 bg-zinc-50 border border-zinc-150 focus-within:border-[#1565c0]/35 focus-within:bg-white focus-within:shadow-[0_4px_16px_rgba(21,101,192,0.04)] rounded-2xl px-4 py-2.5 transition-all duration-200">
+                    <Link className="h-5 w-5 text-zinc-400 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="block text-[8px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">Link do YouTube</span>
+                      <input
+                        type="url"
+                        required
+                        placeholder="Ex: https://www.youtube.com/watch?v=..."
+                        value={formYoutubeUrl}
+                        onChange={(e) => setFormYoutubeUrl(e.target.value)}
+                        className="w-full bg-transparent border-0 p-0 text-[13.5px] text-zinc-800 font-bold placeholder-zinc-300 focus:ring-0 focus:outline-hidden"
+                      />
+                    </div>
+                  </div>
+
+                  {/* YouTube Live Preview */}
+                  {(() => {
+                    const videoId = getYoutubeId(formYoutubeUrl);
+                    if (!videoId) return null;
+                    return (
+                      <div className="p-3 rounded-2xl bg-zinc-50 border border-zinc-150 flex items-center gap-4 animate-fadeIn shadow-[0_2px_8px_rgba(0,0,0,0.015)]">
+                        <div className="h-16 w-24 rounded-xl overflow-hidden bg-zinc-100 relative shrink-0 shadow-xs border border-zinc-200">
+                          <img 
+                            src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`} 
+                            alt="YouTube Preview" 
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase tracking-wider mb-1.5 border border-emerald-100">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Vínculo Confirmado
+                          </span>
+                          <h4 className="text-[12px] font-bold text-zinc-700 truncate leading-snug">Vínculo com o YouTube confirmado</h4>
+                          <p className="text-[9px] text-zinc-400 mt-1 truncate">ID do vídeo: {videoId}</p>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Category Selection */}
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Linha / Categoria</label>
-                  <select
-                    value={formCategory}
-                    onChange={(e) => setFormCategory(e.target.value as PontoCategory)}
-                    className="w-full px-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-[13.5px] text-[#414141] font-semibold focus:bg-white focus:border-[#1565c0]/30 focus:ring-0 focus:outline-hidden transition-all duration-300"
-                  >
-                    {PONTO_CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
+                <div className="flex items-center gap-3.5 bg-zinc-50 border border-zinc-150 focus-within:border-[#1565c0]/35 focus-within:bg-white focus-within:shadow-[0_4px_16px_rgba(21,101,192,0.04)] rounded-2xl px-4 py-2.5 transition-all duration-200">
+                  <Tag className="h-5 w-5 text-zinc-400 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-[8px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">Linha / Categoria</span>
+                    <select
+                      value={formCategory}
+                      onChange={(e) => setFormCategory(e.target.value as PontoCategory)}
+                      className="w-full bg-transparent border-0 p-0 text-[13.5px] text-zinc-800 font-bold focus:ring-0 focus:outline-hidden"
+                    >
+                      {PONTO_CATEGORIES.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 {/* Description */}
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Leve Descrição</label>
-                  <textarea
-                    rows={2}
-                    placeholder="Uma breve frase sobre o ponto, guia ou momento..."
-                    value={formDescription}
-                    onChange={(e) => setFormDescription(e.target.value)}
-                    className="w-full px-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-[13.5px] text-[#414141] font-semibold focus:bg-white focus:border-[#1565c0]/30 focus:ring-0 focus:outline-hidden transition-all duration-300 resize-none"
-                  />
+                <div className="flex items-start gap-3.5 bg-zinc-50 border border-zinc-150 focus-within:border-[#1565c0]/35 focus-within:bg-white focus-within:shadow-[0_4px_16px_rgba(21,101,192,0.04)] rounded-2xl px-4 py-2.5 transition-all duration-200">
+                  <AlignLeft className="h-5 w-5 text-zinc-400 shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-[8px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">Leve Descrição (Opcional)</span>
+                    <textarea
+                      rows={2}
+                      placeholder="Uma breve frase sobre o ponto, guia ou momento..."
+                      value={formDescription}
+                      onChange={(e) => setFormDescription(e.target.value)}
+                      className="w-full bg-transparent border-0 p-0 text-[13.5px] text-zinc-800 font-bold placeholder-zinc-300 focus:ring-0 focus:outline-hidden resize-none leading-snug"
+                    />
+                  </div>
                 </div>
 
-                {/* Lyrics */}
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Letra (Opcional)</label>
-                  <textarea
-                    rows={4}
-                    placeholder="Insira a letra do ponto aqui para que todos possam acompanhar e cantar junto..."
-                    value={formLyrics}
-                    onChange={(e) => setFormLyrics(e.target.value)}
-                    className="w-full px-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-[13.5px] text-[#414141] font-semibold focus:bg-white focus:border-[#1565c0]/30 focus:ring-0 focus:outline-hidden transition-all duration-300 resize-none"
-                  />
-                </div>
-
-                <div className="pt-2">
-                  <button
+                <div className="pt-4">
+                  <motion.button
                     type="submit"
-                    className="w-full py-3.5 rounded-full text-sm font-bold text-white active:scale-[0.97] transition-transform duration-150 ease-out"
-                    style={{
-                      background: 'linear-gradient(180deg, #7DD3FC 0%, #38BDF8 40%, #0EA5E9 100%)',
-                      border: '1.5px solid rgba(255,255,255,0.5)',
-                      boxShadow: '0 4px 15px rgba(14,165,233,0.35), inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.08)',
-                    }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: 'spring', bounce: 0, duration: 0.2 }}
+                    className="w-full py-4 rounded-2xl text-sm font-bold text-white bg-[#1565c0] shadow-lg shadow-[#1565c0]/20 active:scale-[0.98] transition-all hover:bg-[#0d47a1] flex items-center justify-center gap-2"
                   >
-                    Cadastrar Ponto
-                  </button>
+                    <Plus className="h-4.5 w-4.5" strokeWidth={2.5} />
+                    {editingPontoId ? 'Salvar Alterações' : 'Cadastrar Ponto'}
+                  </motion.button>
                 </div>
               </form>
             </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* Floating Bottom Mini-Player (Apple Music Style) */}
-      <AnimatePresence>
-        {activePonto && !isPlayerExpanded && (
-          <motion.div
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 80, opacity: 0 }}
-            onClick={() => setIsPlayerExpanded(true)}
-            className="fixed bottom-4 inset-x-4 z-50 h-16 rounded-2xl bg-white/70 backdrop-blur-md border border-zinc-200/50 shadow-[0_12px_32px_rgba(0,0,0,0.12)] p-2 pr-4 flex items-center justify-between cursor-pointer active:scale-[0.99] transition-transform"
-          >
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="h-12 w-12 rounded-xl overflow-hidden bg-zinc-100 shrink-0">
-                {activePonto.thumbnail ? (
-                  <img src={activePonto.thumbnail} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="h-full w-full flex items-center justify-center bg-[#1565c0]/10 text-[#1565c0]">
-                    <Music className="h-5 w-5" />
-                  </div>
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <h4 className="text-[13px] font-extrabold text-zinc-800 tracking-tight leading-tight truncate">
-                  {activePonto.titulo}
-                </h4>
-                <p className="text-[10px] text-zinc-400 font-semibold tracking-tight uppercase mt-0.5 leading-none">
-                  {activePonto.categoria}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-              {/* Play / Pause Toggle */}
-              <button
-                onClick={() => setIsPlaying(!isPlaying)}
-                className="h-10 w-10 rounded-full flex items-center justify-center text-zinc-700 bg-zinc-50 hover:bg-zinc-100 active:scale-90 shadow-xs border border-zinc-100"
-              >
-                {isPlaying ? (
-                  <Pause className="h-4.5 w-4.5 fill-zinc-700 text-zinc-700" />
-                ) : (
-                  <Play className="h-4.5 w-4.5 fill-zinc-700 text-zinc-700 ml-0.5" />
-                )}
-              </button>
-              {/* Maximize */}
-              <button
-                onClick={() => setIsPlayerExpanded(true)}
-                className="h-10 w-10 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-700 bg-zinc-50 active:scale-90 hover:bg-zinc-100 border border-zinc-100"
-              >
-                <Maximize2 className="h-4 w-4" />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Expanded Premium Liquid Glass Player (WWDC Fluid Motion Concept) */}
-      <AnimatePresence>
-        {isPlayerExpanded && activePonto && (
-          <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-            className="fixed inset-0 z-[120] bg-black flex flex-col justify-between overflow-hidden"
-          >
-            {/* Simulated Animated Colorful Backdrop Glows inside black background (Liquid Glass) */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 opacity-45">
-              <div className="absolute w-[120vw] h-[120vw] rounded-full bg-gradient-to-br from-emerald-600/70 to-blue-700/35 blur-[100px] -top-[30%] -left-[20%] animate-[pulse_10s_ease-in-out_infinite]" />
-              <div className="absolute w-[130vw] h-[130vw] rounded-full bg-gradient-to-tr from-cyan-500/60 to-purple-600/25 blur-[110px] -bottom-[30%] -right-[20%] animate-[pulse_12s_ease-in-out_infinite_3s]" />
-            </div>
-
-            {/* Inner Content wrapper in glassmorphism */}
-            <div className="relative z-10 flex flex-col h-full w-full justify-between p-6 bg-black/40 backdrop-blur-2xl box-border">
-              
-              {/* 1. Header controls */}
-              <div className="flex justify-between items-center h-14 shrink-0">
-                <button
-                  onClick={() => setIsPlayerExpanded(false)}
-                  className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 border border-white/10 text-white active:scale-90"
-                >
-                  <Minimize2 className="h-5 w-5" />
-                </button>
-                <div className="text-center">
-                  <span className="text-[9px] font-black text-white/50 uppercase tracking-[0.25em] leading-none block">
-                    REPRODUZINDO DO TERREIRO
-                  </span>
-                  <span className="text-[13px] font-bold text-white mt-1 block max-w-[180px] truncate">
-                    {activePonto.titulo}
-                  </span>
-                </div>
-                <button
-                  onClick={() => {
-                    setIsPlayerExpanded(false);
-                    setActivePonto(null);
-                    setIsPlaying(false);
-                  }}
-                  className="flex h-11 w-11 items-center justify-center rounded-full bg-red-500/10 border border-red-500/20 text-red-400 active:scale-90"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* 2. Main Reposition area (Image/Video and Lyrics) */}
-              <div className="flex-1 flex flex-col justify-center gap-6 my-4 overflow-y-auto no-scrollbar">
-                
-                {/* Embed YouTube Player and Video Container */}
-                <div className="w-full shrink-0 relative aspect-video rounded-3xl overflow-hidden bg-black/40 border border-white/10 shadow-2xl flex items-center justify-center group">
-                  {/* Standard Hidden/Visible YouTube Iframe */}
-                  {activeVideoId ? (
-                    <iframe
-                      src={`https://www.youtube.com/embed/${activeVideoId}?enablejsapi=1&autoplay=1&mute=${isMuted ? '1' : '0'}&play=1`}
-                      title={activePonto.titulo}
-                      allow="autoplay; encrypted-media"
-                      allowFullScreen
-                      className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
-                        showVideo ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-                      }`}
-                    />
-                  ) : null}
-
-                  {/* Backdrop Cover when video is hidden */}
-                  {!showVideo && (
-                    <div className="absolute inset-0 w-full h-full">
-                      {activePonto.thumbnail ? (
-                        <img 
-                          src={activePonto.thumbnail} 
-                          alt="" 
-                          className="h-full w-full object-cover blur-xs brightness-75 scale-102" 
-                        />
-                      ) : (
-                        <div className="h-full w-full bg-zinc-900/60 flex items-center justify-center text-white/15">
-                          <Music className="h-20 w-20" />
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Video Toggle and Status Overlay */}
-                  <div className="absolute top-4 right-4 z-10 flex gap-2">
-                    <button
-                      onClick={() => setShowVideo(!showVideo)}
-                      className="px-3.5 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[10.5px] font-bold text-white flex items-center gap-1.5 active:scale-90 transition-all"
-                    >
-                      {showVideo ? 'Esconder Vídeo' : 'Mostrar Vídeo'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Lyrics / Letra Tab */}
-                <div className="flex-1 flex flex-col min-h-0 bg-white/5 border border-white/5 rounded-3xl p-5 relative overflow-hidden backdrop-blur-md shadow-inner">
-                  <div className="flex items-center gap-2 mb-3 border-b border-white/10 pb-3 shrink-0">
-                    <BookOpen className="h-4.5 w-4.5 text-[#00b0ff]" />
-                    <span className="text-[11px] font-black text-white/70 uppercase tracking-[0.18em]">
-                      Acompanhar Letra do Ponto
-                    </span>
-                  </div>
-                  <div className="flex-1 overflow-y-auto no-scrollbar pr-1">
-                    {activePonto.letra ? (
-                      <p className="text-[14.5px] font-bold leading-relaxed text-white/90 whitespace-pre-line tracking-wide text-center">
-                        {activePonto.letra}
-                      </p>
-                    ) : (
-                      <div className="h-full flex flex-col items-center justify-center text-center p-6 text-white/40">
-                        <AlertCircle className="h-8 w-8 mb-2 opacity-50" />
-                        <p className="text-[13px] font-semibold">Sem letra cadastrada para este ponto</p>
-                        {isTerreiroAdmin && (
-                          <p className="text-[10px] opacity-75 mt-1 font-medium">Você pode preenchê-la editando o ponto.</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-              </div>
-
-              {/* 3. Controls & Slider area */}
-              <div className="shrink-0 space-y-6 pt-2">
-                {/* Progress bar */}
-                <div className="space-y-2">
-                  <div className="relative h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                    <div 
-                      className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#00e5ff] to-[#00b0ff] rounded-full transition-all duration-1000 ease-linear"
-                      style={{ width: `${(currentTime / duration) * 100}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-[11px] text-white/40 font-mono tracking-wider">
-                    <span>{formatTime(currentTime)}</span>
-                    <span>{formatTime(duration)}</span>
-                  </div>
-                </div>
-
-                {/* Action buttons */}
-                <div className="flex items-center justify-center gap-8">
-                  {/* Mute toggle */}
-                  <button
-                    onClick={() => setIsMuted(!isMuted)}
-                    className={`h-11 w-11 rounded-full flex items-center justify-center transition-all ${
-                      isMuted 
-                        ? 'bg-red-500/10 border border-red-500/20 text-red-400' 
-                        : 'bg-white/5 border border-white/5 text-white/80 hover:text-white'
-                    }`}
-                  >
-                    {isMuted ? <VolumeX className="h-4.5 w-4.5" /> : <Volume2 className="h-4.5 w-4.5" />}
-                  </button>
-
-                  {/* Play / Pause (Big Central button) */}
-                  <motion.button
-                    onClick={() => setIsPlaying(!isPlaying)}
-                    whileTap={{ scale: 0.94 }}
-                    className="h-18 w-18 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-2xl active:scale-95 transition-all"
-                  >
-                    {isPlaying ? (
-                      <Pause className="h-7 w-7 fill-zinc-950 text-zinc-950" />
-                    ) : (
-                      <Play className="h-7 w-7 fill-zinc-950 text-zinc-950 ml-1" />
-                    )}
-                  </motion.button>
-
-                  {/* Open Lyrics standalone or similar action */}
-                  <button
-                    onClick={() => setShowVideo(!showVideo)}
-                    className={`h-11 w-11 rounded-full flex items-center justify-center transition-all ${
-                      showVideo 
-                        ? 'bg-[#00b0ff]/20 border border-[#00b0ff]/30 text-[#00e5ff]' 
-                        : 'bg-white/5 border border-white/5 text-white/80 hover:text-white'
-                    }`}
-                  >
-                    <BookOpen className="h-4.5 w-4.5" />
-                  </button>
-                </div>
-
-                {/* Subtitle / Description */}
-                <p className="text-center text-[11px] text-white/35 font-medium px-4 leading-relaxed truncate pb-2">
-                  {activePonto.descricao || 'Canto sagrado reproduzido no terreiro.'}
-                </p>
-              </div>
-
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+          </div>
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

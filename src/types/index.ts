@@ -32,7 +32,7 @@ export const PONTO_CATEGORIES = [
   'PRETOS VELHOS',
   'EXUS',
   'ERÊS',
-  'BOIADEIROS',
+  'DEFUMAÇÃO',
   'OUTROS',
 ] as const;
 export type PontoCategory = (typeof PONTO_CATEGORIES)[number];
@@ -123,3 +123,14 @@ export interface StoredAppData {
 export interface AuthSession {
   accountId: string;
 }
+
+export interface Notice {
+  id: string;
+  title: string;
+  content: string;
+  category: 'Importante' | 'Programação' | 'Geral';
+  date: string;
+  createdAt: string;
+  terreiroId: string;
+}
+
