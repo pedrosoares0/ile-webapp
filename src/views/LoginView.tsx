@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertCircle, Mail, Lock, User, Phone, Hash, MapPin, Compass, Check } from 'lucide-react';
+import { AlertCircle, Mail, Lock, User, Phone, Hash, MapPin, Compass, Check, X, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -18,15 +18,25 @@ declare global {
 }
 
 const SLIDESHOW_IMAGES = [
-  '/img/login/oxalalogin.webp',
+  'https://i.pinimg.com/1200x/ff/27/66/ff2766b9a007eccd8a89d69c3624d505.jpg',
   '/img/login/oxumlogin.webp',
-  '/img/login/yemanjalogin.webp'
+  '/img/login/oxalalogin.webp',
+  '/img/login/yemanjalogin.webp',
 ];
+
+const formatCelular = (value: string) => {
+  const digits = value.replace(/\D/g, '');
+  const trimmed = digits.slice(0, 11);
+  if (trimmed.length <= 2) return trimmed;
+  if (trimmed.length <= 7) return `${trimmed.slice(0, 2)} ${trimmed.slice(2)}`;
+  return `${trimmed.slice(0, 2)} ${trimmed.slice(2, 7)}-${trimmed.slice(7)}`;
+};
 
 export default function LoginView() {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showQuickAccess, setShowQuickAccess] = useState(false);
   const [currentBg, setCurrentBg] = useState(0);
@@ -77,6 +87,24 @@ export default function LoginView() {
     };
   }, []);
 
+  useEffect(() => {
+    const originalBodyBg = document.body.style.backgroundColor;
+    const rootEl = document.getElementById('root');
+    const originalRootBg = rootEl ? rootEl.style.backgroundColor : '';
+
+    document.body.style.backgroundColor = '#000000';
+    if (rootEl) {
+      rootEl.style.backgroundColor = 'transparent';
+    }
+
+    return () => {
+      document.body.style.backgroundColor = originalBodyBg;
+      if (rootEl) {
+        rootEl.style.backgroundColor = originalRootBg;
+      }
+    };
+  }, []);
+
   // Smart Terreiro Recognition — debounced lookup against Supabase
   const [detectedTerreiro, setDetectedTerreiro] = useState<{ id: string; nome: string } | null>(null);
   const [isDetecting, setIsDetecting] = useState(false);
@@ -104,41 +132,41 @@ export default function LoginView() {
   const isT7CA = Boolean(detectedTerreiro);
 
   const isUsernameError = Boolean(
-    error && 
-    error.toLowerCase().includes('usuário') && 
+    error &&
+    error.toLowerCase().includes('usuário') &&
     error.toLowerCase().includes('uso')
   );
-  
+
   const isEmailError = Boolean(
-    error && 
-    (error.toLowerCase().includes('email') || 
-     error.toLowerCase().includes('already registered') || 
-     error.toLowerCase().includes('já cadastrado') || 
-     error.toLowerCase().includes('já existe'))
+    error &&
+    (error.toLowerCase().includes('email') ||
+      error.toLowerCase().includes('already registered') ||
+      error.toLowerCase().includes('já cadastrado') ||
+      error.toLowerCase().includes('já existe'))
   );
 
   const isPasswordError = Boolean(
-    error && 
+    error &&
     error.toLowerCase().includes('senhas não coincidem')
   );
-  
+
   const isTerreiroCodeError = Boolean(
-    error && 
-    (error.toLowerCase().includes('código do terreiro') || 
-     error.toLowerCase().includes('código não encontrado'))
+    error &&
+    (error.toLowerCase().includes('código do terreiro') ||
+      error.toLowerCase().includes('código não encontrado'))
   );
 
   // Computed taken states
   const isUsernameTaken = Boolean(usernameStatus?.taken) || isUsernameError;
   const isEmailTaken = Boolean(emailStatus?.taken) || isEmailError;
   const isMemberTerreiroCodeInvalid = Boolean(
-    (regCodigoTerreiro.trim().length >= 3 && !isDetectingMemberTerreiro && !detectedMemberTerreiro) || 
+    (regCodigoTerreiro.trim().length >= 3 && !isDetectingMemberTerreiro && !detectedMemberTerreiro) ||
     isTerreiroCodeError
   );
 
   // Missing fields highlighting
   const isMemberStep1Missing = Boolean(
-    error && 
+    error &&
     error.includes('dados obrigatórios')
   );
   const isMemberNomeError = isMemberStep1Missing && !regNome;
@@ -146,7 +174,7 @@ export default function LoginView() {
   const isMemberNumeroError = isMemberStep1Missing && !regNumero;
 
   const isTerreiroStep1Missing = Boolean(
-    error && 
+    error &&
     error.includes('dados do terreiro')
   );
   const isTerreiroNomeError = isTerreiroStep1Missing && !regTerreiroNome;
@@ -232,7 +260,7 @@ export default function LoginView() {
         const { data: matchedTerreiro } = await supabase
           .from('terreiros')
           .select('id, nome')
-          .or(`id.ilike.%${code}%,nome.ilike.%${code}%`)
+          .or(`id.ilike.${code},id.ilike.terreiro_${code}`)
           .limit(1);
 
         if (matchedTerreiro && matchedTerreiro.length > 0) {
@@ -287,7 +315,8 @@ export default function LoginView() {
   // Asynchronous Email checking
   useEffect(() => {
     const emailVal = (registerType === 'membro' ? regEmail : regTerreiroEmail).trim().toLowerCase();
-    if (!emailVal || !emailVal.includes('@') || emailVal.length < 5) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+    if (!emailVal || !emailRegex.test(emailVal)) {
       setEmailStatus(null);
       return;
     }
@@ -367,7 +396,7 @@ export default function LoginView() {
       const { data: matchedTerreiro, error: findError } = await supabase
         .from('terreiros')
         .select('*')
-        .or(`id.ilike.%${code}%,nome.ilike.%${code}%`)
+        .or(`id.ilike.${code},id.ilike.terreiro_${code}`)
         .limit(1);
 
       if (findError || !matchedTerreiro || matchedTerreiro.length === 0) {
@@ -396,7 +425,8 @@ export default function LoginView() {
     });
 
     if (signUpError) {
-      setError(signUpError.message);
+      const msg = signUpError.message;
+      setError(msg === '{}' || !msg ? 'Ocorreu um erro ao criar a conta. É possível que este e-mail já esteja em uso.' : msg);
       return;
     }
 
@@ -414,7 +444,8 @@ export default function LoginView() {
       });
 
       if (dbError) {
-        setError(dbError.message);
+        const msg = dbError.message;
+        setError(msg === '{}' || !msg ? 'Ocorreu um erro ao salvar os dados do seu perfil.' : msg);
         return;
       }
     }
@@ -488,7 +519,8 @@ export default function LoginView() {
     });
 
     if (signUpError) {
-      setError(signUpError.message);
+      const msg = signUpError.message;
+      setError(msg === '{}' || !msg ? 'Ocorreu um erro ao registrar o terreiro. É possível que este e-mail já esteja cadastrado.' : msg);
       return;
     }
 
@@ -507,7 +539,8 @@ export default function LoginView() {
       });
 
       if (dbError) {
-        setError(dbError.message);
+        const msg = dbError.message;
+        setError(msg === '{}' || !msg ? 'Ocorreu um erro ao salvar as configurações do terreiro.' : msg);
         return;
       }
     }
@@ -650,9 +683,9 @@ export default function LoginView() {
                   className="mt-2.5 flex justify-center gap-3"
                 >
                   {[
-                    { logo: '/img/logo-ile.webp', label: 'Adm Ilê', user: 'admin', pass: '123456', isIle: true },
-                    { logo: '/img/logo-T7CA.webp', label: 'Erick', user: 'erick', pass: '123456', isIle: false },
-                    { logo: '/img/logo-T7CA.webp', label: 'Membro', user: 'membro', pass: '123456', isIle: false },
+                    { logo: '/img/login/icone.webp', label: 'Adm Ilê', user: 'admin', pass: '123456', isIle: true },
+                    { logo: '/img/logo-T7CA.webp', label: 'Pai', user: 'erick', pass: '123456', isIle: false },
+                    { logo: '/img/logo-T7CA.webp', label: 'Filho', user: 'membro', pass: '123456', isIle: false },
                   ].map((hint, i) => (
                     <motion.button
                       key={hint.user}
@@ -909,24 +942,41 @@ export default function LoginView() {
                         setEmail(event.target.value);
                         if (error) setError(null);
                       }}
-                      className={`w-full rounded-[22px] bg-white/90 py-3.5 pl-10 pr-6 text-[15px] font-medium outline-none transition-all placeholder:text-[#414141]/25 border shadow-[inset_0_1px_2px_rgba(0,0,0,0.02),_0_2px_5px_rgba(0,0,0,0.015)] ${isT7CA
+                      className={`w-full rounded-[22px] bg-white/90 py-3.5 pl-10 pr-10 text-[15px] font-medium outline-none transition-all placeholder:text-[#414141]/25 border shadow-[inset_0_1px_2px_rgba(0,0,0,0.02),_0_2px_5px_rgba(0,0,0,0.015)] ${isT7CA
                         ? 'text-[#0d47a1] border-[#0d47a1]/15 focus:border-[#0d47a1]/40 focus:bg-white focus:ring-4 focus:ring-[#0d47a1]/5'
                         : 'text-[#414141] border-[#BF2429]/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-4 focus:ring-[#BF2429]/5'
                         }`}
                       placeholder="Email ou Usuário"
                     />
-                    {/* Detecting indicator */}
+                    {/* Detecting / Clear indicator */}
                     <AnimatePresence>
-                      {isDetecting && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.5 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.5 }}
-                          className="absolute right-4 top-1/2 -translate-y-1/2"
-                        >
-                          <div className="h-3.5 w-3.5 rounded-full border-2 border-[#0d47a1]/30 border-t-[#0d47a1] animate-spin" />
-                        </motion.div>
-                      )}
+                      {isDetecting ? (
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center">
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.5 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.5 }}
+                          >
+                            <div className="h-3.5 w-3.5 rounded-full border-2 border-[#0d47a1]/30 border-t-[#0d47a1] animate-spin" />
+                          </motion.div>
+                        </div>
+                      ) : email ? (
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center">
+                          <motion.button
+                            type="button"
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            onClick={() => {
+                              setEmail('');
+                              if (error) setError(null);
+                            }}
+                            className={`p-0.5 rounded-full hover:bg-zinc-100 transition-colors focus:outline-none ${isT7CA ? 'text-[#0d47a1]/40 hover:text-[#0d47a1]' : 'text-zinc-400 hover:text-zinc-600'}`}
+                          >
+                            <X className="h-4 w-4" />
+                          </motion.button>
+                        </div>
+                      ) : null}
                     </AnimatePresence>
                   </div>
 
@@ -938,18 +988,27 @@ export default function LoginView() {
                       }`} />
                     <input
                       required
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(event) => {
                         setPassword(event.target.value);
                         if (error) setError(null);
                       }}
-                      className={`w-full rounded-[22px] bg-white/90 py-3.5 pl-10 pr-6 text-[15px] font-medium outline-none transition-all placeholder:text-[#414141]/25 border shadow-[inset_0_1px_2px_rgba(0,0,0,0.02),_0_2px_5px_rgba(0,0,0,0.015)] ${isT7CA
+                      className={`w-full rounded-[22px] bg-white/90 py-3.5 pl-10 pr-10 text-[15px] font-medium outline-none transition-all placeholder:text-[#414141]/25 border shadow-[inset_0_1px_2px_rgba(0,0,0,0.02),_0_2px_5px_rgba(0,0,0,0.015)] ${isT7CA
                         ? 'text-[#0d47a1] border-[#0d47a1]/15 focus:border-[#0d47a1]/40 focus:bg-white focus:ring-4 focus:ring-[#0d47a1]/5'
                         : 'text-[#414141] border-[#BF2429]/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-4 focus:ring-[#BF2429]/5'
                         }`}
                       placeholder="Senha"
                     />
+                    {password && (
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className={`absolute right-4 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-zinc-100 transition-colors focus:outline-none ${isT7CA ? 'text-[#0d47a1]/40 hover:text-[#0d47a1]' : 'text-zinc-400 hover:text-zinc-600'}`}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -986,7 +1045,7 @@ export default function LoginView() {
                       : 'text-[#BF2429]/70 hover:text-[#BF2429]'
                       }`}
                   >
-                    Não tem uma conta? Faça seu cadastro agora.
+                    Não tem uma conta? Cadastre-se agora.
                   </button>
                 </div>
               </motion.form>
@@ -1026,11 +1085,10 @@ export default function LoginView() {
                       {/* Nome & Sobrenome */}
                       <div className="grid grid-cols-2 gap-3">
                         <div className="group relative">
-                          <User className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${
-                            isMemberNomeError 
-                              ? 'text-red-500' 
-                              : 'text-zinc-400 group-focus-within:text-[#BF2429]'
-                          }`} />
+                          <User className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isMemberNomeError
+                            ? 'text-red-500'
+                            : 'text-zinc-400 group-focus-within:text-[#BF2429]'
+                            }`} />
                           <input
                             required
                             type="text"
@@ -1039,11 +1097,10 @@ export default function LoginView() {
                               setRegNome(e.target.value);
                               if (error) setError(null);
                             }}
-                            className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${
-                              isMemberNomeError 
-                                ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10' 
-                                : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
-                            }`}
+                            className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${isMemberNomeError
+                              ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10'
+                              : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
+                              }`}
                             placeholder="Nome"
                           />
                         </div>
@@ -1056,11 +1113,10 @@ export default function LoginView() {
                               setRegSobrenome(e.target.value);
                               if (error) setError(null);
                             }}
-                            className={`w-full rounded-[16px] bg-white/75 py-3.5 px-5 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${
-                              isMemberSobrenomeError 
-                                ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10' 
-                                : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
-                            }`}
+                            className={`w-full rounded-[16px] bg-white/75 py-3.5 px-5 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${isMemberSobrenomeError
+                              ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10'
+                              : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
+                              }`}
                             placeholder="Sobrenome"
                           />
                         </div>
@@ -1068,37 +1124,34 @@ export default function LoginView() {
 
                       {/* Celular */}
                       <div className="group relative">
-                        <Phone className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${
-                          isMemberNumeroError 
-                            ? 'text-red-500' 
-                            : 'text-zinc-400 group-focus-within:text-[#BF2429]'
-                        }`} />
+                        <Phone className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isMemberNumeroError
+                          ? 'text-red-500'
+                          : 'text-zinc-400 group-focus-within:text-[#BF2429]'
+                          }`} />
                         <input
                           required
                           type="tel"
                           value={regNumero}
                           onChange={(e) => {
-                            setRegNumero(e.target.value);
+                            setRegNumero(formatCelular(e.target.value));
                             if (error) setError(null);
                           }}
-                          className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${
-                            isMemberNumeroError 
-                              ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10' 
-                              : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
-                          }`}
+                          className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${isMemberNumeroError
+                            ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10'
+                            : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
+                            }`}
                           placeholder="Celular"
                         />
                       </div>
 
                       {/* Código do Terreiro */}
                       <div className="group relative">
-                        <Hash className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${
-                          isMemberTerreiroCodeInvalid 
-                            ? 'text-red-500' 
-                            : detectedMemberTerreiro
-                              ? 'text-emerald-600'
-                              : 'text-zinc-400 group-focus-within:text-[#BF2429]'
-                        }`} />
+                        <Hash className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isMemberTerreiroCodeInvalid
+                          ? 'text-red-500'
+                          : detectedMemberTerreiro
+                            ? 'text-emerald-600'
+                            : 'text-zinc-400 group-focus-within:text-[#BF2429]'
+                          }`} />
                         <input
                           type="text"
                           value={regCodigoTerreiro}
@@ -1106,13 +1159,12 @@ export default function LoginView() {
                             setRegCodigoTerreiro(e.target.value);
                             if (error) setError(null);
                           }}
-                          className={`w-full rounded-[16px] py-3.5 pl-10 pr-10 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${
-                            isMemberTerreiroCodeInvalid 
-                              ? 'bg-white/75 border-red-500 focus:border-red-600 focus:ring-red-500/10' 
-                              : detectedMemberTerreiro
-                                ? 'bg-emerald-500/[0.02] border-emerald-500/35 focus:border-emerald-500 focus:ring-emerald-500/10'
-                                : 'bg-white/75 border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
-                          }`}
+                          className={`w-full rounded-[16px] py-3.5 pl-10 pr-10 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${isMemberTerreiroCodeInvalid
+                            ? 'bg-white/75 border-red-500 focus:border-red-600 focus:ring-red-500/10'
+                            : detectedMemberTerreiro
+                              ? 'bg-emerald-500/[0.02] border-emerald-500/35 focus:border-emerald-500 focus:ring-emerald-500/10'
+                              : 'bg-white/75 border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
+                            }`}
                           placeholder="Cód. Terreiro (Opcional)"
                         />
                         {isDetectingMemberTerreiro && (
@@ -1183,13 +1235,12 @@ export default function LoginView() {
                     >
                       {/* Username */}
                       <div className="group relative">
-                        <User className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${
-                          isUsernameTaken 
-                            ? 'text-red-500' 
-                            : usernameStatus?.checked && !usernameStatus.taken
-                              ? 'text-emerald-600'
-                              : 'text-zinc-400 group-focus-within:text-[#BF2429]'
-                        }`} />
+                        <User className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isUsernameTaken
+                          ? 'text-red-500'
+                          : usernameStatus?.checked && !usernameStatus.taken
+                            ? 'text-emerald-600'
+                            : 'text-zinc-400 group-focus-within:text-[#BF2429]'
+                          }`} />
                         <input
                           required
                           type="text"
@@ -1198,13 +1249,12 @@ export default function LoginView() {
                             setRegUsername(e.target.value.replace(/\s+/g, '').toLowerCase());
                             if (error) setError(null);
                           }}
-                          className={`w-full rounded-[16px] py-3.5 pl-10 pr-10 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${
-                            isUsernameTaken 
-                              ? 'bg-white/75 border-red-500 focus:border-red-600 focus:ring-red-500/10' 
-                              : usernameStatus?.checked && !usernameStatus.taken
-                                ? 'bg-emerald-500/[0.02] border-emerald-500/35 focus:border-emerald-500 focus:ring-emerald-500/10'
-                                : 'bg-white/75 border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
-                          }`}
+                          className={`w-full rounded-[16px] py-3.5 pl-10 pr-10 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${isUsernameTaken
+                            ? 'bg-white/75 border-red-500 focus:border-red-600 focus:ring-red-500/10'
+                            : usernameStatus?.checked && !usernameStatus.taken
+                              ? 'bg-emerald-500/[0.02] border-emerald-500/35 focus:border-emerald-500 focus:ring-emerald-500/10'
+                              : 'bg-white/75 border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
+                            }`}
                           placeholder="Nome de Usuário (login)"
                         />
                         {checkingUsername && (
@@ -1226,13 +1276,12 @@ export default function LoginView() {
 
                       {/* Email */}
                       <div className="group relative">
-                        <Mail className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${
-                          isEmailTaken 
-                            ? 'text-red-500' 
-                            : emailStatus?.checked && !emailStatus.taken
-                              ? 'text-emerald-600'
-                              : 'text-zinc-400 group-focus-within:text-[#BF2429]'
-                        }`} />
+                        <Mail className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isEmailTaken
+                          ? 'text-red-500'
+                          : emailStatus?.checked && !emailStatus.taken
+                            ? 'text-emerald-600'
+                            : 'text-zinc-400 group-focus-within:text-[#BF2429]'
+                          }`} />
                         <input
                           required
                           type="email"
@@ -1241,13 +1290,12 @@ export default function LoginView() {
                             setRegEmail(e.target.value);
                             if (error) setError(null);
                           }}
-                          className={`w-full rounded-[16px] py-3.5 pl-10 pr-10 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${
-                            isEmailTaken 
-                              ? 'bg-white/75 border-red-500 focus:border-red-600 focus:ring-red-500/10' 
-                              : emailStatus?.checked && !emailStatus.taken
-                                ? 'bg-emerald-500/[0.02] border-emerald-500/35 focus:border-emerald-500 focus:ring-emerald-500/10'
-                                : 'bg-white/75 border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
-                          }`}
+                          className={`w-full rounded-[16px] py-3.5 pl-10 pr-10 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${isEmailTaken
+                            ? 'bg-white/75 border-red-500 focus:border-red-600 focus:ring-red-500/10'
+                            : emailStatus?.checked && !emailStatus.taken
+                              ? 'bg-emerald-500/[0.02] border-emerald-500/35 focus:border-emerald-500 focus:ring-emerald-500/10'
+                              : 'bg-white/75 border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
+                            }`}
                           placeholder="Email"
                         />
                         {checkingEmail && (
@@ -1270,11 +1318,10 @@ export default function LoginView() {
                       {/* Senha & Confirmar Senha */}
                       <div className="grid grid-cols-2 gap-3">
                         <div className="group relative">
-                          <Lock className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${
-                            isPasswordError 
-                              ? 'text-red-500' 
-                              : 'text-zinc-400 group-focus-within:text-[#BF2429]'
-                          }`} />
+                          <Lock className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isPasswordError
+                            ? 'text-red-500'
+                            : 'text-zinc-400 group-focus-within:text-[#BF2429]'
+                            }`} />
                           <input
                             required
                             type="password"
@@ -1283,20 +1330,18 @@ export default function LoginView() {
                               setRegSenha(e.target.value);
                               if (error) setError(null);
                             }}
-                            className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${
-                              isPasswordError 
-                                ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10' 
-                                : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
-                            }`}
+                            className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${isPasswordError
+                              ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10'
+                              : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
+                              }`}
                             placeholder="Senha"
                           />
                         </div>
                         <div className="group relative">
-                          <Lock className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${
-                            isPasswordError 
-                              ? 'text-red-500' 
-                              : 'text-zinc-400 group-focus-within:text-[#BF2429]'
-                          }`} />
+                          <Lock className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isPasswordError
+                            ? 'text-red-500'
+                            : 'text-zinc-400 group-focus-within:text-[#BF2429]'
+                            }`} />
                           <input
                             required
                             type="password"
@@ -1305,11 +1350,10 @@ export default function LoginView() {
                               setRegConfirmaSenha(e.target.value);
                               if (error) setError(null);
                             }}
-                            className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${
-                              isPasswordError 
-                                ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10' 
-                                : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
-                            }`}
+                            className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${isPasswordError
+                              ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10'
+                              : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
+                              }`}
                             placeholder="Confirmar"
                           />
                         </div>
@@ -1390,11 +1434,10 @@ export default function LoginView() {
                     >
                       {/* Nome do Terreiro */}
                       <div className="group relative">
-                        <User className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${
-                          isTerreiroNomeError 
-                            ? 'text-red-500' 
-                            : 'text-zinc-400 group-focus-within:text-[#BF2429]'
-                        }`} />
+                        <User className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isTerreiroNomeError
+                          ? 'text-red-500'
+                          : 'text-zinc-400 group-focus-within:text-[#BF2429]'
+                          }`} />
                         <input
                           required
                           type="text"
@@ -1403,35 +1446,32 @@ export default function LoginView() {
                             setRegTerreiroNome(e.target.value);
                             if (error) setError(null);
                           }}
-                          className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${
-                            isTerreiroNomeError 
-                              ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10' 
-                              : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
-                          }`}
+                          className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${isTerreiroNomeError
+                            ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10'
+                            : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
+                            }`}
                           placeholder="Nome do Terreiro"
                         />
                       </div>
 
                       {/* Celular */}
                       <div className="group relative">
-                        <Phone className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${
-                          isTerreiroCelularError 
-                            ? 'text-red-500' 
-                            : 'text-zinc-400 group-focus-within:text-[#BF2429]'
-                        }`} />
+                        <Phone className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isTerreiroCelularError
+                          ? 'text-red-500'
+                          : 'text-zinc-400 group-focus-within:text-[#BF2429]'
+                          }`} />
                         <input
                           required
                           type="tel"
                           value={regTerreiroCelular}
                           onChange={(e) => {
-                            setRegTerreiroCelular(e.target.value);
+                            setRegTerreiroCelular(formatCelular(e.target.value));
                             if (error) setError(null);
                           }}
-                          className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${
-                            isTerreiroCelularError 
-                              ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10' 
-                              : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
-                          }`}
+                          className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${isTerreiroCelularError
+                            ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10'
+                            : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
+                            }`}
                           placeholder="Celular"
                         />
                       </div>
@@ -1439,11 +1479,10 @@ export default function LoginView() {
                       {/* Cidade & Estado */}
                       <div className="grid grid-cols-3 gap-3">
                         <div className="col-span-2 group relative">
-                          <MapPin className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${
-                            isTerreiroCidadeError 
-                              ? 'text-red-500' 
-                              : 'text-zinc-400 group-focus-within:text-[#BF2429]'
-                          }`} />
+                          <MapPin className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isTerreiroCidadeError
+                            ? 'text-red-500'
+                            : 'text-zinc-400 group-focus-within:text-[#BF2429]'
+                            }`} />
                           <input
                             required
                             type="text"
@@ -1452,20 +1491,18 @@ export default function LoginView() {
                               setRegTerreiroCidade(e.target.value);
                               if (error) setError(null);
                             }}
-                            className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${
-                              isTerreiroCidadeError 
-                                ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10' 
-                                : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
-                            }`}
+                            className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${isTerreiroCidadeError
+                              ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10'
+                              : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
+                              }`}
                             placeholder="Cidade"
                           />
                         </div>
                         <div className="group relative">
-                          <Compass className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${
-                            isTerreiroEstadoError 
-                              ? 'text-red-500' 
-                              : 'text-zinc-400 group-focus-within:text-[#BF2429]'
-                          }`} />
+                          <Compass className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isTerreiroEstadoError
+                            ? 'text-red-500'
+                            : 'text-zinc-400 group-focus-within:text-[#BF2429]'
+                            }`} />
                           <input
                             required
                             type="text"
@@ -1475,11 +1512,10 @@ export default function LoginView() {
                               setRegTerreiroEstado(e.target.value);
                               if (error) setError(null);
                             }}
-                            className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border text-center uppercase ${
-                              isTerreiroEstadoError 
-                                ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10' 
-                                : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
-                            }`}
+                            className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border text-center uppercase ${isTerreiroEstadoError
+                              ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10'
+                              : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
+                              }`}
                             placeholder="UF"
                           />
                         </div>
@@ -1524,13 +1560,12 @@ export default function LoginView() {
 
                       {/* Username Admin */}
                       <div className="group relative">
-                        <User className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${
-                          isUsernameTaken 
-                            ? 'text-red-500' 
-                            : usernameStatus?.checked && !usernameStatus.taken
-                              ? 'text-emerald-600'
-                              : 'text-zinc-400 group-focus-within:text-[#BF2429]'
-                        }`} />
+                        <User className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isUsernameTaken
+                          ? 'text-red-500'
+                          : usernameStatus?.checked && !usernameStatus.taken
+                            ? 'text-emerald-600'
+                            : 'text-zinc-400 group-focus-within:text-[#BF2429]'
+                          }`} />
                         <input
                           required
                           type="text"
@@ -1539,13 +1574,12 @@ export default function LoginView() {
                             setRegTerreiroUsername(e.target.value.replace(/\s+/g, '').toLowerCase());
                             if (error) setError(null);
                           }}
-                          className={`w-full rounded-[16px] py-3.5 pl-10 pr-10 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${
-                            isUsernameTaken 
-                              ? 'bg-white/75 border-red-500 focus:border-red-600 focus:ring-red-500/10' 
-                              : usernameStatus?.checked && !usernameStatus.taken
-                                ? 'bg-emerald-500/[0.02] border-emerald-500/35 focus:border-emerald-500 focus:ring-emerald-500/10'
-                                : 'bg-white/75 border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
-                          }`}
+                          className={`w-full rounded-[16px] py-3.5 pl-10 pr-10 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${isUsernameTaken
+                            ? 'bg-white/75 border-red-500 focus:border-red-600 focus:ring-red-500/10'
+                            : usernameStatus?.checked && !usernameStatus.taken
+                              ? 'bg-emerald-500/[0.02] border-emerald-500/35 focus:border-emerald-500 focus:ring-emerald-500/10'
+                              : 'bg-white/75 border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
+                            }`}
                           placeholder="Nome de Usuário Admin (login)"
                         />
                         {checkingUsername && (
@@ -1567,13 +1601,12 @@ export default function LoginView() {
 
                       {/* Email Admin */}
                       <div className="group relative">
-                        <Mail className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${
-                          isEmailTaken 
-                            ? 'text-red-500' 
-                            : emailStatus?.checked && !emailStatus.taken
-                              ? 'text-emerald-600'
-                              : 'text-zinc-400 group-focus-within:text-[#BF2429]'
-                        }`} />
+                        <Mail className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isEmailTaken
+                          ? 'text-red-500'
+                          : emailStatus?.checked && !emailStatus.taken
+                            ? 'text-emerald-600'
+                            : 'text-zinc-400 group-focus-within:text-[#BF2429]'
+                          }`} />
                         <input
                           required
                           type="email"
@@ -1582,13 +1615,12 @@ export default function LoginView() {
                             setRegTerreiroEmail(e.target.value);
                             if (error) setError(null);
                           }}
-                          className={`w-full rounded-[16px] py-3.5 pl-10 pr-10 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${
-                            isEmailTaken 
-                              ? 'bg-white/75 border-red-500 focus:border-red-600 focus:ring-red-500/10' 
-                              : emailStatus?.checked && !emailStatus.taken
-                                ? 'bg-emerald-500/[0.02] border-emerald-500/35 focus:border-emerald-500 focus:ring-emerald-500/10'
-                                : 'bg-white/75 border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
-                          }`}
+                          className={`w-full rounded-[16px] py-3.5 pl-10 pr-10 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${isEmailTaken
+                            ? 'bg-white/75 border-red-500 focus:border-red-600 focus:ring-red-500/10'
+                            : emailStatus?.checked && !emailStatus.taken
+                              ? 'bg-emerald-500/[0.02] border-emerald-500/35 focus:border-emerald-500 focus:ring-emerald-500/10'
+                              : 'bg-white/75 border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
+                            }`}
                           placeholder="Email Admin"
                         />
                         {checkingEmail && (
@@ -1611,11 +1643,10 @@ export default function LoginView() {
                       {/* Senha & Confirmar Senha */}
                       <div className="grid grid-cols-2 gap-3">
                         <div className="group relative">
-                          <Lock className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${
-                            isPasswordError 
-                              ? 'text-red-500' 
-                              : 'text-zinc-400 group-focus-within:text-[#BF2429]'
-                          }`} />
+                          <Lock className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isPasswordError
+                            ? 'text-red-500'
+                            : 'text-zinc-400 group-focus-within:text-[#BF2429]'
+                            }`} />
                           <input
                             required
                             type="password"
@@ -1624,20 +1655,18 @@ export default function LoginView() {
                               setRegTerreiroSenha(e.target.value);
                               if (error) setError(null);
                             }}
-                            className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${
-                              isPasswordError 
-                                ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10' 
-                                : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
-                            }`}
+                            className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${isPasswordError
+                              ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10'
+                              : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
+                              }`}
                             placeholder="Senha"
                           />
                         </div>
                         <div className="group relative">
-                          <Lock className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${
-                            isPasswordError 
-                              ? 'text-red-500' 
-                              : 'text-zinc-400 group-focus-within:text-[#BF2429]'
-                          }`} />
+                          <Lock className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isPasswordError
+                            ? 'text-red-500'
+                            : 'text-zinc-400 group-focus-within:text-[#BF2429]'
+                            }`} />
                           <input
                             required
                             type="password"
@@ -1646,11 +1675,10 @@ export default function LoginView() {
                               setRegTerreiroConfirmaSenha(e.target.value);
                               if (error) setError(null);
                             }}
-                            className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${
-                              isPasswordError 
-                                ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10' 
-                                : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
-                            }`}
+                            className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${isPasswordError
+                              ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10'
+                              : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
+                              }`}
                             placeholder="Confirmar"
                           />
                         </div>
