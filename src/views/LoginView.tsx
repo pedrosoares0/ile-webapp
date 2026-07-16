@@ -18,9 +18,9 @@ declare global {
 }
 
 const SLIDESHOW_IMAGES = [
-  'https://i.pinimg.com/1200x/ff/27/66/ff2766b9a007eccd8a89d69c3624d505.jpg',
+  '/img/login/exu.webp',
   '/img/login/oxumlogin.webp',
-  '/img/login/oxalalogin.webp',
+  '/img/login/filho.webp',
   '/img/login/yemanjalogin.webp',
 ];
 
