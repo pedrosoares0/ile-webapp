@@ -1,4 +1,4 @@
-![Capa do Projeto](/public/img/capa-readme.png)
+![Capa do Projeto](/public/img/capa-readme1.png)
 
 # Ilê - Gestão Inteligente para Comunidades de Umbanda
 
