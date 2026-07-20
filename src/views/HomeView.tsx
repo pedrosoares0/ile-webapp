@@ -194,12 +194,17 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
     return terreiros.find((t) => t.id === currentAccount.terreiroId) ?? null;
   }, [currentAccount, terreiros]);
 
+  // Use sigla when available, otherwise extract from name
   const terreiroDisplayName = useMemo(() => {
     if (!currentTerreiro) return 'SISTEMA ILÊ';
+    if (currentTerreiro.sigla) return currentTerreiro.sigla;
     const name = currentTerreiro.nome;
     const dashIdx = name.indexOf(' - ');
     return dashIdx > 0 ? name.substring(0, dashIdx).trim() : name;
   }, [currentTerreiro]);
+
+  // Aurora color — use terreiro's theme color, default to app red
+  const auroraColor = currentTerreiro?.corTema || '#BF2429';
 
   // Robust Upcoming Events — all events within next 7 days, sorted
   const upcomingEvents = useMemo(() => {
@@ -328,7 +333,7 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
 
       `}</style>
 
-      {/* Aurora Backdrop Effect behind the main card */}
+      {/* Aurora Backdrop Effect behind the main card — color driven by terreiro.corTema */}
       <div
         className="absolute inset-x-0 top-0 h-[45dvh] pointer-events-none overflow-hidden z-0 select-none"
         style={{
@@ -337,10 +342,12 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
         }}
       >
         <div
-          className="absolute w-[72vw] h-[72vw] rounded-full bg-gradient-to-br from-[#0d47a1]/85 to-[#1565c0]/45 blur-[60px] -top-[18%] -left-[12%] aurora-blob-1"
+          className="absolute w-[72vw] h-[72vw] rounded-full blur-[60px] -top-[18%] -left-[12%] aurora-blob-1"
+          style={{ background: `radial-gradient(circle, ${auroraColor}dd 0%, ${auroraColor}55 60%, transparent 100%)`, transition: 'background 0.8s ease' }}
         />
         <div
-          className="absolute w-[85vw] h-[85vw] rounded-full bg-gradient-to-tr from-[#00b0ff]/80 to-[#00e5ff]/35 blur-[70px] -top-[22%] -right-[18%] aurora-blob-2"
+          className="absolute w-[85vw] h-[85vw] rounded-full blur-[70px] -top-[22%] -right-[18%] aurora-blob-2"
+          style={{ background: `radial-gradient(circle, ${auroraColor}bb 0%, ${auroraColor}33 60%, transparent 100%)`, filter: 'hue-rotate(20deg)', transition: 'background 0.8s ease' }}
         />
       </div>
 

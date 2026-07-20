@@ -369,6 +369,7 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
     saveTerreiro({
       id: terreiroId,
       nome: terreiroForm.nome.trim(),
+      sigla: terreiros.find((t) => t.id === editingTerreiroId)?.sigla ?? '',
       cidade: terreiroForm.cidade.trim(),
       estado: terreiroForm.estado.trim(),
       dirigente: terreiroForm.dirigente.trim(),
@@ -376,6 +377,7 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
       observacoes: terreiroForm.observacoes.trim(),
       ativo: terreiroForm.ativo,
       accessAccountId: accountId,
+      corTema: terreiros.find((t) => t.id === editingTerreiroId)?.corTema ?? '#BF2429',
       createdAt:
         terreiros.find((terreiro) => terreiro.id === editingTerreiroId)?.createdAt ??
         new Date().toISOString(),

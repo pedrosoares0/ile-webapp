@@ -42,6 +42,7 @@ export type ViewType = 'home' | 'pontos' | 'eventos' | 'divindades' | 'financeir
 export interface Terreiro {
   id: string;
   nome: string;
+  sigla: string;
   cidade: string;
   estado: string;
   dirigente: string;
@@ -49,6 +50,7 @@ export interface Terreiro {
   observacoes: string;
   ativo: boolean;
   accessAccountId: string;
+  corTema: string;
   createdAt: string;
 }
 

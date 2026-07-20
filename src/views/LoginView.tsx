@@ -69,18 +69,20 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
   const [regConfirmaSenha, setRegConfirmaSenha] = useState('');
   const [regCodigoTerreiro, setRegCodigoTerreiro] = useState('');
 
-  // Terreiro Registration states (Split into 2 Steps)
+  // Terreiro Registration states (Split into 3 Steps)
   const [regStep, setRegStep] = useState(1);
   const [membroStep, setMembroStep] = useState(1);
   const [regTerreiroDirigente, setRegTerreiroDirigente] = useState('');
   const [regTerreiroUsername, setRegTerreiroUsername] = useState('');
   const [regTerreiroNome, setRegTerreiroNome] = useState('');
+  const [regTerreiroSigla, setRegTerreiroSigla] = useState('');
   const [regTerreiroEmail, setRegTerreiroEmail] = useState('');
   const [regTerreiroCelular, setRegTerreiroCelular] = useState('');
   const [regTerreiroCidade, setRegTerreiroCidade] = useState('');
   const [regTerreiroEstado, setRegTerreiroEstado] = useState('');
   const [regTerreiroSenha, setRegTerreiroSenha] = useState('');
   const [regTerreiroConfirmaSenha, setRegTerreiroConfirmaSenha] = useState('');
+  const [regTerreiroCorTema, setRegTerreiroCorTema] = useState('#BF2429');
 
   // Feed icon cycling effect
   useEffect(() => {
@@ -554,12 +556,14 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
       const { error: dbError } = await supabase.from('terreiros').insert({
         id: newTerreiroId,
         nome: regTerreiroNome,
+        sigla: regTerreiroSigla.trim().toUpperCase(),
         cidade: regTerreiroCidade,
         estado: regTerreiroEstado.toUpperCase(),
         dirigente: regTerreiroDirigente,
         contato: regTerreiroCelular,
         observacoes: 'Terreiro cadastrado pelo portal público.',
         ativo: true,
+        cor_tema: regTerreiroCorTema,
         access_account_id: signUpData.user.id,
       });
 
@@ -588,24 +592,39 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
         setRegTerreiroDirigente('');
         setRegTerreiroUsername('');
         setRegTerreiroNome('');
+        setRegTerreiroSigla('');
         setRegTerreiroEmail('');
         setRegTerreiroCelular('');
         setRegTerreiroCidade('');
         setRegTerreiroEstado('');
         setRegTerreiroSenha('');
         setRegTerreiroConfirmaSenha('');
+        setRegTerreiroCorTema('#BF2429');
         setSuccessData(null);
       }
     });
   }
 
   function handleTerreiroNext() {
-    if (!regTerreiroNome || !regTerreiroCelular || !regTerreiroCidade || !regTerreiroEstado) {
+    if (!regTerreiroNome || !regTerreiroSigla || !regTerreiroCelular || !regTerreiroCidade || !regTerreiroEstado) {
       setError('Preencha os dados do terreiro para continuar.');
       return;
     }
     setError(null);
     setRegStep(2);
+  }
+
+  function handleTerreiroNext2() {
+    if (regTerreiroSenha !== regTerreiroConfirmaSenha) {
+      setError('As senhas não coincidem.');
+      return;
+    }
+    if (!regTerreiroDirigente || !regTerreiroUsername || !regTerreiroEmail || !regTerreiroSenha) {
+      setError('Preencha todos os dados do administrador para continuar.');
+      return;
+    }
+    setError(null);
+    setRegStep(3);
   }
 
   return (
@@ -744,14 +763,13 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
       </AnimatePresence>
 
       {/* Double Bezel Outer Shell */}
-      <div className={`relative mx-4 mb-2 p-1.5 rounded-[44px] bg-white/5 border border-white/15 backdrop-blur-2xl shadow-[0_24px_60px_rgba(0,0,0,0.25)] z-10 overflow-hidden transition-all duration-[250ms] ease-[0.23,1,0.32,1] ${isRegister ? 'min-h-[78vh] flex flex-col justify-center' : ''
-        }`}>
+      <div className={`relative mx-4 mb-2 p-1.5 rounded-[44px] bg-white/5 border border-white/15 backdrop-blur-2xl shadow-[0_24px_60px_rgba(0,0,0,0.25)] z-10 overflow-hidden transition-all duration-[250ms] ease-[0.23,1,0.32,1]`}>
 
         {/* Double Bezel Inner Core Card */}
         <motion.div
           layout
           className={`relative rounded-[38px] px-6 pt-6 pb-5 overflow-hidden transition-all duration-[250ms] ease-[0.23,1,0.32,1] ${isRegister
-            ? 'min-h-[76vh] flex flex-col justify-start gap-4 border border-white/60 shadow-[inset_0_1px_2px_rgba(255,255,255,0.6)]'
+            ? 'flex flex-col gap-4 border border-white/60 shadow-[inset_0_1px_2px_rgba(255,255,255,0.6)]'
             : 'border border-white/40 shadow-[inset_0_1px_2px_rgba(255,255,255,0.45)]'
             }`}
         >
@@ -1042,19 +1060,18 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                   type="submit"
                   animate={{
                     background: isT7CA
-                      ? 'linear-gradient(180deg, #1565c0 0%, #0d47a1 100%)'
-                      : 'linear-gradient(180deg, #BF2429 0%, #991b1d 100%)',
+                      ? 'linear-gradient(175deg, #1e72d8 0%, #0d47a1 100%)'
+                      : 'linear-gradient(175deg, #e8383c 0%, #a91b1f 100%)',
                   }}
                   transition={{ duration: 0.25 }}
-                  className="group relative w-full overflow-hidden rounded-[22px] py-4 text-[13px] font-black tracking-[0.2em] text-white transition-all active:scale-[0.96] mt-5 border-t border-white/20 shadow-lg"
+                  className="w-full rounded-full py-[15px] text-[14px] font-bold tracking-wide text-white transition-all active:scale-[0.97] mt-5"
                   style={{
                     boxShadow: isT7CA
-                      ? '0 6px 20px rgba(13, 71, 161, 0.35), inset 0 1px 0 rgba(255,255,255,0.2)'
-                      : '0 6px 20px rgba(191, 36, 41, 0.35), inset 0 1px 0 rgba(255,255,255,0.2)'
+                      ? '0 0 0 2.5px rgba(255,255,255,0.28), 0 10px 28px rgba(13,71,161,0.44), inset 0 1px 0 rgba(255,255,255,0.3)'
+                      : '0 0 0 2.5px rgba(255,255,255,0.28), 0 10px 28px rgba(191,36,41,0.44), inset 0 1px 0 rgba(255,255,255,0.3)'
                   }}
                 >
-                  <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
-                  <span className="relative flex items-center justify-center gap-2">
+                  <span className="flex items-center justify-center gap-2">
                     {detectedTerreiro ? `ENTRAR NO ${detectedShortName}` : 'ENTRAR'}
                   </span>
                 </motion.button>
@@ -1220,6 +1237,7 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                         </div>
                       </div>
 
+
                       {/* Celular */}
                       <div className="group relative">
                         <Phone className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isMemberNumeroError
@@ -1348,13 +1366,13 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                           setError(null);
                           setMembroStep(2);
                         }}
-                        className="group relative w-full overflow-hidden rounded-[16px] py-4 text-[13px] font-black tracking-[0.2em] text-white transition-all active:scale-[0.96] border-t border-white/20 shadow-lg bg-gradient-to-b from-[#BF2429] to-[#991b1d] hover:from-[#d9383d] hover:to-[#bf2429] mt-2"
+                        className="w-full rounded-full py-[15px] text-[14px] font-bold tracking-wide text-white transition-all active:scale-[0.97] mt-2"
                         style={{
-                          boxShadow: '0 6px 20px rgba(191, 36, 41, 0.25), inset 0 1px 0 rgba(255,255,255,0.2)'
+                          background: 'linear-gradient(175deg, #e8383c 0%, #a91b1f 100%)',
+                          boxShadow: '0 0 0 2.5px rgba(255,255,255,0.28), 0 10px 28px rgba(191,36,41,0.44), inset 0 1px 0 rgba(255,255,255,0.3)'
                         }}
                       >
-                        <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
-                        <span className="relative flex items-center justify-center gap-2">
+                        <span className="flex items-center justify-center gap-2">
                           AVANÇAR
                           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="opacity-80"><path d="M5 3l4 4-4 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         </span>
@@ -1514,13 +1532,13 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
 
                       <motion.button
                         type="submit"
-                        className="group relative w-full overflow-hidden rounded-[16px] py-4 text-[13px] font-black tracking-[0.2em] text-white transition-all active:scale-[0.96] border-t border-white/20 shadow-lg bg-gradient-to-b from-[#BF2429] to-[#991b1d] hover:from-[#d9383d] hover:to-[#bf2429] mt-2"
+                        className="w-full rounded-full py-[15px] text-[14px] font-bold tracking-wide text-white transition-all active:scale-[0.97] mt-2"
                         style={{
-                          boxShadow: '0 6px 20px rgba(191, 36, 41, 0.25), inset 0 1px 0 rgba(255,255,255,0.2)'
+                          background: 'linear-gradient(175deg, #e8383c 0%, #a91b1f 100%)',
+                          boxShadow: '0 0 0 2.5px rgba(255,255,255,0.28), 0 10px 28px rgba(191,36,41,0.44), inset 0 1px 0 rgba(255,255,255,0.3)'
                         }}
                       >
-                        <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
-                        <span className="relative flex items-center justify-center gap-2">
+                        <span className="flex items-center justify-center gap-2">
                           CONFIRMAR CADASTRO
                         </span>
                       </motion.button>
@@ -1553,7 +1571,7 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                 </AnimatePresence>
               </motion.form>
             ) : (
-              /* TERREIRO REGISTRATION FORM (2-STEP GLASSMORPHIC WIZARD) */
+              /* TERREIRO REGISTRATION FORM (3-STEP GLASSMORPHIC WIZARD) */
               <motion.form
                 key="register-terreiro"
                 initial={{ opacity: 0, x: 8 }}
@@ -1606,6 +1624,33 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                           placeholder="Nome do Terreiro"
                         />
                       </div>
+
+
+                      {/* Sigla do Terreiro */}
+                      <div className="group relative">
+                        <Hash className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${(isTerreiroStep1Missing && !regTerreiroSigla)
+                          ? 'text-red-500'
+                          : 'text-zinc-400 group-focus-within:text-[#BF2429]'
+                          }`} />
+                        <input
+                          required
+                          type="text"
+                          maxLength={8}
+                          value={regTerreiroSigla}
+                          onChange={(e) => {
+                            setRegTerreiroSigla(e.target.value.replace(/\s+/g, '').toUpperCase());
+                            if (error) setError(null);
+                          }}
+                          className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-black uppercase tracking-[0.12em] outline-none transition-all placeholder:text-[#414141]/35 placeholder:normal-case placeholder:tracking-normal focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${(isTerreiroStep1Missing && !regTerreiroSigla)
+                            ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10'
+                            : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
+                            }`}
+                          placeholder="Sigla do terreiro (ex: T7CA)"
+                        />
+                      </div>
+                      <p className="text-[10px] text-[#414141]/45 font-medium px-1 -mt-1">
+                        Abreviação exibida na barra superior do app para seus membros
+                      </p>
 
                       {/* Celular */}
                       <div className="group relative">
@@ -1677,19 +1722,35 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                       <motion.button
                         type="button"
                         onClick={handleTerreiroNext}
-                        className="group relative w-full overflow-hidden rounded-[16px] py-4 text-[13px] font-black tracking-[0.2em] text-white transition-all active:scale-[0.96] border-t border-white/20 shadow-lg bg-gradient-to-b from-[#BF2429] to-[#991b1d] hover:from-[#d9383d] hover:to-[#bf2429] mt-2"
+                        className="w-full rounded-full py-[15px] text-[14px] font-bold tracking-wide text-white transition-all active:scale-[0.97] mt-2"
                         style={{
-                          boxShadow: '0 6px 20px rgba(191, 36, 41, 0.25), inset 0 1px 0 rgba(255,255,255,0.2)'
+                          background: 'linear-gradient(175deg, #e8383c 0%, #a91b1f 100%)',
+                          boxShadow: '0 0 0 2.5px rgba(255,255,255,0.28), 0 10px 28px rgba(191,36,41,0.44), inset 0 1px 0 rgba(255,255,255,0.3)'
                         }}
                       >
-                        <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
-                        <span className="relative flex items-center justify-center gap-2">
+                        <span className="flex items-center justify-center gap-2">
                           AVANÇAR
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="opacity-80"><path d="M5 3l4 4-4 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         </span>
                       </motion.button>
+
+                      <div className="text-center pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsRegister(false);
+                            setError(null);
+                            setRegStep(1);
+                          }}
+                          className="text-[11px] font-semibold text-[#BF2429]/60 hover:text-[#BF2429] transition-colors focus:outline-none"
+                        >
+                          Já tem uma conta?{' '}
+                          <span className="font-black underline underline-offset-2">Fazer Login</span>
+                        </button>
+                      </div>
                     </motion.div>
-                  ) : (
-                    /* STEP 2: ADMIN / CREATOR DETAILS */
+                  ) : regStep === 2 ? (
+                    /* STEP 2: ADMIN / CREATOR DETAILS — avança para step 3 */
                     <motion.div
                       key="step2"
                       initial={{ opacity: 0, y: 6 }}
@@ -1838,44 +1899,165 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                       </div>
 
                       <motion.button
-                        type="submit"
-                        className="group relative w-full overflow-hidden rounded-[16px] py-4 text-[13px] font-black tracking-[0.2em] text-white transition-all active:scale-[0.96] border-t border-white/20 shadow-lg bg-gradient-to-b from-[#BF2429] to-[#991b1d] hover:from-[#d9383d] hover:to-[#bf2429] mt-2"
+                        type="button"
+                        onClick={handleTerreiroNext2}
+                        className="w-full rounded-full py-[15px] text-[14px] font-bold tracking-wide text-white transition-all active:scale-[0.97] mt-2"
                         style={{
-                          boxShadow: '0 6px 20px rgba(191, 36, 41, 0.25), inset 0 1px 0 rgba(255,255,255,0.2)'
+                          background: 'linear-gradient(175deg, #e8383c 0%, #a91b1f 100%)',
+                          boxShadow: '0 0 0 2.5px rgba(255,255,255,0.28), 0 10px 28px rgba(191,36,41,0.44), inset 0 1px 0 rgba(255,255,255,0.3)'
                         }}
                       >
-                        <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
-                        <span className="relative flex items-center justify-center gap-2">
+                        <span className="flex items-center justify-center gap-2">
+                          AVANÇAR
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="opacity-80"><path d="M5 3l4 4-4 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </span>
+                      </motion.button>
+
+                      {/* Navegação */}
+                      <div className="flex items-center justify-center gap-4 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setRegStep(1)}
+                          className="text-[11px] font-semibold text-[#414141]/50 hover:text-[#414141]/80 transition-colors focus:outline-none flex items-center gap-1"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7 2L3 6l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          Passo anterior
+                        </button>
+                        <span className="text-[#414141]/15 text-xs">|</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsRegister(false);
+                            setError(null);
+                            setRegStep(1);
+                          }}
+                          className="text-[11px] font-semibold text-[#BF2429]/60 hover:text-[#BF2429] transition-colors focus:outline-none"
+                        >
+                          Já tenho conta
+                        </button>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    /* STEP 3: THEME COLOR SELECTION */
+                    <motion.div
+                      key="step3"
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.14, ease: 'easeOut' }}
+                      className="space-y-4 pb-1"
+                    >
+                      {/* Step 3 header */}
+                      <div className="text-center space-y-1 pt-1 pb-2">
+                        <p className="text-[13px] font-black text-[#414141] tracking-tight">Escolha a Cor do seu Terreiro</p>
+                        <p className="text-[11px] text-[#414141]/50 font-medium leading-relaxed">
+                          Essa cor define o fundo aurora da Home para todos os membros do <strong className="text-[#414141]/70">{regTerreiroSigla || 'seu terreiro'}</strong>
+                        </p>
+                      </div>
+
+                      {/* Color Grid */}
+                      <div className="grid grid-cols-4 gap-3">
+                        {([
+                          { hex: '#BF2429', label: 'Vermelho' },
+                          { hex: '#1565c0', label: 'Azul' },
+                          { hex: '#1a7a4a', label: 'Verde' },
+                          { hex: '#6B21A8', label: 'Roxo' },
+                          { hex: '#B45309', label: 'Dourado' },
+                          { hex: '#BE185D', label: 'Rosa' },
+                          { hex: '#0891B2', label: 'Ciano' },
+                          { hex: '#C2410C', label: 'Laranja' },
+                        ] as const).map(({ hex, label }) => {
+                          const isSelected = regTerreiroCorTema === hex;
+                          return (
+                            <button
+                              key={hex}
+                              type="button"
+                              onClick={() => setRegTerreiroCorTema(hex)}
+                              className="flex flex-col items-center gap-1.5 focus:outline-none group"
+                            >
+                              <div
+                                className={`relative w-full aspect-square rounded-[18px] transition-all duration-200 ${isSelected ? 'scale-105' : 'scale-100 hover:scale-102 opacity-80 hover:opacity-100'}`}
+                                style={{
+                                  background: `linear-gradient(135deg, ${hex}cc, ${hex})`,
+                                  boxShadow: isSelected
+                                    ? `0 0 0 3px white, 0 0 0 5px ${hex}, 0 8px 20px ${hex}66`
+                                    : `0 4px 12px ${hex}44`
+                                }}
+                              >
+                                {isSelected && (
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                  </div>
+                                )}
+                              </div>
+                              <span className={`text-[9px] font-bold tracking-wide transition-colors ${isSelected ? 'text-[#414141]' : 'text-[#414141]/45'}`}>
+                                {label}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Preview */}
+                      <div
+                        className="w-full rounded-[20px] overflow-hidden h-[60px] relative"
+                        style={{ background: '#f5f5f5' }}
+                      >
+                        <div
+                          className="absolute w-[90%] h-[160%] rounded-full blur-[30px] -top-[30%] -left-[10%]"
+                          style={{ background: regTerreiroCorTema + 'cc', transition: 'background 0.4s ease' }}
+                        />
+                        <div
+                          className="absolute w-[70%] h-[160%] rounded-full blur-[25px] -top-[20%] -right-[15%]"
+                          style={{ background: regTerreiroCorTema + '99', transition: 'background 0.4s ease' }}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-[11px] font-black text-white/90 tracking-widest uppercase" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.3)' }}>
+                            Preview — {regTerreiroSigla || 'SIGLA'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Submit */}
+                      <motion.button
+                        type="submit"
+                        className="w-full rounded-full py-[15px] text-[14px] font-bold tracking-wide text-white transition-all active:scale-[0.97] mt-1"
+                        style={{
+                          background: `linear-gradient(175deg, ${regTerreiroCorTema}ee, ${regTerreiroCorTema})`,
+                          boxShadow: `0 0 0 2.5px rgba(255,255,255,0.28), 0 10px 28px ${regTerreiroCorTema}70, inset 0 1px 0 rgba(255,255,255,0.3)`
+                        }}
+                      >
+                        <span className="flex items-center justify-center gap-2">
                           CADASTRAR TERREIRO
                         </span>
                       </motion.button>
+
+                      {/* Navegação */}
+                      <div className="flex items-center justify-center gap-4 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setRegStep(2)}
+                          className="text-[11px] font-semibold text-[#414141]/50 hover:text-[#414141]/80 transition-colors focus:outline-none flex items-center gap-1"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7 2L3 6l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          Passo anterior
+                        </button>
+                        <span className="text-[#414141]/15 text-xs">|</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsRegister(false);
+                            setError(null);
+                            setRegStep(1);
+                          }}
+                          className="text-[11px] font-semibold text-[#BF2429]/60 hover:text-[#BF2429] transition-colors focus:outline-none"
+                        >
+                          Já tenho conta
+                        </button>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
-
-                {/* Back controls */}
-                <div className="text-center mt-4">
-                  {regStep === 2 && registerType === 'terreiro' ? (
-                    <button
-                      type="button"
-                      onClick={() => setRegStep(1)}
-                      className="text-xs font-semibold text-[#BF2429]/70 hover:text-[#BF2429] transition-colors focus:outline-none block mx-auto mb-1.5"
-                    >
-                      ← Voltar para o Passo 1
-                    </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsRegister(false);
-                      setError(null);
-                      setRegStep(1);
-                    }}
-                    className="text-xs font-semibold text-[#BF2429]/70 hover:text-[#BF2429] transition-colors focus:outline-none"
-                  >
-                    Já tem uma conta? Fazer Login.
-                  </button>
-                </div>
               </motion.form>
             )}
           </AnimatePresence>

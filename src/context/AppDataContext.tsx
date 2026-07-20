@@ -128,6 +128,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           terreirosData.map((t) => ({
             id: t.id,
             nome: t.nome,
+            sigla: t.sigla || '',
             cidade: t.cidade || '',
             estado: t.estado || '',
             dirigente: t.dirigente || '',
@@ -135,6 +136,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             observacoes: t.observacoes || '',
             ativo: t.ativo,
             accessAccountId: t.access_account_id || '',
+            corTema: t.cor_tema || '#BF2429',
             createdAt: t.created_at,
           }))
         );
@@ -334,12 +336,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.from('terreiros').upsert({
           id: terreiro.id,
           nome: terreiro.nome,
+          sigla: terreiro.sigla,
           cidade: terreiro.cidade,
           estado: terreiro.estado,
           dirigente: terreiro.dirigente,
           contato: terreiro.contato,
           observacoes: terreiro.observacoes,
           ativo: terreiro.ativo,
+          cor_tema: terreiro.corTema,
           access_account_id: terreiro.accessAccountId || null,
         });
         if (!error) {

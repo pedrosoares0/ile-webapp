@@ -68,6 +68,10 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
   const isHubUser = currentAccount?.role === 'terreiro_user' && !currentAccount?.terreiroId;
   const logoSrc = (isGlobalAdmin || isHubUser) ? '/img/login/icone.webp' : '/img/logo-T7CA.webp';
 
+  const { terreiros } = useAppData();
+  const currentTerreiro = terreiros.find(t => t.id === currentAccount?.terreiroId);
+  const terreiroSigla = currentTerreiro?.sigla || currentTerreiro?.nome?.split(' - ')[0] || 'Terreiro';
+
   const filteredMenuItems = MENU_ITEMS.filter(item => {
     if (isHubUser) {
       return item.id === 'home' || item.id === 'divindades' || item.id === 'sair';
@@ -128,7 +132,7 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
                     <img src={logoSrc} alt="Logo" className="relative h-14 w-14 object-contain" />
                   </div>
                   <h2 className="text-[16px] font-bold text-[#242424] tracking-[0.25em] leading-none uppercase">
-                    {(isGlobalAdmin || isHubUser) ? 'Ilê' : 'T7CA'}
+                    {(isGlobalAdmin || isHubUser) ? 'Ilê' : terreiroSigla}
                   </h2>
                   <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#414141]/40 mt-2">
                     {isGlobalAdmin ? 'Portal Administrativo' : isHubUser ? 'Hub de Terreiros' : 'Terreiro de Umbanda'}
