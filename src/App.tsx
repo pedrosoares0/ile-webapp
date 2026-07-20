@@ -19,10 +19,11 @@ export default function App() {
   const [currentView, setCurrentView] = useState<ViewType>('home')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [hideNavbar, setHideNavbar] = useState(false)
+  const [isGuestHub, setIsGuestHub] = useState(false)
   const { isAuthenticated, logout } = useAuth()
   const { currentAccount, isLoading } = useAppData()
 
-  const isHubUser = currentAccount?.role === 'terreiro_user' && !currentAccount?.terreiroId;
+  const isHubUser = isGuestHub || (currentAccount?.role === 'terreiro_user' && !currentAccount?.terreiroId);
   const showNavbar = isAuthenticated && !isHubUser && !hideNavbar;
 
   // Reset navbar hidden state when view changes
@@ -43,17 +44,17 @@ export default function App() {
 
   // Reset view to home when logging in or out
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !isGuestHub) {
       setCurrentView('home')
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, isGuestHub])
 
   const handleNavigate = (view: ViewType) => {
     setCurrentView(view)
   }
 
-  if (!isAuthenticated) {
-    return <LoginView />
+  if (!isAuthenticated && !isGuestHub) {
+    return <LoginView onExploreHub={() => setIsGuestHub(true)} />
   }
 
   return (
@@ -75,7 +76,12 @@ export default function App() {
       >
           {currentView === 'home' ? (
             isHubUser ? (
-              <HubView key="hub" onToggleMenu={() => setIsMenuOpen(true)} />
+              <HubView 
+                key="hub" 
+                onToggleMenu={() => setIsMenuOpen(true)} 
+                isGuestMode={isGuestHub}
+                onExitGuest={() => setIsGuestHub(false)}
+              />
             ) : (
               <HomeView key="home" onNavigate={setCurrentView} onToggleMenu={() => setIsMenuOpen(true)} />
             )

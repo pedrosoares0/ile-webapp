@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertCircle, Mail, Lock, User, Phone, Hash, MapPin, Compass, Check, X, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, Mail, Lock, User, Phone, Hash, MapPin, Compass, Check, X, Eye, EyeOff, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -32,7 +32,11 @@ const formatCelular = (value: string) => {
   return `${trimmed.slice(0, 2)} ${trimmed.slice(2, 7)}-${trimmed.slice(7)}`;
 };
 
-export default function LoginView() {
+interface LoginViewProps {
+  onExploreHub?: () => void;
+}
+
+export default function LoginView({ onExploreHub }: LoginViewProps) {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -41,6 +45,15 @@ export default function LoginView() {
   const [showQuickAccess, setShowQuickAccess] = useState(false);
   const [currentBg, setCurrentBg] = useState(0);
   const [prevBg, setPrevBg] = useState(0);
+
+  // Feed Ilê rotating icon states (must be at component level, not inside IIFE)
+  const FEED_ICONS = [
+    { src: '/img/reactions/folha.webp', shadow: 'rgba(60,150,60,0.35)' },
+    { src: '/img/reactions/concha.webp', shadow: 'rgba(200,170,110,0.35)' },
+    { src: '/img/reactions/coracao.webp', shadow: 'rgba(220,50,50,0.35)' },
+  ];
+  const [feedIconIdx, setFeedIconIdx] = useState(0);
+  const [feedIconVisible, setFeedIconVisible] = useState(true);
 
   // Registration flow states
   const [isRegister, setIsRegister] = useState(false);
@@ -68,6 +81,18 @@ export default function LoginView() {
   const [regTerreiroEstado, setRegTerreiroEstado] = useState('');
   const [regTerreiroSenha, setRegTerreiroSenha] = useState('');
   const [regTerreiroConfirmaSenha, setRegTerreiroConfirmaSenha] = useState('');
+
+  // Feed icon cycling effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFeedIconVisible(false);
+      setTimeout(() => {
+        setFeedIconIdx(prev => (prev + 1) % FEED_ICONS.length);
+        setFeedIconVisible(true);
+      }, 300);
+    }, 2200);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -684,8 +709,9 @@ export default function LoginView() {
                 >
                   {[
                     { logo: '/img/login/icone.webp', label: 'Adm Ilê', user: 'admin', pass: '123456', isIle: true },
-                    { logo: '/img/logo-T7CA.webp', label: 'Pai', user: 'erick', pass: '123456', isIle: false },
+                    { logo: '/img/logo-T7CA.webp', label: 'Pai (T7CA)', user: 'erick', pass: '123456', isIle: false },
                     { logo: '/img/logo-T7CA.webp', label: 'Filho', user: 'membro', pass: '123456', isIle: false },
+                    { logo: '/img/login/icone.webp', label: 'Hub Membro', user: 'membro.hub', pass: '123456', isIle: true },
                   ].map((hint, i) => (
                     <motion.button
                       key={hint.user}
@@ -1033,7 +1059,7 @@ export default function LoginView() {
                   </span>
                 </motion.button>
 
-                <div className="text-center mt-4">
+                <div className="text-center mt-3">
                   <button
                     type="button"
                     onClick={() => {
@@ -1046,6 +1072,78 @@ export default function LoginView() {
                       }`}
                   >
                     Não tem uma conta? Cadastre-se agora.
+                  </button>
+                </div>
+
+                {/* Feed Ilê Feature Card / Exploration Button */}
+                <div className="mt-5 pt-3.5 border-t border-[#414141]/8 flex flex-col items-center">
+                  <button
+                    type="button"
+                    onClick={() => onExploreHub?.()}
+                    className="w-full group relative overflow-hidden rounded-[28px] text-left transition-all active:scale-[0.98] shadow-[0_6px_28px_rgba(139,0,0,0.09),_0_2px_8px_rgba(0,0,0,0.06)]"
+                    style={{
+                      background: 'linear-gradient(135deg, #fff9f5 0%, #fff5ee 40%, #fdf0e8 100%)',
+                      border: '1px solid rgba(139,0,0,0.10)',
+                    }}
+                  >
+                    {/* Subtle inner glow top edge */}
+                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
+
+                    <div className="flex items-center gap-3.5 p-4">
+                      {/* Animated icon container */}
+                      <div
+                        className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[18px] transition-all"
+                        style={{
+                          background: 'linear-gradient(145deg, #fff 60%, #fde8d8 100%)',
+                          boxShadow: `0 4px 16px ${FEED_ICONS[feedIconIdx].shadow}, 0 1px 4px rgba(0,0,0,0.06), inset 0 1px 1px rgba(255,255,255,0.9)`,
+                          border: '1px solid rgba(139,0,0,0.08)',
+                          transition: 'box-shadow 0.4s ease',
+                        }}
+                      >
+                        <img
+                          src={FEED_ICONS[feedIconIdx].src}
+                          alt=""
+                          className="h-8 w-8 object-contain"
+                          style={{
+                            opacity: feedIconVisible ? 1 : 0,
+                            transform: feedIconVisible ? 'scale(1)' : 'scale(0.82)',
+                            transition: 'opacity 0.3s ease, transform 0.3s ease',
+                            filter: `drop-shadow(0 2px 6px ${FEED_ICONS[feedIconIdx].shadow})`,
+                          }}
+                        />
+                      </div>
+
+                      {/* Text content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-[12.5px] font-bold text-[#414141] tracking-tight">Feed Ilê</span>
+                          <span
+                            className="text-[8.5px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider"
+                            style={{
+                              background: 'linear-gradient(90deg, rgba(139,0,0,0.10) 0%, rgba(139,0,0,0.06) 100%)',
+                              color: '#8B0000',
+                              border: '1px solid rgba(139,0,0,0.12)',
+                            }}
+                          >
+                            Visitante
+                          </span>
+                        </div>
+                        <p className="text-[11px] font-medium text-[#414141]/55 leading-tight">
+                          Explore terreiros, giras e pontos sem conta
+                        </p>
+                      </div>
+
+                      {/* Arrow */}
+                      <div
+                        className="shrink-0 h-7 w-7 rounded-full flex items-center justify-center"
+                        style={{
+                          background: 'rgba(139,0,0,0.06)',
+                          border: '1px solid rgba(139,0,0,0.10)',
+                        }}
+                      >
+                        <ChevronRight className="h-3.5 w-3.5 text-[#8B0000]/60 group-hover:translate-x-0.5 transition-transform" />
+                      </div>
+                    </div>
                   </button>
                 </div>
               </motion.form>
@@ -1140,8 +1238,15 @@ export default function LoginView() {
                             ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10'
                             : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
                             }`}
-                          placeholder="Celular"
+                          placeholder="Celular (DDD + número)"
                         />
+                      </div>
+
+                      {/* Divider com label */}
+                      <div className="flex items-center gap-2 pt-1">
+                        <div className="flex-1 h-px bg-[#BF2429]/10" />
+                        <span className="text-[9.5px] font-black tracking-[0.18em] text-[#BF2429]/50 uppercase">Código do Terreiro</span>
+                        <div className="flex-1 h-px bg-[#BF2429]/10" />
                       </div>
 
                       {/* Código do Terreiro */}
@@ -1165,7 +1270,7 @@ export default function LoginView() {
                               ? 'bg-emerald-500/[0.02] border-emerald-500/35 focus:border-emerald-500 focus:ring-emerald-500/10'
                               : 'bg-white/75 border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
                             }`}
-                          placeholder="Cód. Terreiro (Opcional)"
+                          placeholder="Código convite (opcional)"
                         />
                         {isDetectingMemberTerreiro && (
                           <div className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -1174,32 +1279,63 @@ export default function LoginView() {
                         )}
                       </div>
 
+                      {/* Feedback do código */}
                       {detectedMemberTerreiro ? (
                         <motion.div
-                          initial={{ opacity: 0, y: -2 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="flex items-center gap-1.5 text-[10px] text-emerald-700 bg-emerald-500/10 border border-emerald-500/15 rounded-xl px-3 py-2 -mt-1 text-left"
+                          initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          className="flex items-center gap-2 text-[11px] text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-3.5 py-2.5 -mt-1 text-left"
                         >
-                          <Check className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
-                          <span>
-                            Terreiro localizado: <strong className="font-black">{detectedMemberTerreiro.nome} ({detectedMemberTerreiro.id.toUpperCase()})</strong>
-                          </span>
+                          <div className="flex-shrink-0 h-6 w-6 rounded-full bg-emerald-500/15 flex items-center justify-center">
+                            <Check className="h-3.5 w-3.5 text-emerald-600" />
+                          </div>
+                          <div>
+                            <p className="font-black text-emerald-800 leading-none mb-0.5">Terreiro encontrado!</p>
+                            <p className="font-medium text-emerald-700/80">{detectedMemberTerreiro.nome} <span className="text-emerald-600/60">· {detectedMemberTerreiro.id.toUpperCase()}</span></p>
+                          </div>
                         </motion.div>
                       ) : regCodigoTerreiro.trim().length >= 3 && !isDetectingMemberTerreiro ? (
                         <motion.div
-                          initial={{ opacity: 0, y: -2 }}
+                          initial={{ opacity: 0, y: -4 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="flex items-center gap-1.5 text-[10px] text-red-700 bg-red-500/10 border border-red-500/15 rounded-xl px-3 py-2 -mt-1 text-left"
+                          className="flex items-center gap-2 text-[11px] text-red-700 bg-red-500/8 border border-red-500/15 rounded-2xl px-3.5 py-2.5 -mt-1 text-left"
                         >
-                          <AlertCircle className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
-                          <span>
-                            Código inválido ou não encontrado.
-                          </span>
+                          <div className="flex-shrink-0 h-6 w-6 rounded-full bg-red-500/12 flex items-center justify-center">
+                            <X className="h-3.5 w-3.5 text-red-500" />
+                          </div>
+                          <div>
+                            <p className="font-black leading-none mb-0.5">Código não encontrado</p>
+                            <p className="font-medium text-red-600/80">Verifique com seu pai/mãe de santo.</p>
+                          </div>
                         </motion.div>
                       ) : (
-                        <p className="text-[10px] text-zinc-500/75 leading-relaxed px-1 text-left -mt-1">
-                          O código de convite é fornecido pelo dirigente (pai ou mãe de santo) do seu terreiro para vincular sua conta diretamente a ele.
-                        </p>
+                        <motion.div
+                          initial={{ opacity: 0, y: -4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="relative overflow-hidden rounded-2xl -mt-1"
+                          style={{
+                            background: 'linear-gradient(135deg, rgba(139,0,0,0.04) 0%, rgba(191,36,41,0.04) 100%)',
+                            border: '1px solid rgba(139,0,0,0.10)',
+                          }}
+                        >
+                          <div className="flex gap-3 p-3">
+                            <div className="flex-shrink-0 mt-0.5">
+                              <div
+                                className="h-7 w-7 rounded-full flex items-center justify-center"
+                                style={{ background: 'rgba(139,0,0,0.08)' }}
+                              >
+                                <span className="text-[14px]">🤝</span>
+                              </div>
+                            </div>
+                            <div className="space-y-1 text-left">
+                              <p className="text-[11px] font-black text-[#8B0000] leading-none">Como obter o código?</p>
+                              <p className="text-[10.5px] text-[#414141]/65 leading-relaxed">
+                                Peça ao seu <strong className="text-[#8B0000]/80 font-bold">pai ou mãe de santo</strong> que envie o código convite do terreiro. Caso não tenha, <strong className="text-[#414141]/80">deixe em branco</strong> — você acessará o{' '}
+                                <strong className="text-[#8B0000] font-bold">Feed Ilê</strong> e poderá explorar terreiros de todo o país!
+                              </p>
+                            </div>
+                          </div>
+                        </motion.div>
                       )}
 
                       <motion.button
@@ -1220,8 +1356,25 @@ export default function LoginView() {
                         <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
                         <span className="relative flex items-center justify-center gap-2">
                           AVANÇAR
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="opacity-80"><path d="M5 3l4 4-4 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         </span>
                       </motion.button>
+
+                      {/* Já tem conta */}
+                      <div className="text-center pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsRegister(false);
+                            setError(null);
+                            setMembroStep(1);
+                          }}
+                          className="text-[11px] font-semibold text-[#BF2429]/60 hover:text-[#BF2429] transition-colors focus:outline-none"
+                        >
+                          Já tem uma conta?{' '}
+                          <span className="font-black underline underline-offset-2">Fazer Login</span>
+                        </button>
+                      </div>
                     </motion.div>
                   ) : (
                     /* STEP 2: CREDENTIALS */
@@ -1371,33 +1524,33 @@ export default function LoginView() {
                           CONFIRMAR CADASTRO
                         </span>
                       </motion.button>
+
+                      {/* Voltar */}
+                      <div className="flex items-center justify-center gap-4 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setMembroStep(1)}
+                          className="text-[11px] font-semibold text-[#414141]/50 hover:text-[#414141]/80 transition-colors focus:outline-none flex items-center gap-1"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7 2L3 6l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          Passo anterior
+                        </button>
+                        <span className="text-[#414141]/15 text-xs">|</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsRegister(false);
+                            setError(null);
+                            setMembroStep(1);
+                          }}
+                          className="text-[11px] font-semibold text-[#BF2429]/60 hover:text-[#BF2429] transition-colors focus:outline-none"
+                        >
+                          Já tenho conta
+                        </button>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
-
-                {/* Back controls */}
-                <div className="text-center mt-4">
-                  {membroStep === 2 && (
-                    <button
-                      type="button"
-                      onClick={() => setMembroStep(1)}
-                      className="text-xs font-semibold text-[#BF2429]/70 hover:text-[#BF2429] transition-colors focus:outline-none block mx-auto mb-1.5"
-                    >
-                      ← Voltar para o Passo 1
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsRegister(false);
-                      setError(null);
-                      setMembroStep(1);
-                    }}
-                    className="text-xs font-semibold text-[#BF2429]/70 hover:text-[#BF2429] transition-colors focus:outline-none"
-                  >
-                    Já tem uma conta? Fazer Login.
-                  </button>
-                </div>
               </motion.form>
             ) : (
               /* TERREIRO REGISTRATION FORM (2-STEP GLASSMORPHIC WIZARD) */
