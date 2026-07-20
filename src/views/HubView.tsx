@@ -574,6 +574,7 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
                                               top: isUser ? '-1px' : rid === 'folha' ? '0px' : '2px',
                                               filter: `drop-shadow(0 2px 5px ${r.shadow})`,
                                               objectFit: 'contain',
+                                              mixBlendMode: 'multiply',
                                             }}
                                           />
                                         );
@@ -615,6 +616,7 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
                                           filter: `drop-shadow(0 3px 8px ${r.shadow})`,
                                           transform: reactions[post.id] === r.id ? 'scale(1.2)' : 'scale(1)',
                                           transition: 'transform 0.15s ease',
+                                          mixBlendMode: 'multiply',
                                         }}
                                       />
                                     </button>
