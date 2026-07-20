@@ -522,13 +522,20 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
 
                           {/* Reaction Button — WhatsApp style */}
                           <div className="relative">
+                            {/* Invisible backdrop to close picker on outside tap */}
+                            {openReactionPickerId === post.id && (
+                              <div
+                                className="fixed inset-0 z-40"
+                                onClick={() => setOpenReactionPickerId(null)}
+                              />
+                            )}
+
                             {/* Active Reaction Display / Tap to open picker */}
                             <button
                               onClick={() => setOpenReactionPickerId(
                                 openReactionPickerId === post.id ? null : post.id
                               )}
-                              onBlur={() => setTimeout(() => setOpenReactionPickerId(null), 250)}
-                              className="flex items-center gap-2 text-xs font-semibold transition-transform active:scale-90"
+                              className="flex items-center gap-2 text-xs font-semibold transition-transform active:scale-90 relative z-50"
                             >
                               {/* Stacked reaction icons */}
                               {(() => {
@@ -586,7 +593,7 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
                               })()}
                             </button>
 
-                            {/* Reaction Picker Popover */}
+                            {/* Reaction Picker — z-50 sits above the z-40 backdrop */}
                             <AnimatePresence>
                               {openReactionPickerId === post.id && (
                                 <motion.div
@@ -594,16 +601,13 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
                                   animate={{ opacity: 1, scale: 1, y: 0 }}
                                   exit={{ opacity: 0, scale: 0.85, y: 4 }}
                                   transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
-                                  className="absolute bottom-full left-0 mb-2 flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/90 backdrop-blur-md border border-black/[0.07] shadow-[0_8px_28px_rgba(0,0,0,0.12)] z-50"
+                                  className="absolute bottom-full left-0 mb-2 flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/95 backdrop-blur-md border border-black/[0.07] shadow-[0_8px_28px_rgba(0,0,0,0.14)] z-50"
                                 >
                                   {REACTIONS.map((r) => (
                                     <button
                                       key={r.id}
-                                      onMouseDown={(e) => {
-                                        e.preventDefault(); // Prevent blur on parent before click fires
-                                        toggleReaction(post.id, r.id);
-                                      }}
-                                      className={`flex items-center justify-center p-1.5 rounded-xl transition-all active:scale-90 hover:scale-110 ${
+                                      onClick={() => toggleReaction(post.id, r.id)}
+                                      className={`flex flex-col items-center gap-0.5 p-1.5 rounded-xl transition-all active:scale-90 hover:scale-110 ${
                                         reactions[post.id] === r.id ? 'scale-110' : ''
                                       }`}
                                       title={r.label}
@@ -611,14 +615,15 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
                                       <img
                                         src={r.src}
                                         alt={r.label}
-                                        className="h-8 w-8 object-contain"
+                                        className="h-9 w-9 object-contain"
                                         style={{
                                           filter: `drop-shadow(0 3px 8px ${r.shadow})`,
-                                          transform: reactions[post.id] === r.id ? 'scale(1.2)' : 'scale(1)',
+                                          transform: reactions[post.id] === r.id ? 'scale(1.15)' : 'scale(1)',
                                           transition: 'transform 0.15s ease',
                                           mixBlendMode: 'multiply',
                                         }}
                                       />
+                                      <span className="text-[9px] font-bold text-[#414141]/60">{r.label}</span>
                                     </button>
                                   ))}
                                 </motion.div>
