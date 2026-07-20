@@ -527,7 +527,7 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
                               onClick={() => setOpenReactionPickerId(
                                 openReactionPickerId === post.id ? null : post.id
                               )}
-                              onBlur={() => setTimeout(() => setOpenReactionPickerId(null), 150)}
+                              onBlur={() => setTimeout(() => setOpenReactionPickerId(null), 250)}
                               className="flex items-center gap-2 text-xs font-semibold transition-transform active:scale-90"
                             >
                               {/* Stacked reaction icons */}
@@ -598,7 +598,10 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
                                   {REACTIONS.map((r) => (
                                     <button
                                       key={r.id}
-                                      onClick={() => toggleReaction(post.id, r.id)}
+                                      onMouseDown={(e) => {
+                                        e.preventDefault(); // Prevent blur on parent before click fires
+                                        toggleReaction(post.id, r.id);
+                                      }}
                                       className={`flex items-center justify-center p-1.5 rounded-xl transition-all active:scale-90 hover:scale-110 ${
                                         reactions[post.id] === r.id ? 'scale-110' : ''
                                       }`}
