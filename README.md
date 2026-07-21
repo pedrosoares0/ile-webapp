@@ -2,8 +2,6 @@
 
 # Ilê - Gestão Inteligente para Comunidades de Umbanda
 
-> Documentação técnica e operacional: [`docs/README.md`](docs/README.md)
-
 **Ilê** é uma plataforma "Mobile-First" desenvolvida para modernizar a gestão e a comunicação em terreiros de Umbanda e Candomblé. Unindo tradição e tecnologia, o projeto oferece acesso a informações essenciais da comunidade.
 
 ---
