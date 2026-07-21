@@ -47,19 +47,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // If the identifier doesn't look like an email, treat it as a username
         if (!emailToAuth.includes('@')) {
-          const { data: profile, error: lookupError } = await supabase
-            .from('accounts')
-            .select('email')
-            .ilike('username', emailToAuth)
-            .maybeSingle();
+          const { data: resolvedEmail, error: lookupError } = await supabase
+            .rpc('resolve_login_email', { identifier: emailToAuth });
 
-          if (lookupError || !profile) {
+          if (lookupError || !resolvedEmail) {
             return {
               success: false,
               error: 'Nome de usuário não encontrado.',
             };
           }
-          emailToAuth = profile.email;
+          emailToAuth = resolvedEmail;
         }
 
         const { data, error } = await supabase.auth.signInWithPassword({

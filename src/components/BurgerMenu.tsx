@@ -10,7 +10,8 @@ import {
   BookOpen,
   Music,
   HeartHandshake,
-  Bell
+  Bell,
+  Users
 } from 'lucide-react';
 
 interface BurgerMenuProps {
@@ -34,6 +35,7 @@ const MENU_ITEMS: MenuItem[] = [
   { id: 'pontos', label: 'Músicas & Pontos', icon: Music },
   { id: 'oracao', label: 'Pedidos de Oração', icon: HeartHandshake },
   { id: 'avisos', label: 'Avisos & Comunicados', icon: Bell },
+  { id: 'cadastros', label: 'Cadastros', icon: Users },
   { id: 'sair', label: 'Desconectar conta', icon: LogOut, isExit: true },
 ];
 

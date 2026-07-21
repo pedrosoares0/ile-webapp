@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   AlertCircle,
@@ -10,12 +10,19 @@ import {
   Trash2,
   Users,
   ArrowLeft,
+  Check,
+  X,
+  Clock3,
+  ImagePlus,
+  Upload,
+  UserPlus,
 } from 'lucide-react';
 import EmptyStateCard from '../components/EmptyStateCard';
 import SheetModal from '../components/SheetModal';
 import { useAppData } from '../context/AppDataContext';
 import { formatDateInputValue, sortEvents, parseLocalDate } from '../lib/date';
 import { createId } from '../lib/id';
+import { supabase } from '../lib/supabase';
 import {
   AppUser,
   EVENT_CATEGORIES,
@@ -32,7 +39,7 @@ import {
   UserStatus,
 } from '../types';
 
-type AdminTab = 'terreiros' | 'usuarios' | 'eventos';
+type AdminTab = 'terreiros' | 'usuarios' | 'eventos' | 'solicitacoes' | 'publicacoes';
 
 interface TerreiroFormState {
   nome: string;
@@ -130,12 +137,8 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
     events,
     currentAccount,
     isGlobalAdmin,
-    saveTerreiro,
     deleteTerreiro,
-    saveAccount,
     deleteAccount,
-    saveUser,
-    deleteUser,
     saveEvent,
     deleteEvent,
   } = useAppData();
@@ -155,11 +158,71 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
   const [eventForm, setEventForm] = useState<EventFormState>(getDefaultEventForm(terreiros[0]?.id ?? ''));
+  const [membershipRequests, setMembershipRequests] = useState<any[]>([]);
+  const [postCaption, setPostCaption] = useState('');
+  const [postLocation, setPostLocation] = useState('');
+  const [storyTitle, setStoryTitle] = useState('');
+  const [storyDescription, setStoryDescription] = useState('');
+  const [uploading, setUploading] = useState(false);
 
 
 
   const firstTerreiroId = terreiros[0]?.id ?? '';
   const orderedEvents = sortEvents(events);
+
+  async function loadMembershipRequests() {
+    const { data } = await supabase.from('membership_requests')
+      .select('*, requester:accounts!membership_requests_account_id_fkey(nome,email,username), terreiros(nome)')
+      .order('created_at', { ascending:false });
+    setMembershipRequests(data || []);
+  }
+
+  useEffect(() => { void loadMembershipRequests(); }, []);
+
+  async function reviewMembership(id: string, approve: boolean) {
+    const { error } = await supabase.rpc('review_membership_request', { target_request:id, approve_request:approve });
+    if (error) { setPageMessage(error.message); return; }
+    setPageMessage(approve ? 'Solicitação aprovada. A conta existente foi vinculada ao terreiro.' : 'Solicitação recusada.');
+    await loadMembershipRequests();
+  }
+
+  async function uploadImage(bucket: 'posts'|'stories'|'terreiros', file: File, terreiroId: string) {
+    if (!file.type.startsWith('image/')) throw new Error('Selecione um arquivo de imagem.');
+    if (file.size > 5*1024*1024) throw new Error('A imagem deve ter no máximo 5 MB.');
+    const ext=file.name.split('.').pop()?.toLowerCase()||'webp';
+    const path=`${terreiroId}/${crypto.randomUUID()}.${ext}`;
+    const { error }=await supabase.storage.from(bucket).upload(path,file,{contentType:file.type,upsert:false});
+    if(error) throw error;
+    return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+  }
+
+  async function publishPost(file: File) {
+    const terreiroId=currentAccount?.terreiroId || firstTerreiroId;
+    if(!terreiroId||!currentAccount) return;
+    setUploading(true);
+    try { const imageUrl=await uploadImage('posts',file,terreiroId); const {error}=await supabase.from('posts').insert({
+      id:createId('post'),terreiro_id:terreiroId,author_account_id:currentAccount.id,caption:postCaption.trim(),
+      location:postLocation.trim(),image_url:imageUrl,visibility:'public'
+    }); if(error)throw error; setPostCaption('');setPostLocation('');setPageMessage('Publicação enviada para o Feed Ilê.'); }
+    catch(error:any){setPageMessage(error.message)} finally{setUploading(false)}
+  }
+
+  async function publishStory(file: File) {
+    const terreiroId=currentAccount?.terreiroId || firstTerreiroId;
+    if(!terreiroId||!currentAccount) return;
+    setUploading(true);
+    try { const mediaUrl=await uploadImage('stories',file,terreiroId); const {error}=await supabase.from('stories').insert({
+      id:createId('story'),terreiro_id:terreiroId,author_account_id:currentAccount.id,title:storyTitle.trim(),
+      activity_description:storyDescription.trim(),media_url:mediaUrl,expires_at:new Date(Date.now()+24*60*60*1000).toISOString()
+    }); if(error)throw error;setStoryTitle('');setStoryDescription('');setPageMessage('Story publicado por 24 horas.'); }
+    catch(error:any){setPageMessage(error.message)} finally{setUploading(false)}
+  }
+
+  async function uploadTerreiroLogo(file: File) {
+    const terreiroId=currentAccount?.terreiroId || firstTerreiroId;if(!terreiroId)return;
+    setUploading(true);try{const logoUrl=await uploadImage('terreiros',file,terreiroId);const{error}=await supabase.from('terreiros').update({logo_url:logoUrl}).eq('id',terreiroId);if(error)throw error;setPageMessage('Imagem do terreiro atualizada.');}
+    catch(error:any){setPageMessage(error.message)}finally{setUploading(false)}
+  }
 
   function clearMessages() {
     setPageMessage(null);
@@ -308,15 +371,14 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
       return;
     }
 
-    handleDelete(() => {
-      if (user.accessAccountId) {
-        deleteAccount(user.accessAccountId);
-      }
-      deleteUser(user.id);
+    handleDelete(async () => {
+      const { error } = await supabase.rpc('admin_delete_member', { member_id: user.id });
+      if (error) { setPageMessage(error.message); return; }
+      window.location.reload();
     }, 'Deseja excluir este usuário?');
   }
 
-  function handleSaveTerreiro(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSaveTerreiro(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!isGlobalAdmin) {
@@ -351,43 +413,23 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
       return;
     }
 
-    const accountId = existingAccount?.id ?? createId('account');
-    const terreiroId = editingTerreiroId ?? createId('terreiro');
-
-    saveAccount({
-      id: accountId,
-      nome: terreiroForm.dirigente.trim(),
-      email: normalizedEmail,
-      password: terreiroForm.accessPassword.trim(),
-      scope: 'terreiro',
-      role: 'terreiro_admin',
-      terreiroId,
-      userId: null,
-      createdAt: existingAccount?.createdAt ?? new Date().toISOString(),
+    const currentTerreiro = terreiros.find((t) => t.id === editingTerreiroId);
+    const { error: saveError } = await supabase.rpc('global_save_terreiro', {
+      target_id: editingTerreiroId, terreiro_nome: terreiroForm.nome.trim(), terreiro_sigla: currentTerreiro?.sigla || '',
+      terreiro_cidade: terreiroForm.cidade.trim(), terreiro_estado: terreiroForm.estado.trim(),
+      terreiro_dirigente: terreiroForm.dirigente.trim(), terreiro_contato: terreiroForm.contato.trim(),
+      terreiro_observacoes: terreiroForm.observacoes.trim(), terreiro_ativo: terreiroForm.ativo,
+      terreiro_cor: currentTerreiro?.corTema || '#BF2429', access_email: normalizedEmail,
+      access_password: terreiroForm.accessPassword.trim(),
     });
-
-    saveTerreiro({
-      id: terreiroId,
-      nome: terreiroForm.nome.trim(),
-      sigla: terreiros.find((t) => t.id === editingTerreiroId)?.sigla ?? '',
-      cidade: terreiroForm.cidade.trim(),
-      estado: terreiroForm.estado.trim(),
-      dirigente: terreiroForm.dirigente.trim(),
-      contato: terreiroForm.contato.trim(),
-      observacoes: terreiroForm.observacoes.trim(),
-      ativo: terreiroForm.ativo,
-      accessAccountId: accountId,
-      corTema: terreiros.find((t) => t.id === editingTerreiroId)?.corTema ?? '#BF2429',
-      createdAt:
-        terreiros.find((terreiro) => terreiro.id === editingTerreiroId)?.createdAt ??
-        new Date().toISOString(),
-    });
+    if (saveError) { setFormError(saveError.message); return; }
 
     setFormError(null);
     setShowTerreiroModal(false);
+    window.location.reload();
   }
 
-  function handleSaveUser(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSaveUser(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const normalizedEmail = userForm.email.trim().toLowerCase();
@@ -416,35 +458,17 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
       return;
     }
 
-    const userId = editingUserId ?? createId('user');
-    const accountId = existingAccount?.id ?? createId('account');
-
-    saveAccount({
-      id: accountId,
-      nome: userForm.nome.trim(),
-      email: normalizedEmail,
-      password: userForm.accessPassword.trim(),
-      scope: 'terreiro',
-      role: userForm.accessRole,
-      terreiroId: userForm.terreiroId,
-      userId,
-      createdAt: existingAccount?.createdAt ?? new Date().toISOString(),
+    const { error: saveError } = await supabase.rpc('admin_save_member', {
+      member_id: editingUserId, account_uuid: existingAccount?.id || null, member_name: userForm.nome.trim(),
+      member_email: normalizedEmail, member_phone: userForm.telefone.trim(), member_role: userForm.role,
+      member_status: userForm.status, target_terreiro: userForm.terreiroId, access_role: userForm.accessRole,
+      access_password: userForm.accessPassword.trim(),
     });
-
-    saveUser({
-      id: userId,
-      nome: userForm.nome.trim(),
-      email: normalizedEmail,
-      telefone: userForm.telefone.trim(),
-      role: userForm.role,
-      status: userForm.status,
-      terreiroId: userForm.terreiroId,
-      accessAccountId: accountId,
-      createdAt: users.find((user) => user.id === editingUserId)?.createdAt ?? new Date().toISOString(),
-    });
+    if (saveError) { setFormError(saveError.message); return; }
 
     setFormError(null);
     setShowUserModal(false);
+    window.location.reload();
   }
 
   function handleSaveEvent(event: React.FormEvent<HTMLFormElement>) {
@@ -480,6 +504,8 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
     { id: 'terreiros', label: 'Terreiros' },
     { id: 'usuarios', label: 'Usuários' },
     { id: 'eventos', label: 'Eventos' },
+    { id: 'solicitacoes', label: 'Solicitações' },
+    { id: 'publicacoes', label: 'Publicações' },
   ];
 
   return (
@@ -567,14 +593,14 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
                 ? 'Gestão de Casas'
                 : tab === 'usuarios'
                   ? 'Gestão de Acesso'
-                  : 'Agenda Operacional'}
+                  : tab === 'eventos' ? 'Agenda Operacional' : tab === 'solicitacoes' ? 'Entrada de Membros' : 'Conteúdo do Hub'}
             </h3>
             <p className="text-2xl font-bold tracking-tight text-[#414141]">
               {tab === 'terreiros'
                 ? 'Terreiros Cadastrados'
                 : tab === 'usuarios'
                   ? 'Usuários do Sistema'
-                  : 'Eventos do Sistema'}
+                  : tab === 'eventos' ? 'Eventos do Sistema' : tab === 'solicitacoes' ? 'Solicitações de Participação' : 'Publicar no Feed'}
             </p>
             {tab === 'terreiros' && !isGlobalAdmin ? (
               <p className="mt-2 text-[12px] font-semibold text-[#1565c0]/45">
@@ -582,7 +608,7 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
               </p>
             ) : null}
           </div>
-          <button
+          {tab !== 'solicitacoes' && tab !== 'publicacoes' && <button
             type="button"
             onClick={() =>
               tab === 'terreiros'
@@ -595,7 +621,7 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
             className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1565c0] text-white shadow-xl shadow-[#1565c0]/20 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Plus className="h-6 w-6" />
-          </button>
+          </button>}
         </div>
 
         {tab === 'terreiros' &&
@@ -740,6 +766,49 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
               description="Monte a agenda com datas, horários, locais e vínculos com os terreiros."
             />
           ))}
+
+        {tab === 'solicitacoes' && (
+          membershipRequests.length ? membershipRequests.map((request) => (
+            <div key={request.id} className="rounded-[32px] border border-black/5 bg-white p-6 shadow-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-lg font-bold text-[#414141]">{request.requester?.nome || request.requester?.username}</p>
+                  <p className="mt-1 text-sm text-[#414141]/55">{request.requester?.email}</p>
+                  <p className="mt-3 text-[11px] font-black uppercase tracking-wider text-[#1565c0]/60">{request.request_type === 'invite_code' ? 'Usou código de convite' : 'Encontrou pelo Hub'} · {request.terreiros?.nome}</p>
+                  {request.message && <p className="mt-3 text-sm text-[#414141]/70">{request.message}</p>}
+                  <div className={`mt-3 inline-flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-black uppercase ${request.status==='pending'?'bg-amber-100 text-amber-700':request.status==='approved'?'bg-emerald-100 text-emerald-700':'bg-red-100 text-red-700'}`}>
+                    <Clock3 className="h-3 w-3" /> {request.status==='pending'?'Aguardando aprovação':request.status==='approved'?'Aprovado':'Recusado'}
+                  </div>
+                </div>
+                {request.status==='pending' && <div className="flex gap-2">
+                  <button onClick={() => void reviewMembership(request.id,true)} className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"><Check className="h-5 w-5" /></button>
+                  <button onClick={() => void reviewMembership(request.id,false)} className="flex h-11 w-11 items-center justify-center rounded-full bg-red-100 text-red-700"><X className="h-5 w-5" /></button>
+                </div>}
+              </div>
+            </div>
+          )) : <EmptyStateCard icon={<UserPlus className="h-8 w-8 text-[#1565c0]/20" />} title="Nenhuma solicitação" description="Novos pedidos feitos pelo Hub ou por código aparecerão aqui." />
+        )}
+
+        {tab === 'publicacoes' && (
+          <div className="space-y-5">
+            <div className="rounded-[32px] bg-white p-6 shadow-sm space-y-4">
+              <div className="flex items-center gap-3"><ImagePlus className="h-6 w-6 text-[#1565c0]"/><div><h4 className="font-black text-[#414141]">Nova publicação</h4><p className="text-xs text-[#414141]/50">A imagem será salva no bucket posts.</p></div></div>
+              <textarea value={postCaption} onChange={(e)=>setPostCaption(e.target.value)} placeholder="Legenda da publicação" rows={4} className={textareaClass}/>
+              <input value={postLocation} onChange={(e)=>setPostLocation(e.target.value)} placeholder="Localização" className={inputClass}/>
+              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-full bg-[#1565c0] py-4 text-xs font-black uppercase text-white"><Upload className="h-4 w-4"/>{uploading?'Enviando...':'Selecionar imagem e publicar'}<input disabled={uploading||!postCaption.trim()} type="file" accept="image/*" className="hidden" onChange={(e)=>{const f=e.target.files?.[0];if(f)void publishPost(f);e.target.value=''}}/></label>
+            </div>
+            <div className="rounded-[32px] bg-white p-6 shadow-sm space-y-4">
+              <div className="flex items-center gap-3"><Clock3 className="h-6 w-6 text-[#1565c0]"/><div><h4 className="font-black text-[#414141]">Novo story</h4><p className="text-xs text-[#414141]/50">Ficará disponível por 24 horas.</p></div></div>
+              <input value={storyTitle} onChange={(e)=>setStoryTitle(e.target.value)} placeholder="Título" className={inputClass}/>
+              <textarea value={storyDescription} onChange={(e)=>setStoryDescription(e.target.value)} placeholder="Descrição" rows={3} className={textareaClass}/>
+              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-full bg-[#1565c0] py-4 text-xs font-black uppercase text-white"><Upload className="h-4 w-4"/>{uploading?'Enviando...':'Selecionar imagem e publicar'}<input disabled={uploading||!storyTitle.trim()} type="file" accept="image/*" className="hidden" onChange={(e)=>{const f=e.target.files?.[0];if(f)void publishStory(f);e.target.value=''}}/></label>
+            </div>
+            <div className="rounded-[32px] bg-white p-6 shadow-sm">
+              <h4 className="font-black text-[#414141]">Imagem do terreiro</h4><p className="mb-4 mt-1 text-xs text-[#414141]/50">Atualiza a imagem exibida no Feed e nos stories.</p>
+              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-full border border-[#1565c0]/20 py-4 text-xs font-black uppercase text-[#1565c0]"><Upload className="h-4 w-4"/>Enviar imagem<input disabled={uploading} type="file" accept="image/*" className="hidden" onChange={(e)=>{const f=e.target.files?.[0];if(f)void uploadTerreiroLogo(f);e.target.value=''}}/></label>
+            </div>
+          </div>
+        )}
 
 
       </div>

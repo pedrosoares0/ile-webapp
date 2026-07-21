@@ -219,39 +219,7 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
     const timer = setTimeout(async () => {
       setIsDetecting(true);
       try {
-        let identifier = val;
-
-        // If it looks like a username (no @), resolve to email first
-        if (!val.includes('@')) {
-          const { data: profile } = await supabase
-            .from('accounts')
-            .select('email, terreiro_id')
-            .ilike('username', val)
-            .maybeSingle();
-
-          if (profile?.terreiro_id) {
-            // Directly found terreiro via username
-            const { data: terreiro } = await supabase
-              .from('terreiros')
-              .select('id, nome')
-              .eq('id', profile.terreiro_id)
-              .single();
-            setDetectedTerreiro(terreiro ?? null);
-            setIsDetecting(false);
-            return;
-          }
-          // If no terreiro_id, this is a global admin or unknown user
-          setDetectedTerreiro(null);
-          setIsDetecting(false);
-          return;
-        }
-
-        // It's an email — look up the account
-        const { data: profile } = await supabase
-          .from('accounts')
-          .select('terreiro_id')
-          .ilike('email', identifier)
-          .maybeSingle();
+        const { data: profile } = await supabase.rpc('resolve_login_context', { identifier: val });
 
         if (profile?.terreiro_id) {
           const { data: terreiro } = await supabase
@@ -319,15 +287,15 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
     setCheckingUsername(true);
     const timer = setTimeout(async () => {
       try {
-        const { data: existingUser } = await supabase
-          .from('accounts')
-          .select('id')
-          .ilike('username', userVal)
-          .maybeSingle();
+        const emailVal = (registerType === 'membro' ? regEmail : regTerreiroEmail).trim().toLowerCase();
+        const { data: availability } = await supabase.rpc('account_identifier_available', {
+          candidate_username: userVal,
+          candidate_email: emailVal,
+        });
 
         setUsernameStatus({
           checked: true,
-          taken: Boolean(existingUser)
+          taken: availability?.username_available === false
         });
       } catch {
         setUsernameStatus(null);
@@ -351,15 +319,15 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
     setCheckingEmail(true);
     const timer = setTimeout(async () => {
       try {
-        const { data: existingEmail } = await supabase
-          .from('accounts')
-          .select('id')
-          .ilike('email', emailVal)
-          .maybeSingle();
+        const userVal = (registerType === 'membro' ? regUsername : regTerreiroUsername).trim().toLowerCase();
+        const { data: availability } = await supabase.rpc('account_identifier_available', {
+          candidate_username: userVal,
+          candidate_email: emailVal,
+        });
 
         setEmailStatus({
           checked: true,
-          taken: Boolean(existingEmail)
+          taken: availability?.email_available === false
         });
       } catch {
         setEmailStatus(null);
@@ -401,15 +369,11 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
       return;
     }
 
-    // Check if username is already taken
     if (regUsername.trim()) {
-      const { data: existingUser, error: lookupError } = await supabase
-        .from('accounts')
-        .select('id')
-        .ilike('username', regUsername.trim())
-        .maybeSingle();
-
-      if (lookupError || existingUser) {
+      const { data: availability, error: lookupError } = await supabase.rpc('account_identifier_available', {
+        candidate_username: regUsername.trim(), candidate_email: regEmail.trim()
+      });
+      if (lookupError || availability?.username_available === false) {
         setError('Este nome de usuário já está em uso.');
         return;
       }
@@ -433,8 +397,6 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
       matchedTerreiroId = matchedTerreiro[0].id;
     }
 
-    const newUserId = `user_membro_${Date.now()}`;
-
     // Register user in Supabase Auth
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: regEmail.trim(),
@@ -443,10 +405,6 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
         data: {
           nome: regNome,
           username: regUsername.trim().toLowerCase(),
-          scope: matchedTerreiroId ? 'terreiro' : 'global',
-          role: 'terreiro_user',
-          terreiroId: matchedTerreiroId,
-          userId: newUserId,
         }
       }
     });
@@ -457,17 +415,12 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
       return;
     }
 
-    // Insert user info into public.users table
     if (signUpData.user) {
-      const { error: dbError } = await supabase.from('users').insert({
-        id: newUserId,
-        nome: `${regNome} ${regSobrenome}`,
-        email: regEmail.trim(),
-        telefone: regNumero,
-        role: 'membro',
-        status: 'ativo',
-        terreiro_id: matchedTerreiroId || null,
-        access_account_id: signUpData.user.id,
+      const { error: dbError } = await supabase.rpc('complete_member_registration', {
+        member_name: `${regNome} ${regSobrenome}`,
+        member_email: regEmail.trim(),
+        member_phone: regNumero,
+        invite_code: matchedTerreiroId || null,
       });
 
       if (dbError) {
@@ -513,22 +466,15 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
       return;
     }
 
-    // Check if admin username is already taken
     if (regTerreiroUsername.trim()) {
-      const { data: existingUser, error: lookupError } = await supabase
-        .from('accounts')
-        .select('id')
-        .ilike('username', regTerreiroUsername.trim())
-        .maybeSingle();
-
-      if (lookupError || existingUser) {
+      const { data: availability, error: lookupError } = await supabase.rpc('account_identifier_available', {
+        candidate_username: regTerreiroUsername.trim(), candidate_email: regTerreiroEmail.trim()
+      });
+      if (lookupError || availability?.username_available === false) {
         setError('Este nome de usuário do administrador já está em uso.');
         return;
       }
     }
-
-    // Generate unique short code for invite, e.g. T4891
-    const newTerreiroId = 'T' + Math.floor(1000 + Math.random() * 9000);
 
     // Register admin user in Supabase Auth
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -538,9 +484,6 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
         data: {
           nome: regTerreiroDirigente,
           username: regTerreiroUsername.trim().toLowerCase(),
-          scope: 'terreiro',
-          role: 'terreiro_admin',
-          terreiroId: newTerreiroId,
         }
       }
     });
@@ -551,20 +494,16 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
       return;
     }
 
-    // Insert new Terreiro details
+    let newTerreiroId = '';
     if (signUpData.user) {
-      const { error: dbError } = await supabase.from('terreiros').insert({
-        id: newTerreiroId,
-        nome: regTerreiroNome,
-        sigla: regTerreiroSigla.trim().toUpperCase(),
-        cidade: regTerreiroCidade,
-        estado: regTerreiroEstado.toUpperCase(),
-        dirigente: regTerreiroDirigente,
-        contato: regTerreiroCelular,
-        observacoes: 'Terreiro cadastrado pelo portal público.',
-        ativo: true,
-        cor_tema: regTerreiroCorTema,
-        access_account_id: signUpData.user.id,
+      const { data: createdTerreiroId, error: dbError } = await supabase.rpc('create_my_terreiro', {
+        terreiro_nome: regTerreiroNome,
+        terreiro_sigla: regTerreiroSigla,
+        terreiro_cidade: regTerreiroCidade,
+        terreiro_estado: regTerreiroEstado,
+        terreiro_dirigente: regTerreiroDirigente,
+        terreiro_contato: regTerreiroCelular,
+        terreiro_cor: regTerreiroCorTema,
       });
 
       if (dbError) {
@@ -572,6 +511,7 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
         setError(msg === '{}' || !msg ? 'Ocorreu um erro ao salvar as configurações do terreiro.' : msg);
         return;
       }
+      newTerreiroId = createdTerreiroId;
     }
 
     const targetEmail = regTerreiroEmail;

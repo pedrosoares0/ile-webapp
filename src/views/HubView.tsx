@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -10,7 +10,6 @@ import {
   Home,
   Music,
   ExternalLink,
-  Plus,
   Heart,
   ChevronRight,
   Sparkles,
@@ -22,11 +21,19 @@ import {
   Map,
   Share2,
   MoreHorizontal,
-  Bookmark
+  Bookmark,
+  Menu,
+  KeyRound,
+  UserPlus,
+  Clock3
 } from 'lucide-react';
 import { useAppData } from '../context/AppDataContext';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
+import { createId } from '../lib/id';
+import SheetModal from '../components/SheetModal';
 import { parseLocalDate } from '../lib/date';
-import { Terreiro } from '../types';
+import { Ponto, Terreiro, TerreiroEvent } from '../types';
 
 interface HubViewProps {
   onToggleMenu?: () => void;
@@ -44,113 +51,55 @@ const CARD_BACKGROUNDS = [
   '/img/fundo-hero5.jpg'
 ];
 
-const MOCK_STORIES = [
-  {
-    id: 'story_t7ca',
-    terreiroId: 'terreiro_t7ca',
-    terreiroNome: 'T7CA',
-    avatar: '/img/logo-T7CA.webp',
-    title: 'GIRA DE BAIANOS',
-    image: 'https://acdn-us.mitiendanube.com/stores/001/743/445/products/whatsapp-image-2023-10-19-at-19-28-36-0a2774e1b6724078cb16977551547981-1024-1024.webp',
-    activityDescription: 'Preparação para a Gira de Baianos com rezas, cânticos e defumação de ervas. Venha receber essa energia alegre!',
-    timeAgo: '2h atrás'
-  },
-  {
-    id: 'story_jurema',
-    terreiroId: 'terreiro_jurema',
-    terreiroNome: 'TUMA',
-    avatar: 'https://lh3.googleusercontent.com/gps-cs-s/APNQkAHDK2s6zgk6Hb4TjdWjNn9EikVWVYHB5o3B1n3VqTlOsPSwfGLlD7QiSNuPUj03BTvX1h42ogDhR4zbEgvPVINZUm8235E1lILQGpTX3OMeKxPZrX_atOy3qxq-9Dwbk1HTBLb3=s680-w680-h510-rw',
-    title: 'FESTA DE OGUM',
-    image: 'https://lh3.googleusercontent.com/gps-cs-s/AHRPTWnL8sG6xgK5EDhB3QrNFDD7N11XXV7BTWuhq9vNG70DJfXiCnSdhh-j-QFGrhipbNRx9-dUQxbNr53dEtVZbHLyFXlN8W-ieEn_3OPZU4gHBdE4c4B_iS1MmeGNJbbkECqj4XwT=s1360-w1360-h1020-rw',
-    activityDescription: 'Celebração ao Pai Ogum, senhor dos caminhos e das batalhas. Cânticos, flores e partilha sagrada.',
-    timeAgo: '4h atrás'
-  },
-  {
-    id: 'story_penabranca',
-    terreiroId: 'terreiro_penabranca',
-    terreiroNome: 'Pena Branca',
-    avatar: 'https://caminhosdaluzsm.com.br/wp-content/uploads/2023/08/01-29.jpg',
-    title: 'CONFECÇÃO E VENDA DE GUIAS',
-    image: 'https://acdn-us.mitiendanube.com/stores/002/945/397/products/guia-caboclo-pana-branca4-c27064ad74f11d762c17278971946703-1024-1024.webp',
-    activityDescription: 'Guias e guias cruzadas sob encomenda confeccionadas com miçangas selecionadas, sementes e o axé dos Caboclos.',
-    timeAgo: '6h atrás'
-  },
-  {
-    id: 'story_iemanja',
-    terreiroId: 'terreiro_t7ca',
-    terreiroNome: 'Águas Sagradas',
-    avatar: '/img/login/yemanjalogin.webp',
-    title: 'GIRA DOS PRETOS VELHOS',
-    image: 'https://lh3.googleusercontent.com/gps-cs-s/AHRPTWmpiNFgyL869JlfbzvWwctZ3UH-9s4FfD8TSulEqScJv4CpjX-CrEfBRNUEDab5yrBYEGD0MFl3_nO4OrT7LIh0ZXfW8IXn3keF2S07_MqZ9r60T7vivpL_OdijU12bg3wr-hWgow=s1360-w1360-h1020-rw',
-    activityDescription: 'Atendimento e sabedoria com os vovôs e vovós de Aruanda. Calma, café e conselho amoroso.',
-    timeAgo: '12h atrás'
-  }
-];
+type ReactionType = 'coracao' | 'concha' | 'folha';
 
-const MOCK_POSTS = [
-  {
-    id: 'post_baianos',
-    terreiroId: 'terreiro_t7ca',
-    terreiroNome: 'T7CA - Terreiro 7 Caminhos de Aruanda',
-    dirigente: 'Pai Erick de Oxalá',
-    avatar: '/img/logo-T7CA.webp',
-    timeAgo: 'Há 2 horas',
-    location: 'Salvador, BA',
-    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDyiPfE85MG4_7MptuepDfcOhZZ6dtithSCSpCBsE4qkKE1CUWdNr9Ad4&s=10',
-    caption: 'Preparação a todo vapor para a nossa grande Gira de Baianos! Ervas selecionadas, terreiro limpo e aroma de alfazema no ar. Venham com fé e de coração aberto para receber o axé dos nossos baianos. 🕊️✨',
-    likesCount: 184,
-    commentsCount: 23,
-    mockReactions: ['coracao', 'concha', 'folha'] as const,
-    hashtags: ['#Baianos', '#Umbanda', '#Axé', '#T7CA', '#Caridade']
-  },
-  {
-    id: 'post_ogum',
-    terreiroId: 'terreiro_jurema',
-    terreiroNome: 'TUMA - Terreiro Umbanda Mãe Aruanda',
-    dirigente: 'Mãe Jurema',
-    avatar: 'https://lh3.googleusercontent.com/gps-cs-s/APNQkAHDK2s6zgk6Hb4TjdWjNn9EikVWVYHB5o3B1n3VqTlOsPSwfGLlD7QiSNuPUj03BTvX1h42ogDhR4zbEgvPVINZUm8235E1lILQGpTX3OMeKxPZrX_atOy3qxq-9Dwbk1HTBLb3=s680-w680-h510-rw',
-    timeAgo: 'Há 5 horas',
-    location: 'São Paulo, SP',
-    image: 'https://www.salvadordabahia.com/capitalafro/wp-content/uploads/2023/05/Terreiro-Tumba-Junsara.-Destaques.-Foto-Arthur-Seabra-1920x900.jpg',
-    caption: 'Homenagem abençoada ao Pai Ogum! Que sua espada de luz venha cortando toda demanda e abrindo os caminhos de todos os filhos e visitantes. Patacori Ogum! ⚔️🛡️',
-    likesCount: 312,
-    commentsCount: 47,
-    mockReactions: ['coracao', 'folha'] as const,
-    hashtags: ['#Ogum', '#Ogunhê', '#Fé', '#TUMA', '#Proteção']
-  },
-  {
-    id: 'post_penabranca',
-    terreiroId: 'terreiro_penabranca',
-    terreiroNome: 'Terreiro Caboclo Pena Branca',
-    dirigente: 'Pai Joaquim das Matas',
-    avatar: 'https://caminhosdaluzsm.com.br/wp-content/uploads/2023/08/01-29.jpg',
-    timeAgo: 'Há 8 horas',
-    location: 'Belo Horizonte, MG',
-    image: 'https://lh3.googleusercontent.com/gps-cs-s/AHRPTWle0dMNGBypHbKG21jj6Ic9nIsq0XPZjlvYEuTxWw88lMtKnaqFWROu9BXBS2HPUF8CrBQ-DVPnKQUakWK-Jywt0vu0_67OX112xCmxH1votzY6iSgKzm6MkFuuw09OGYMxI0_4=s1360-w1360-h1020-rw',
-    caption: 'Sessão de passe magnético e cura espiritual com os Caboclos da Jurema. Que a força das ervas e da mata sagrada renove as energias e traga paz ao coração de todos os irmãos. Okê Caboclo! 🌿🏹',
-    likesCount: 256,
-    commentsCount: 31,
-    mockReactions: ['concha'] as const,
-    hashtags: ['#Caboclos', '#PenaBranca', '#CuraEspiritual', '#OkêCaboclo', '#Passe']
-  }
-];
+interface HubStory {
+  id: string; terreiroId: string; terreiroNome: string; avatar: string;
+  title: string; image: string; activityDescription: string; timeAgo: string;
+}
 
-export default function HubView({ isGuestMode = false, onExitGuest }: HubViewProps) {
-  const { terreiros, events, pontos } = useAppData();
+interface HubPost {
+  id: string; terreiroId: string; terreiroNome: string; dirigente: string;
+  avatar: string; timeAgo: string; location: string; image: string;
+  caption: string; likesCount: number; reactionTypes: ReactionType[]; hashtags: string[];
+}
+
+function relativeTime(value: string) {
+  const minutes = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 60000));
+  if (minutes < 60) return `Há ${Math.max(1, minutes)} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `Há ${hours}h`;
+  return `Há ${Math.floor(hours / 24)}d`;
+}
+
+export default function HubView({ onToggleMenu, isGuestMode = false, onExitGuest }: HubViewProps) {
+  const { terreiros: scopedTerreiros, events: scopedEvents, pontos: scopedPontos, currentAccount } = useAppData();
+  const { session } = useAuth();
+  const [publicTerreiros, setPublicTerreiros] = useState<Terreiro[]>([]);
+  const [publicEvents, setPublicEvents] = useState<TerreiroEvent[]>([]);
+  const [publicPontos, setPublicPontos] = useState<Ponto[]>([]);
+  const [stories, setStories] = useState<HubStory[]>([]);
+  const [posts, setPosts] = useState<HubPost[]>([]);
+  const [myRequest, setMyRequest] = useState<any | null>(null);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteCode, setInviteCode] = useState('');
+  const [requestMessage, setRequestMessage] = useState('');
+  const [requestingMembership, setRequestingMembership] = useState(false);
+  const terreiros = publicTerreiros.length ? publicTerreiros : scopedTerreiros;
+  const events = publicEvents.length ? publicEvents : scopedEvents;
+  const pontos = publicPontos.length ? publicPontos : scopedPontos;
   const [searchTerm, setSearchTerm] = useState('');
   const selectedFilter: string = 'todos'; // Filters removed from UI — always show all
   const [selectedTerreiro, setSelectedTerreiro] = useState<Terreiro | null>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'giras' | 'curimba' | 'oracao'>('info');
 
   // Favorites state
-  const [favoritedIds, setFavoritedIds] = useState<string[]>(['terreiro_t7ca']);
-  const [likedPosts, setLikedPosts] = useState<string[]>(['post_baianos']);
+  const [favoritedIds, setFavoritedIds] = useState<string[]>([]);
   const [savedPosts, setSavedPosts] = useState<string[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Reactions state (postId -> reactionType)
-  type ReactionType = 'coracao' | 'concha' | 'folha';
-  const [reactions, setReactions] = useState<Record<string, ReactionType>>({ post_baianos: 'coracao' });
+  const [reactions, setReactions] = useState<Record<string, ReactionType>>({});
   const [openReactionPickerId, setOpenReactionPickerId] = useState<string | null>(null);
 
   const REACTIONS: { id: ReactionType; src: string; label: string; shadow: string }[] = [
@@ -159,16 +108,72 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
     { id: 'folha', src: '/img/reactions/folha.webp', label: 'Folha', shadow: 'rgba(60,150,60,0.45)' },
   ];
 
-  const toggleReaction = (postId: string, reactionId: ReactionType) => {
-    setReactions(prev => {
-      const current = prev[postId];
-      if (current === reactionId) {
-        const next = { ...prev };
-        delete next[postId];
-        return next;
-      }
-      return { ...prev, [postId]: reactionId };
-    });
+  const loadHubData = useCallback(async () => {
+    const [terreirosResult, eventsResult, pontosResult, postsResult, storiesResult] = await Promise.all([
+      supabase.from('terreiros').select('*').eq('publicado', true).eq('ativo', true).order('nome'),
+      supabase.from('events').select('*').order('date'),
+      supabase.from('pontos').select('*').order('titulo'),
+      supabase.from('posts').select('*, terreiros!inner(nome,sigla,dirigente,logo_url), post_reactions(reaction_type,account_id)').order('published_at', { ascending: false }),
+      supabase.from('stories').select('*, terreiros!inner(nome,sigla,logo_url)').gt('expires_at', new Date().toISOString()).order('published_at', { ascending: false }),
+    ]);
+
+    setPublicTerreiros((terreirosResult.data || []).map((t: any) => ({
+      id:t.id,nome:t.nome,sigla:t.sigla||'',cidade:t.cidade||'',estado:t.estado||'',dirigente:t.dirigente||'',
+      contato:t.contato||'',observacoes:t.observacoes||'',ativo:t.ativo,accessAccountId:t.access_account_id||'',
+      corTema:t.cor_tema||'#BF2429',createdAt:t.created_at,
+    })));
+    setPublicEvents((eventsResult.data || []).map((e: any) => ({
+      id:e.id,date:parseLocalDate(`${e.date}T12:00:00`),title:e.title,time:e.time||'',location:e.location||'',
+      type:e.type,category:e.category,terreiroId:e.terreiro_id,description:e.description||'',createdAt:e.created_at,
+    })));
+    setPublicPontos((pontosResult.data || []).map((p: any) => ({
+      id:p.id,titulo:p.titulo,categoria:p.categoria,youtubeUrl:p.youtube_url||'',descricao:p.descricao||'',
+      thumbnail:p.thumbnail||'',terreiroId:p.terreiro_id,letra:p.letra||'',createdAt:p.created_at,
+    })));
+
+    const ownReactions: Record<string, ReactionType> = {};
+    setPosts((postsResult.data || []).map((p: any) => {
+      const allReactions = p.post_reactions || [];
+      const own = allReactions.find((r: any) => r.account_id === session?.accountId);
+      if (own) ownReactions[p.id] = own.reaction_type;
+      return {
+        id:p.id,terreiroId:p.terreiro_id,terreiroNome:p.terreiros.nome,dirigente:p.terreiros.dirigente||'',
+        avatar:p.terreiros.logo_url||(p.terreiro_id==='terreiro_t7ca'?'/img/logo-T7CA.webp':'/img/login/icone.webp'),
+        timeAgo:relativeTime(p.published_at),location:p.location||'',image:p.image_url||'/img/fundo-hero3.jpg',
+        caption:p.caption,likesCount:allReactions.length,
+        reactionTypes:[...new Set(allReactions.map((r: any) => r.reaction_type))] as ReactionType[],hashtags:p.hashtags||[],
+      };
+    }));
+    setReactions(ownReactions);
+    setStories((storiesResult.data || []).map((s: any) => ({
+      id:s.id,terreiroId:s.terreiro_id,terreiroNome:s.terreiros.sigla||s.terreiros.nome,
+      avatar:s.terreiros.logo_url||(s.terreiro_id==='terreiro_t7ca'?'/img/logo-T7CA.webp':'/img/login/icone.webp'),
+      title:s.title,image:s.media_url,activityDescription:s.activity_description||'',timeAgo:relativeTime(s.published_at),
+    })));
+
+    if (session?.accountId) {
+      const [favoritesResult, savedResult] = await Promise.all([
+        supabase.from('favorite_terreiros').select('terreiro_id').eq('account_id', session.accountId),
+        supabase.from('saved_posts').select('post_id').eq('account_id', session.accountId),
+      ]);
+      setFavoritedIds((favoritesResult.data || []).map((item: any) => item.terreiro_id));
+      setSavedPosts((savedResult.data || []).map((item: any) => item.post_id));
+      const { data: requestData } = await supabase.from('membership_requests').select('*, terreiros(nome)').order('created_at', { ascending:false }).limit(1).maybeSingle();
+      setMyRequest(requestData || null);
+    }
+  }, [session?.accountId]);
+
+  useEffect(() => { void loadHubData(); }, [loadHubData]);
+
+  const toggleReaction = async (postId: string, reactionId: ReactionType) => {
+    if (!session?.accountId) { showToast('Entre em sua conta para reagir.'); return; }
+    const current = reactions[postId];
+    if (current === reactionId) {
+      await supabase.from('post_reactions').delete().eq('post_id', postId).eq('account_id', session.accountId);
+    } else {
+      await supabase.from('post_reactions').upsert({ post_id:postId, account_id:session.accountId, reaction_type:reactionId });
+    }
+    await loadHubData();
     setOpenReactionPickerId(null);
   };
 
@@ -195,7 +200,7 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
       if (!isStoryPaused) {
         setStoryProgress((prev) => {
           if (prev >= 100) {
-            if (activeStoryIndex < MOCK_STORIES.length - 1) {
+            if (activeStoryIndex < stories.length - 1) {
               setActiveStoryIndex((curr) => curr !== null ? curr + 1 : null);
               return 0;
             } else {
@@ -209,46 +214,58 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
     }, 50);
 
     return () => clearInterval(interval);
-  }, [activeStoryIndex, isStoryPaused]);
+  }, [activeStoryIndex, isStoryPaused, stories.length]);
 
   // Reset progress when index changes
   useEffect(() => {
     setStoryProgress(0);
   }, [activeStoryIndex]);
 
-  const toggleFavorite = (terreiroId: string, name: string, e?: React.MouseEvent) => {
+  const toggleFavorite = async (terreiroId: string, name: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    if (!session?.accountId) { showToast('Entre em sua conta para favoritar.'); return; }
     if (favoritedIds.includes(terreiroId)) {
-      setFavoritedIds(prev => prev.filter(id => id !== terreiroId));
+      await supabase.from('favorite_terreiros').delete().eq('account_id',session.accountId).eq('terreiro_id',terreiroId);
       showToast(`Removido dos favoritos`);
     } else {
-      setFavoritedIds(prev => [...prev, terreiroId]);
+      await supabase.from('favorite_terreiros').insert({account_id:session.accountId,terreiro_id:terreiroId});
       showToast(`Favoritado: ${name}`);
     }
+    await loadHubData();
   };
 
-  const toggleLikePost = (postId: string) => {
-    if (likedPosts.includes(postId)) {
-      setLikedPosts(prev => prev.filter(id => id !== postId));
-    } else {
-      setLikedPosts(prev => [...prev, postId]);
-      showToast('Publicação curtida!');
-    }
-  };
+  const toggleLikePost = (postId: string) => void toggleReaction(postId, 'coracao');
 
-  const toggleSavePost = (postId: string) => {
+  const toggleSavePost = async (postId: string) => {
+    if (!session?.accountId) { showToast('Entre em sua conta para salvar.'); return; }
     if (savedPosts.includes(postId)) {
-      setSavedPosts(prev => prev.filter(id => id !== postId));
+      await supabase.from('saved_posts').delete().eq('account_id',session.accountId).eq('post_id',postId);
       showToast('Removido dos salvos');
     } else {
-      setSavedPosts(prev => [...prev, postId]);
+      await supabase.from('saved_posts').insert({account_id:session.accountId,post_id:postId});
       showToast('Publicação salva!');
     }
+    await loadHubData();
   };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 2500);
+  };
+
+  const submitMembershipRequest = async (terreiroId?: string) => {
+    if (!session?.accountId) { showToast('Entre em sua conta para solicitar participação.'); return; }
+    setRequestingMembership(true);
+    const { error } = await supabase.rpc('create_membership_request', {
+      target_terreiro: terreiroId || null,
+      invite_code: terreiroId ? null : inviteCode.trim(),
+      request_message: requestMessage.trim() || null,
+    });
+    setRequestingMembership(false);
+    if (error) { showToast(error.message.includes('pending') ? 'Você já possui uma solicitação aguardando aprovação.' : 'Não foi possível enviar a solicitação.'); return; }
+    setShowInviteModal(false); setInviteCode(''); setRequestMessage('');
+    showToast('Solicitação enviada. Aguarde a aprovação do terreiro.');
+    await loadHubData();
   };
 
   // Handle tap left or right on the story modal to skip/rewind
@@ -266,7 +283,7 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
         setStoryProgress(0);
       }
     } else {
-      if (activeStoryIndex < MOCK_STORIES.length - 1) {
+      if (activeStoryIndex < stories.length - 1) {
         setActiveStoryIndex(activeStoryIndex + 1);
       } else {
         setActiveStoryIndex(null);
@@ -319,8 +336,14 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
     setPrayerSuccess(false);
   };
 
-  const handlePrayerSubmit = (e: React.FormEvent) => {
+  const handlePrayerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!session?.accountId || !selectedTerreiro) { showToast('Entre em sua conta para enviar o pedido.'); return; }
+    const { error } = await supabase.from('prayer_requests').insert({
+      id:createId('prayer'),name:prayerName,type:prayerType,content:prayerContent,answered:false,
+      account_id:session.accountId,terreiro_id:selectedTerreiro.id,
+    });
+    if (error) { showToast('Não foi possível enviar o pedido.'); return; }
     setPrayerSuccess(true);
     setPrayerName('');
     setPrayerContent('');
@@ -378,6 +401,11 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
 
         {/* Header Bar with Logo */}
         <div className="relative z-10 flex flex-col items-center justify-center mb-5 mt-2 shrink-0">
+          {!isGuestMode && (
+            <button onClick={onToggleMenu} className="absolute left-0 top-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#8B0000] shadow-sm border border-black/5" aria-label="Abrir menu">
+              <Menu className="h-5 w-5" />
+            </button>
+          )}
           <div className="flex flex-col items-center text-center">
             <img
               src="/img/login/icone.webp"
@@ -393,21 +421,27 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
           </div>
         </div>
 
+        {!isGuestMode && !currentAccount?.terreiroId && (
+          <div className="relative z-10 mb-4 rounded-3xl border border-[#8B0000]/10 bg-white p-4 shadow-sm">
+            {myRequest?.status === 'pending' ? (
+              <div className="flex items-center gap-3 text-left">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700"><Clock3 className="h-5 w-5" /></div>
+                <div><p className="text-xs font-black uppercase tracking-wide text-amber-700">Aguardando aprovação</p><p className="mt-1 text-xs text-[#414141]/60">{myRequest.terreiros?.nome} analisará sua solicitação.</p></div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-left"><p className="text-xs font-black text-[#8B0000]">Já foi convidado?</p><p className="mt-1 text-[11px] text-[#414141]/55">Use o código e aguarde a aprovação.</p></div>
+                <button onClick={() => setShowInviteModal(true)} className="flex items-center gap-2 rounded-full bg-[#8B0000] px-4 py-2.5 text-[10px] font-black uppercase text-white"><KeyRound className="h-4 w-4" /> Usar código</button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Stories Carousel Section */}
         <div className="relative z-10 mb-4 shrink-0">
           <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-1.5 px-1">
-            {/* Create Story Action */}
-            <div className="flex flex-col items-center shrink-0">
-              <div className="h-[60px] w-[60px] rounded-full border-2 border-dashed border-[#8B0000]/35 flex items-center justify-center bg-[#FEF9ED]/60 shadow-sm cursor-pointer hover:scale-105 active:scale-95 transition-all">
-                <Plus className="h-5 w-5 text-[#8B0000]/65" strokeWidth={2.5} />
-              </div>
-              <span className="text-[9px] font-bold text-[#414141]/50 text-center mt-1.5 leading-none">
-                Divulgar
-              </span>
-            </div>
-
             {/* Stories List */}
-            {MOCK_STORIES.map((story, idx) => {
+            {stories.map((story, idx) => {
               const isStoryT7ca = story.terreiroId === 'terreiro_t7ca';
               const storyAccent = isStoryT7ca ? '#1565c0' : '#8B0000';
               return (
@@ -465,10 +499,10 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
         {/* Feed Section: Terreiros + Social Publications */}
         <div className="space-y-6">
 
-          {/* Render Mock Social Publication Post Card first if 'todos' or 'publicacoes' filter active */}
+          {/* Persisted social publications */}
           {(selectedFilter === 'todos' || selectedFilter === 'publicacoes') && (
             <div className="space-y-6">
-              {MOCK_POSTS.map((post) => {
+              {posts.map((post) => {
                 const isSaved = savedPosts.includes(post.id);
 
                 return (
@@ -542,7 +576,7 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
                                 // Canonical visual order: folha (back) → concha → coracao (front)
                                 const CANONICAL_ORDER = ['folha', 'concha', 'coracao'];
                                 const userReaction = reactions[post.id];
-                                const base = [...(post.mockReactions as unknown as string[])];
+                                const base = [...post.reactionTypes];
 
                                 // All unique types (base + user if new)
                                 const allUnique = [...new Set([...base, ...(userReaction ? [userReaction] : [])])];
@@ -868,7 +902,7 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
                   </h2>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[8.5px] font-extrabold px-3 py-1 rounded-full uppercase tracking-widest bg-[#8B0000]/10 text-[#8B0000]">
-                      CÓDIGO CONVITE: {selectedTerreiro.id.toUpperCase()}
+                      PARTICIPAÇÃO MEDIANTE APROVAÇÃO
                     </span>
                   </div>
                 </div>
@@ -959,6 +993,15 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
                           {selectedTerreiro.observacoes}
                         </p>
                       </div>
+                    )}
+                    {!isGuestMode && !currentAccount?.terreiroId && (
+                      myRequest?.status === 'pending' ? (
+                        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-center text-xs font-bold text-amber-700">Aguardando aprovação do terreiro.</div>
+                      ) : (
+                        <button disabled={requestingMembership} onClick={() => void submitMembershipRequest(selectedTerreiro.id)} className="flex w-full items-center justify-center gap-2 rounded-full bg-[#8B0000] py-3.5 text-xs font-black uppercase tracking-wider text-white disabled:opacity-50">
+                          <UserPlus className="h-4 w-4" /> Quero fazer parte
+                        </button>
+                      )
                     )}
                   </motion.div>
                 )}
@@ -1186,8 +1229,8 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
             >
               {/* Full-bleed Edge-to-Edge Story Background Image */}
               <img
-                src={MOCK_STORIES[activeStoryIndex].image}
-                alt={MOCK_STORIES[activeStoryIndex].title}
+                src={stories[activeStoryIndex].image}
+                alt={stories[activeStoryIndex].title}
                 className="absolute inset-0 w-full h-full object-cover z-0"
               />
 
@@ -1197,7 +1240,7 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
 
               {/* Top Progress Segmented Indicators */}
               <div className="absolute top-3 inset-x-4 flex gap-1.5 z-30">
-                {MOCK_STORIES.map((s, idx) => {
+                {stories.map((s, idx) => {
                   let width = '0%';
                   if (idx < activeStoryIndex) width = '100%';
                   if (idx === activeStoryIndex) width = `${storyProgress}%`;
@@ -1217,17 +1260,17 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full border border-white/40 overflow-hidden shadow-lg shrink-0">
                     <img
-                      src={MOCK_STORIES[activeStoryIndex].avatar}
+                      src={stories[activeStoryIndex].avatar}
                       alt=""
                       className="h-full w-full object-cover"
                     />
                   </div>
                   <div className="text-left">
                     <span className="block text-sm font-extrabold text-white leading-none tracking-wide drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                      {MOCK_STORIES[activeStoryIndex].terreiroNome}
+                      {stories[activeStoryIndex].terreiroNome}
                     </span>
                     <span className="block text-[11px] font-semibold text-white/80 mt-1 leading-none drop-shadow-sm">
-                      {MOCK_STORIES[activeStoryIndex].timeAgo}
+                      {stories[activeStoryIndex].timeAgo}
                     </span>
                   </div>
                 </div>
@@ -1252,11 +1295,11 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
                 <div className="px-5 pb-4 pt-10">
                   {/* Subtle Event Badge */}
                   <span className="inline-block px-2.5 py-0.5 rounded-md text-[9.5px] font-bold uppercase tracking-[0.18em] text-white/90 bg-white/15 backdrop-blur-sm border border-white/20 mb-2.5">
-                    {MOCK_STORIES[activeStoryIndex].title}
+                    {stories[activeStoryIndex].title}
                   </span>
                   {/* Caption */}
                   <p className="text-[13.5px] font-medium text-white/95 leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.7)] max-w-[90%]">
-                    {MOCK_STORIES[activeStoryIndex].activityDescription}
+                    {stories[activeStoryIndex].activityDescription}
                   </p>
                 </div>
 
@@ -1274,20 +1317,20 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="h-8 w-8 rounded-full overflow-hidden border border-white/30 shrink-0">
                       <img
-                        src={MOCK_STORIES[activeStoryIndex].avatar}
+                        src={stories[activeStoryIndex].avatar}
                         alt=""
                         className="h-full w-full object-cover"
                       />
                     </div>
                     <span className="text-[11px] font-semibold text-white/80 truncate leading-tight">
-                      {MOCK_STORIES[activeStoryIndex].terreiroNome}
+                      {stories[activeStoryIndex].terreiroNome}
                     </span>
                   </div>
 
                   {/* Clean CTA Button */}
                   <button
                     onClick={() => {
-                      const targetTerreiro = terreiros.find(t => t.id === MOCK_STORIES[activeStoryIndex!].terreiroId);
+                      const targetTerreiro = terreiros.find(t => t.id === stories[activeStoryIndex!].terreiroId);
                       if (targetTerreiro) setSelectedTerreiro(targetTerreiro);
                       setActiveStoryIndex(null);
                     }}
@@ -1303,6 +1346,14 @@ export default function HubView({ isGuestMode = false, onExitGuest }: HubViewPro
           </motion.div>
         )}
       </AnimatePresence>
+
+      <SheetModal isOpen={showInviteModal} title="Código de convite" subtitle="A aprovação do terreiro ainda será necessária" onClose={() => setShowInviteModal(false)}>
+        <div className="space-y-4">
+          <input value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} placeholder="Ex.: T1234" className="w-full rounded-2xl border border-black/10 bg-white px-5 py-4 text-sm font-bold uppercase outline-none" />
+          <textarea value={requestMessage} onChange={(e) => setRequestMessage(e.target.value)} placeholder="Mensagem para o dirigente (opcional)" rows={3} className="w-full resize-none rounded-2xl border border-black/10 bg-white px-5 py-4 text-sm outline-none" />
+          <button disabled={!inviteCode.trim() || requestingMembership} onClick={() => void submitMembershipRequest()} className="w-full rounded-full bg-[#8B0000] py-4 text-xs font-black uppercase tracking-wider text-white disabled:opacity-40">Enviar para aprovação</button>
+        </div>
+      </SheetModal>
     </motion.div>
   );
 }
