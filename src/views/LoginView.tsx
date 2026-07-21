@@ -1,8 +1,91 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertCircle, Mail, Lock, User, Phone, Hash, MapPin, Compass, Check, X, Eye, EyeOff, ChevronRight } from 'lucide-react';
+import { AlertCircle, Mail, Lock, User, Phone, Hash, MapPin, Compass, Check, X, Eye, EyeOff, ChevronRight, ImagePlus, Upload } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+
+const BRAZIL_UFS = [
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 
+  'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 
+  'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+];
+
+const BRAZIL_CITIES: { nome: string; uf: string }[] = [
+  { nome: 'Salvador', uf: 'BA' },
+  { nome: 'Feira de Santana', uf: 'BA' },
+  { nome: 'Vitória da Conquista', uf: 'BA' },
+  { nome: 'Camaçari', uf: 'BA' },
+  { nome: 'Juazeiro', uf: 'BA' },
+  { nome: 'Lauro de Freitas', uf: 'BA' },
+  { nome: 'Itabuna', uf: 'BA' },
+  { nome: 'Ilhéus', uf: 'BA' },
+  { nome: 'Porto Seguro', uf: 'BA' },
+  { nome: 'Barreiras', uf: 'BA' },
+  { nome: 'Jequié', uf: 'BA' },
+  { nome: 'Alagoinhas', uf: 'BA' },
+  { nome: 'Simões Filho', uf: 'BA' },
+  { nome: 'Paulo Afonso', uf: 'BA' },
+  { nome: 'Santo Antônio de Jesus', uf: 'BA' },
+  { nome: 'Valença', uf: 'BA' },
+  { nome: 'Candeias', uf: 'BA' },
+  { nome: 'Guanambi', uf: 'BA' },
+  { nome: 'Jacobina', uf: 'BA' },
+  { nome: 'Serrinha', uf: 'BA' },
+  { nome: 'Senhor do Bonfim', uf: 'BA' },
+  { nome: 'Dias d\'Ávila', uf: 'BA' },
+  { nome: 'Luís Eduardo Magalhães', uf: 'BA' },
+  { nome: 'Itapetinga', uf: 'BA' },
+  { nome: 'Irecê', uf: 'BA' },
+  { nome: 'São Paulo', uf: 'SP' },
+  { nome: 'Campinas', uf: 'SP' },
+  { nome: 'Santos', uf: 'SP' },
+  { nome: 'São Bernardo do Campo', uf: 'SP' },
+  { nome: 'Santo André', uf: 'SP' },
+  { nome: 'Osasco', uf: 'SP' },
+  { nome: 'Ribeirão Preto', uf: 'SP' },
+  { nome: 'Sorocaba', uf: 'SP' },
+  { nome: 'São José dos Campos', uf: 'SP' },
+  { nome: 'Guarulhos', uf: 'SP' },
+  { nome: 'Rio de Janeiro', uf: 'RJ' },
+  { nome: 'Niterói', uf: 'RJ' },
+  { nome: 'Duque de Caxias', uf: 'RJ' },
+  { nome: 'Nova Iguaçu', uf: 'RJ' },
+  { nome: 'São Gonçalo', uf: 'RJ' },
+  { nome: 'Petrópolis', uf: 'RJ' },
+  { nome: 'Cabo Frio', uf: 'RJ' },
+  { nome: 'Belo Horizonte', uf: 'MG' },
+  { nome: 'Uberlândia', uf: 'MG' },
+  { nome: 'Juiz de Fora', uf: 'MG' },
+  { nome: 'Contagem', uf: 'MG' },
+  { nome: 'Montes Claros', uf: 'MG' },
+  { nome: 'Brasília', uf: 'DF' },
+  { nome: 'Curitiba', uf: 'PR' },
+  { nome: 'Londrina', uf: 'PR' },
+  { nome: 'Porto Alegre', uf: 'RS' },
+  { nome: 'Caxias do Sul', uf: 'RS' },
+  { nome: 'Recife', uf: 'PE' },
+  { nome: 'Olinda', uf: 'PE' },
+  { nome: 'Caruaru', uf: 'PE' },
+  { nome: 'Fortaleza', uf: 'CE' },
+  { nome: 'Belém', uf: 'PA' },
+  { nome: 'Manaus', uf: 'AM' },
+  { nome: 'Goiânia', uf: 'GO' },
+  { nome: 'São Luís', uf: 'MA' },
+  { nome: 'Maceió', uf: 'AL' },
+  { nome: 'Natal', uf: 'RN' },
+  { nome: 'Campo Grande', uf: 'MS' },
+  { nome: 'Teresina', uf: 'PI' },
+  { nome: 'João Pessoa', uf: 'PB' },
+  { nome: 'Aracaju', uf: 'SE' },
+  { nome: 'Cuiabá', uf: 'MT' },
+  { nome: 'Florianópolis', uf: 'SC' },
+  { nome: 'Vitória', uf: 'ES' },
+  { nome: 'Macapá', uf: 'AP' },
+  { nome: 'Porto Velho', uf: 'RO' },
+  { nome: 'Boa Vista', uf: 'RR' },
+  { nome: 'Rio Branco', uf: 'AC' },
+  { nome: 'Palmas', uf: 'TO' },
+];
 
 declare global {
   namespace JSX {
@@ -83,6 +166,18 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
   const [regTerreiroSenha, setRegTerreiroSenha] = useState('');
   const [regTerreiroConfirmaSenha, setRegTerreiroConfirmaSenha] = useState('');
   const [regTerreiroCorTema, setRegTerreiroCorTema] = useState('#BF2429');
+  const [regTerreiroLogoFile, setRegTerreiroLogoFile] = useState<File | null>(null);
+  const [regTerreiroLogoPreview, setRegTerreiroLogoPreview] = useState<string | null>(null);
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
+
+  const filteredCitySuggestions = useMemo(() => {
+    const query = regTerreiroCidade.trim().toLowerCase();
+    if (!query) return [];
+    return BRAZIL_CITIES.filter(c => 
+      c.nome.toLowerCase().includes(query) &&
+      (!regTerreiroEstado || c.uf.toUpperCase() === regTerreiroEstado.toUpperCase())
+    ).slice(0, 8);
+  }, [regTerreiroCidade, regTerreiroEstado]);
 
   // Feed icon cycling effect
   useEffect(() => {
@@ -133,7 +228,13 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
   }, []);
 
   // Smart Terreiro Recognition — debounced lookup against Supabase
-  const [detectedTerreiro, setDetectedTerreiro] = useState<{ id: string; nome: string } | null>(null);
+  const [detectedTerreiro, setDetectedTerreiro] = useState<{ 
+    id: string; 
+    nome: string; 
+    sigla?: string; 
+    logoUrl?: string; 
+    corTema?: string; 
+  } | null>(null);
   const [isDetecting, setIsDetecting] = useState(false);
 
   // Custom Success Alert Modal state
@@ -156,7 +257,24 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
 
-  const isT7CA = Boolean(detectedTerreiro);
+  // Remember Me state & persistent auto-fill
+  const [rememberMe, setRememberMe] = useState(true);
+
+  useEffect(() => {
+    const savedLogin = localStorage.getItem('ile_remembered_login');
+    const savedRememberState = localStorage.getItem('ile_remember_me');
+
+    if (savedRememberState === 'true' && savedLogin) {
+      setEmail(savedLogin);
+      setRememberMe(true);
+    } else if (savedRememberState === 'false') {
+      setRememberMe(false);
+    }
+  }, []);
+
+  const activeThemeColor = detectedTerreiro?.corTema || '#BF2429';
+  const activeSigla = detectedTerreiro?.sigla || (detectedTerreiro?.nome ? detectedTerreiro.nome.split(' - ')[0] : 'Terreiro');
+  const activeLogoUrl = detectedTerreiro?.logoUrl;
 
   const isUsernameError = Boolean(
     error &&
@@ -219,15 +337,51 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
     const timer = setTimeout(async () => {
       setIsDetecting(true);
       try {
+        // 1. Try resolve_login_context by account username/email
         const { data: profile } = await supabase.rpc('resolve_login_context', { identifier: val });
 
-        if (profile?.terreiro_id) {
+        let tId = profile?.terreiro_id;
+
+        // 2. Direct lookup on terreiros table if not resolved from user profile
+        if (!tId) {
+          const { data: directTerreiros } = await supabase
+            .from('terreiros')
+            .select('id, nome, sigla, logo_url, cor_tema')
+            .or(`id.ilike.${val},sigla.ilike.${val},nome.ilike.%${val}%`)
+            .limit(1);
+
+          if (directTerreiros && directTerreiros.length > 0) {
+            const t = directTerreiros[0];
+            setDetectedTerreiro({
+              id: t.id,
+              nome: t.nome,
+              sigla: t.sigla || t.nome.split(' - ')[0],
+              logoUrl: t.logo_url || undefined,
+              corTema: t.cor_tema || '#BF2429'
+            });
+            setIsDetecting(false);
+            return;
+          }
+        }
+
+        if (tId) {
           const { data: terreiro } = await supabase
             .from('terreiros')
-            .select('id, nome')
-            .eq('id', profile.terreiro_id)
+            .select('id, nome, sigla, logo_url, cor_tema')
+            .eq('id', tId)
             .single();
-          setDetectedTerreiro(terreiro ?? null);
+
+          if (terreiro) {
+            setDetectedTerreiro({
+              id: terreiro.id,
+              nome: terreiro.nome,
+              sigla: terreiro.sigla || terreiro.nome.split(' - ')[0],
+              logoUrl: terreiro.logo_url || undefined,
+              corTema: terreiro.cor_tema || '#BF2429'
+            });
+          } else {
+            setDetectedTerreiro(null);
+          }
         } else {
           setDetectedTerreiro(null);
         }
@@ -339,15 +493,6 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
     return () => clearTimeout(timer);
   }, [regEmail, regTerreiroEmail, registerType]);
 
-  // Short display name for detected terreiro (e.g. "T7CA" from "T7CA - Terreiro de Umbanda...")
-  const detectedShortName = useMemo(() => {
-    if (!detectedTerreiro) return '';
-    const name = detectedTerreiro.nome;
-    // Try to get the short prefix before ' - '
-    const dashIdx = name.indexOf(' - ');
-    return dashIdx > 0 ? name.substring(0, dashIdx).trim() : name.substring(0, 12);
-  }, [detectedTerreiro]);
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
@@ -357,6 +502,14 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
     if (!result.success) {
       setError(result.error ?? 'Não foi possível entrar.');
       return;
+    }
+
+    if (rememberMe) {
+      localStorage.setItem('ile_remembered_login', email.trim());
+      localStorage.setItem('ile_remember_me', 'true');
+    } else {
+      localStorage.removeItem('ile_remembered_login');
+      localStorage.setItem('ile_remember_me', 'false');
     }
 
     setError(null);
@@ -512,6 +665,20 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
         return;
       }
       newTerreiroId = createdTerreiroId;
+
+      if (newTerreiroId && regTerreiroLogoFile) {
+        try {
+          const ext = regTerreiroLogoFile.name.split('.').pop()?.toLowerCase() || 'webp';
+          const path = `${newTerreiroId}/logo_${crypto.randomUUID()}.${ext}`;
+          const { error: uploadError } = await supabase.storage.from('terreiros').upload(path, regTerreiroLogoFile, { contentType: regTerreiroLogoFile.type, upsert: true });
+          if (!uploadError) {
+            const publicUrl = supabase.storage.from('terreiros').getPublicUrl(path).data.publicUrl;
+            await supabase.from('terreiros').update({ logo_url: publicUrl }).eq('id', newTerreiroId);
+          }
+        } catch (err) {
+          console.error('Erro ao enviar logo:', err);
+        }
+      }
     }
 
     const targetEmail = regTerreiroEmail;
@@ -703,42 +870,57 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
       </AnimatePresence>
 
       {/* Double Bezel Outer Shell */}
-      <div className={`relative mx-4 mb-2 p-1.5 rounded-[44px] bg-white/5 border border-white/15 backdrop-blur-2xl shadow-[0_24px_60px_rgba(0,0,0,0.25)] z-10 overflow-hidden transition-all duration-[250ms] ease-[0.23,1,0.32,1]`}>
+      <div 
+        className="relative mx-4 mb-2 p-1.5 rounded-[44px] bg-white/10 border backdrop-blur-2xl transition-all duration-[300ms] z-10 overflow-hidden"
+        style={{
+          borderColor: detectedTerreiro ? `${activeThemeColor}55` : 'rgba(255, 255, 255, 0.18)',
+          boxShadow: detectedTerreiro ? `0 24px 60px ${activeThemeColor}40` : '0 24px 60px rgba(0,0,0,0.25)'
+        }}
+      >
 
         {/* Double Bezel Inner Core Card */}
         <motion.div
           layout
-          className={`relative rounded-[38px] px-6 pt-6 pb-5 overflow-hidden transition-all duration-[250ms] ease-[0.23,1,0.32,1] ${isRegister
+          className={`relative rounded-[38px] px-6 pt-6 pb-5 overflow-hidden transition-all duration-[300ms] ${isRegister
             ? 'flex flex-col gap-4 border border-white/60 shadow-[inset_0_1px_2px_rgba(255,255,255,0.6)]'
-            : 'border border-white/40 shadow-[inset_0_1px_2px_rgba(255,255,255,0.45)]'
+            : 'border shadow-[inset_0_1px_2px_rgba(255,255,255,0.45)]'
             }`}
+          style={{
+            borderColor: detectedTerreiro ? `${activeThemeColor}33` : 'rgba(255,255,255,0.4)'
+          }}
         >
           {/* Dynamic Background Gradient */}
           <div
-            className="absolute inset-0 z-0 pointer-events-none transition-all duration-[250ms] ease-[0.23,1,0.32,1]"
+            className="absolute inset-0 z-0 pointer-events-none transition-all duration-[300ms]"
             style={{
               background: isRegister
                 ? 'linear-gradient(180deg, rgba(252, 248, 242, 0.88) 0%, rgba(255, 255, 255, 0.78) 100%)'
-                : isT7CA
-                  ? 'linear-gradient(180deg, #e3f2fd 0%, #d0e8fc 100%)'
+                : detectedTerreiro
+                  ? `linear-gradient(180deg, ${activeThemeColor}30 0%, ${activeThemeColor}10 40%, #FAF4E9 100%)`
                   : 'linear-gradient(180deg, #FAF4E9 0%, #eadecc 100%)'
             }}
           />
 
           {/* Watermark Dança Removed */}
 
-          {/* Aurora Effect inside Card Footer */}
+          {/* Aurora Effect inside Card */}
           <AnimatePresence>
-            {isT7CA && !isRegister && (
+            {detectedTerreiro && !isRegister && (
               <motion.div
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 0.35 }}
+                animate={{ opacity: 0.8 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="absolute inset-x-0 bottom-0 pointer-events-none z-0 select-none"
+                transition={{ duration: 0.4 }}
+                className="absolute inset-0 pointer-events-none z-0 select-none overflow-hidden"
               >
-                <div className="absolute -bottom-10 left-1/4 w-32 h-32 rounded-full bg-[#0d47a1] blur-[30px] animate-[pulse_4s_infinite]" />
-                <div className="absolute -bottom-14 right-1/4 w-36 h-36 rounded-full bg-[#00b0ff] blur-[35px] animate-[pulse_5s_infinite_1.2s]" />
+                <div 
+                  className="absolute -top-12 -left-10 w-48 h-48 rounded-full blur-[40px] animate-[pulse_6s_ease-in-out_infinite]"
+                  style={{ background: `radial-gradient(circle, ${activeThemeColor}aa 0%, ${activeThemeColor}20 70%, transparent 100%)` }}
+                />
+                <div 
+                  className="absolute -bottom-14 -right-10 w-52 h-52 rounded-full blur-[45px] animate-[pulse_8s_ease-in-out_infinite_1.2s]"
+                  style={{ background: `radial-gradient(circle, ${activeThemeColor}88 0%, ${activeThemeColor}15 70%, transparent 100%)` }}
+                />
               </motion.div>
             )}
           </AnimatePresence>
@@ -763,19 +945,23 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
               </motion.div>
             )}
 
-            {/* Title with optional T7CA logo next to Bem-Vindo */}
+            {/* Title with optional terreiro logo next to Bem-Vindo */}
             <div className="flex items-center justify-center gap-2.5 mb-3">
-              {/* T7CA Logo appears inside the card left of Bem-Vindo during login */}
+              {/* Terreiro Logo appears inside the card left of Bem-Vindo during login */}
               <AnimatePresence>
-                {isT7CA && !isRegister && (
+                {detectedTerreiro && !isRegister && (
                   <motion.div
                     initial={{ width: 0, opacity: 0, scale: 0.5 }}
-                    animate={{ width: 32, opacity: 1, scale: 1 }}
+                    animate={{ width: 36, opacity: 1, scale: 1 }}
                     exit={{ width: 0, opacity: 0, scale: 0.5 }}
                     transition={{ type: 'spring', stiffness: 120, damping: 20 }}
-                    className="h-8 w-8 flex-shrink-0 overflow-hidden"
+                    className="h-9 w-9 flex-shrink-0 rounded-full overflow-hidden border border-black/10 bg-white/90 shadow-sm flex items-center justify-center p-0.5"
                   >
-                    <img src="/img/logo-T7CA.webp" alt="T7CA Logo" className="h-full w-full object-contain" />
+                    {activeLogoUrl ? (
+                      <img src={activeLogoUrl} alt={detectedTerreiro.nome} className="h-full w-full object-cover rounded-full" />
+                    ) : (
+                      <img src="/img/login/icone.webp" alt="Ilê Logo" className="h-5 w-5 object-contain" />
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -784,8 +970,8 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                 animate={{
                   color: isRegister
                     ? '#BF2429'
-                    : isT7CA
-                      ? '#0d47a1'
+                    : detectedTerreiro
+                      ? activeThemeColor
                       : '#BF2429',
                 }}
                 transition={{ duration: 0.24, ease: 'easeOut' }}
@@ -823,9 +1009,9 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                     }`}
                 >
                   <lord-icon
-                    src="https://cdn.lordicon.com/hroklero.json"
+                    src="https://cdn.lordicon.com/dxjqoygy.json"
                     trigger="hover"
-                    colors={registerType === 'membro' ? 'primary:#ffffff,secondary:#ffffff' : 'primary:#BF2429,secondary:#BF2429'}
+                    colors={registerType === 'membro' ? 'primary:#ffffff,secondary:#ffffff,tertiary:#ffffff' : 'primary:#BF2429,secondary:#BF2429,tertiary:#BF2429'}
                     style={{ width: '18px', height: '18px' }}
                   />
                   Membro
@@ -914,10 +1100,10 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                 <div className="space-y-3">
                   {/* Email Input */}
                   <div className="group relative">
-                    <Mail className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isT7CA
-                      ? 'text-[#0d47a1]/25 group-focus-within:text-[#0d47a1]'
-                      : 'text-[#BF2429]/25 group-focus-within:text-[#BF2429]'
-                      }`} />
+                    <Mail 
+                      className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors" 
+                      style={{ color: detectedTerreiro ? activeThemeColor : 'rgba(191,36,41,0.5)' }} 
+                    />
                     <input
                       required
                       type="text"
@@ -926,10 +1112,10 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                         setEmail(event.target.value);
                         if (error) setError(null);
                       }}
-                      className={`w-full rounded-[22px] bg-white/90 py-3.5 pl-10 pr-10 text-[15px] font-medium outline-none transition-all placeholder:text-[#414141]/25 border shadow-[inset_0_1px_2px_rgba(0,0,0,0.02),_0_2px_5px_rgba(0,0,0,0.015)] ${isT7CA
-                        ? 'text-[#0d47a1] border-[#0d47a1]/15 focus:border-[#0d47a1]/40 focus:bg-white focus:ring-4 focus:ring-[#0d47a1]/5'
-                        : 'text-[#414141] border-[#BF2429]/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-4 focus:ring-[#BF2429]/5'
-                        }`}
+                      className="w-full rounded-[22px] bg-white/90 py-3.5 pl-10 pr-10 text-[15px] font-medium outline-none transition-all placeholder:text-[#414141]/25 border shadow-[inset_0_1px_2px_rgba(0,0,0,0.02),_0_2px_5px_rgba(0,0,0,0.015)] text-[#414141] focus:bg-white focus:outline-hidden"
+                      style={{
+                        borderColor: detectedTerreiro ? `${activeThemeColor}66` : 'rgba(191,36,41,0.25)'
+                      }}
                       placeholder="Email ou Usuário"
                     />
                     {/* Detecting / Clear indicator */}
@@ -941,7 +1127,10 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.5 }}
                           >
-                            <div className="h-3.5 w-3.5 rounded-full border-2 border-[#0d47a1]/30 border-t-[#0d47a1] animate-spin" />
+                            <div 
+                              className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin" 
+                              style={{ borderColor: activeThemeColor, borderTopColor: 'transparent' }}
+                            />
                           </motion.div>
                         </div>
                       ) : email ? (
@@ -955,7 +1144,7 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                               setEmail('');
                               if (error) setError(null);
                             }}
-                            className={`p-0.5 rounded-full hover:bg-zinc-100 transition-colors focus:outline-none ${isT7CA ? 'text-[#0d47a1]/40 hover:text-[#0d47a1]' : 'text-zinc-400 hover:text-zinc-600'}`}
+                            className="p-0.5 rounded-full hover:bg-zinc-100 transition-colors focus:outline-none text-zinc-400 hover:text-zinc-600"
                           >
                             <X className="h-4 w-4" />
                           </motion.button>
@@ -966,10 +1155,10 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
 
                   {/* Password Input */}
                   <div className="group relative">
-                    <Lock className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isT7CA
-                      ? 'text-[#0d47a1]/25 group-focus-within:text-[#0d47a1]'
-                      : 'text-[#BF2429]/25 group-focus-within:text-[#BF2429]'
-                      }`} />
+                    <Lock 
+                      className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors" 
+                      style={{ color: detectedTerreiro ? activeThemeColor : 'rgba(191,36,41,0.5)' }} 
+                    />
                     <input
                       required
                       type={showPassword ? 'text' : 'password'}
@@ -978,17 +1167,17 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                         setPassword(event.target.value);
                         if (error) setError(null);
                       }}
-                      className={`w-full rounded-[22px] bg-white/90 py-3.5 pl-10 pr-10 text-[15px] font-medium outline-none transition-all placeholder:text-[#414141]/25 border shadow-[inset_0_1px_2px_rgba(0,0,0,0.02),_0_2px_5px_rgba(0,0,0,0.015)] ${isT7CA
-                        ? 'text-[#0d47a1] border-[#0d47a1]/15 focus:border-[#0d47a1]/40 focus:bg-white focus:ring-4 focus:ring-[#0d47a1]/5'
-                        : 'text-[#414141] border-[#BF2429]/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-4 focus:ring-[#BF2429]/5'
-                        }`}
+                      className="w-full rounded-[22px] bg-white/90 py-3.5 pl-10 pr-10 text-[15px] font-medium outline-none transition-all placeholder:text-[#414141]/25 border shadow-[inset_0_1px_2px_rgba(0,0,0,0.02),_0_2px_5px_rgba(0,0,0,0.015)] text-[#414141] focus:bg-white focus:outline-hidden"
+                      style={{
+                        borderColor: detectedTerreiro ? `${activeThemeColor}66` : 'rgba(191,36,41,0.25)'
+                      }}
                       placeholder="Senha"
                     />
                     {password && (
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className={`absolute right-4 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-zinc-100 transition-colors focus:outline-none ${isT7CA ? 'text-[#0d47a1]/40 hover:text-[#0d47a1]' : 'text-zinc-400 hover:text-zinc-600'}`}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-zinc-100 transition-colors focus:outline-none text-zinc-400 hover:text-zinc-600"
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -996,23 +1185,48 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                   </div>
                 </div>
 
+                {/* Remember Me Option */}
+                <div className="flex items-center justify-between px-2 pt-2.5 pb-0.5">
+                  <label className="flex items-center gap-2 cursor-pointer select-none group">
+                    <div className="relative flex items-center justify-center">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="peer sr-only"
+                      />
+                      <div 
+                        className={`h-4.5 w-4.5 rounded-lg border transition-all flex items-center justify-center shadow-2xs ${
+                          rememberMe 
+                            ? 'border-transparent text-white' 
+                            : 'border-black/20 bg-white/70 group-hover:border-black/40'
+                        }`}
+                        style={{
+                          backgroundColor: rememberMe ? activeThemeColor : undefined
+                        }}
+                      >
+                        {rememberMe && <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />}
+                      </div>
+                    </div>
+                    <span className="text-[12px] font-bold text-[#414141]/75 group-hover:text-[#414141] transition-colors">
+                      Lembrar meu login
+                    </span>
+                  </label>
+                </div>
+
                 <motion.button
                   type="submit"
                   animate={{
-                    background: isT7CA
-                      ? 'linear-gradient(175deg, #1e72d8 0%, #0d47a1 100%)'
-                      : 'linear-gradient(175deg, #e8383c 0%, #a91b1f 100%)',
+                    backgroundColor: activeThemeColor
                   }}
                   transition={{ duration: 0.25 }}
-                  className="w-full rounded-full py-[15px] text-[14px] font-bold tracking-wide text-white transition-all active:scale-[0.97] mt-5"
+                  className="w-full rounded-full py-[15px] text-[14px] font-bold tracking-wide text-white transition-all active:scale-[0.97] mt-5 shadow-lg"
                   style={{
-                    boxShadow: isT7CA
-                      ? '0 0 0 2.5px rgba(255,255,255,0.28), 0 10px 28px rgba(13,71,161,0.44), inset 0 1px 0 rgba(255,255,255,0.3)'
-                      : '0 0 0 2.5px rgba(255,255,255,0.28), 0 10px 28px rgba(191,36,41,0.44), inset 0 1px 0 rgba(255,255,255,0.3)'
+                    boxShadow: `0 0 0 2.5px rgba(255,255,255,0.28), 0 10px 28px ${activeThemeColor}55, inset 0 1px 0 rgba(255,255,255,0.3)`
                   }}
                 >
                   <span className="flex items-center justify-center gap-2">
-                    {detectedTerreiro ? `ENTRAR NO ${detectedShortName}` : 'ENTRAR'}
+                    {detectedTerreiro ? `ENTRAR NO ${activeSigla.toUpperCase()}` : 'ENTRAR'}
                   </span>
                 </motion.button>
 
@@ -1023,10 +1237,8 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                       setIsRegister(true);
                       setError(null);
                     }}
-                    className={`text-xs font-semibold transition-colors focus:outline-none ${isT7CA
-                      ? 'text-[#0d47a1]/70 hover:text-[#0d47a1]'
-                      : 'text-[#BF2429]/70 hover:text-[#BF2429]'
-                      }`}
+                    className="text-xs font-semibold transition-colors focus:outline-none hover:opacity-100 opacity-80"
+                    style={{ color: detectedTerreiro ? activeThemeColor : '#BF2429' }}
                   >
                     Não tem uma conta? Cadastre-se agora.
                   </button>
@@ -1614,8 +1826,9 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                         />
                       </div>
 
-                      {/* Cidade & Estado */}
-                      <div className="grid grid-cols-3 gap-3">
+                      {/* Cidade & Estado (Com Autocomplete e Combobox UF) */}
+                      <div className="grid grid-cols-3 gap-3 relative z-30">
+                        {/* Cidade Autocomplete */}
                         <div className="col-span-2 group relative">
                           <MapPin className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isTerreiroCidadeError
                             ? 'text-red-500'
@@ -1625,37 +1838,80 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                             required
                             type="text"
                             value={regTerreiroCidade}
+                            onFocus={() => setShowCityDropdown(true)}
                             onChange={(e) => {
                               setRegTerreiroCidade(e.target.value);
+                              setShowCityDropdown(true);
                               if (error) setError(null);
                             }}
                             className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border ${isTerreiroCidadeError
                               ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10'
                               : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
                               }`}
-                            placeholder="Cidade"
+                            placeholder="Digite a Cidade..."
                           />
+
+                          {/* Interactive City Autocomplete Suggestions Dropdown */}
+                          <AnimatePresence>
+                            {showCityDropdown && filteredCitySuggestions.length > 0 && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 4, scale: 0.98 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                                className="absolute left-0 right-0 top-full mt-1 z-50 rounded-2xl bg-white border border-black/10 shadow-xl overflow-hidden max-h-48 overflow-y-auto no-scrollbar"
+                              >
+                                {filteredCitySuggestions.map((item, idx) => (
+                                  <button
+                                    key={`${item.nome}-${item.uf}-${idx}`}
+                                    type="button"
+                                    onClick={() => {
+                                      setRegTerreiroCidade(item.nome);
+                                      setRegTerreiroEstado(item.uf);
+                                      setShowCityDropdown(false);
+                                      if (error) setError(null);
+                                    }}
+                                    className="w-full px-4 py-2.5 text-left text-[13px] font-semibold text-[#414141] hover:bg-[#BF2429]/10 hover:text-[#BF2429] flex items-center justify-between border-b border-black/[0.03] last:border-none transition-colors"
+                                  >
+                                    <span className="flex items-center gap-2">
+                                      <MapPin className="h-3.5 w-3.5 text-[#BF2429]/50" />
+                                      {item.nome}
+                                    </span>
+                                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-black/5 text-black/60">
+                                      {item.uf}
+                                    </span>
+                                  </button>
+                                ))}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
+
+                        {/* UF Combobox Select */}
                         <div className="group relative">
-                          <Compass className={`absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isTerreiroEstadoError
+                          <Compass className={`absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors pointer-events-none z-10 ${isTerreiroEstadoError
                             ? 'text-red-500'
                             : 'text-zinc-400 group-focus-within:text-[#BF2429]'
                             }`} />
-                          <input
+                          <select
                             required
-                            type="text"
-                            maxLength={2}
                             value={regTerreiroEstado}
                             onChange={(e) => {
                               setRegTerreiroEstado(e.target.value);
                               if (error) setError(null);
                             }}
-                            className={`w-full rounded-[16px] bg-white/75 py-3.5 pl-10 pr-4 text-[14px] font-semibold outline-none transition-all placeholder:text-[#414141]/35 focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border text-center uppercase ${isTerreiroEstadoError
+                            className={`w-full appearance-none rounded-[16px] bg-white/75 py-3.5 pl-9 pr-6 text-[13px] font-black outline-none transition-all focus:bg-white focus:ring-4 text-[#414141] shadow-[0_1px_2px_rgba(0,0,0,0.015)] border text-center uppercase cursor-pointer ${isTerreiroEstadoError
                               ? 'border-red-500 focus:border-red-600 focus:ring-red-500/10'
                               : 'border-amber-950/15 focus:border-[#BF2429]/40 focus:bg-white focus:ring-[#BF2429]/5'
                               }`}
-                            placeholder="UF"
-                          />
+                          >
+                            <option value="" disabled>UF</option>
+                            {BRAZIL_UFS.map(uf => (
+                              <option key={uf} value={uf}>{uf}</option>
+                            ))}
+                          </select>
+                          <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
+                            <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          </div>
                         </div>
                       </div>
 
@@ -1896,65 +2152,158 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                       </div>
 
                       {/* Color Grid */}
-                      <div className="grid grid-cols-4 gap-3">
+                      <div className="grid grid-cols-4 gap-3.5 p-1 pt-1 pb-1">
                         {([
-                          { hex: '#BF2429', label: 'Vermelho' },
-                          { hex: '#1565c0', label: 'Azul' },
-                          { hex: '#1a7a4a', label: 'Verde' },
-                          { hex: '#6B21A8', label: 'Roxo' },
-                          { hex: '#B45309', label: 'Dourado' },
-                          { hex: '#BE185D', label: 'Rosa' },
-                          { hex: '#0891B2', label: 'Ciano' },
-                          { hex: '#C2410C', label: 'Laranja' },
-                        ] as const).map(({ hex, label }) => {
-                          const isSelected = regTerreiroCorTema === hex;
+                          { hex: '#BF2429', label: 'Vermelho', orixa: 'Exu & Iansã' },
+                          { hex: '#1565C0', label: 'Azul', orixa: 'Ogum & Iemanjá' },
+                          { hex: '#1A7A4A', label: 'Verde', orixa: 'Oxóssi' },
+                          { hex: '#6B21A8', label: 'Roxo', orixa: 'Nanã' },
+                          { hex: '#EAB308', label: 'Amarelo', orixa: 'Oxum' },
+                          { hex: '#BE185D', label: 'Rosa', orixa: 'Erês & Ewá' },
+                          { hex: '#B5A490', label: 'Bege', orixa: 'Oxalá' },
+                          { hex: '#C2410C', label: 'Laranja', orixa: 'Xangô' },
+                        ] as const).map(({ hex, label, orixa }) => {
+                          const isSelected = regTerreiroCorTema.toLowerCase() === hex.toLowerCase();
                           return (
                             <button
                               key={hex}
                               type="button"
                               onClick={() => setRegTerreiroCorTema(hex)}
-                              className="flex flex-col items-center gap-1.5 focus:outline-none group"
+                              className="flex flex-col items-center gap-1.5 focus:outline-none group relative"
                             >
                               <div
-                                className={`relative w-full aspect-square rounded-[18px] transition-all duration-200 ${isSelected ? 'scale-105' : 'scale-100 hover:scale-102 opacity-80 hover:opacity-100'}`}
+                                className={`relative w-full aspect-square rounded-[18px] transition-all duration-200 ${
+                                  isSelected ? 'scale-100 shadow-md' : 'scale-95 opacity-80 hover:opacity-100 hover:scale-100'
+                                }`}
                                 style={{
-                                  background: `linear-gradient(135deg, ${hex}cc, ${hex})`,
-                                  boxShadow: isSelected
-                                    ? `0 0 0 3px white, 0 0 0 5px ${hex}, 0 8px 20px ${hex}66`
-                                    : `0 4px 12px ${hex}44`
+                                  background: `linear-gradient(135deg, ${hex}ee, ${hex})`,
+                                  outline: isSelected ? `2.5px solid ${hex}` : 'none',
+                                  outlineOffset: '2.5px',
+                                  boxShadow: isSelected ? `0 6px 18px ${hex}45` : `0 2px 6px ${hex}20`
                                 }}
                               >
                                 {isSelected && (
                                   <div className="absolute inset-0 flex items-center justify-center">
-                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-8" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                                   </div>
                                 )}
                               </div>
-                              <span className={`text-[9px] font-bold tracking-wide transition-colors ${isSelected ? 'text-[#414141]' : 'text-[#414141]/45'}`}>
-                                {label}
-                              </span>
+                              <div className="text-center leading-none">
+                                <p className={`text-[9.5px] font-extrabold tracking-tight transition-colors ${isSelected ? 'text-[#242424]' : 'text-[#414141]/55'}`}>
+                                  {label}
+                                </p>
+                                <p className="text-[7.5px] font-bold text-[#414141]/40 uppercase tracking-tighter mt-0.5 truncate max-w-[65px]">
+                                  {orixa}
+                                </p>
+                              </div>
                             </button>
                           );
                         })}
                       </div>
 
-                      {/* Preview */}
-                      <div
-                        className="w-full rounded-[20px] overflow-hidden h-[60px] relative"
-                        style={{ background: '#f5f5f5' }}
-                      >
+                      {/* Logo Upload Field */}
+                      <div className="space-y-1 text-left pt-1">
+                        <label className="text-[11px] font-bold text-[#414141]/75 flex items-center gap-1.5">
+                          <ImagePlus className="h-3.5 w-3.5 transition-colors duration-300" style={{ color: regTerreiroCorTema }} />
+                          Logo / Brasão do Terreiro (opcional)
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <label 
+                            className="flex-1 cursor-pointer flex items-center justify-center gap-2 rounded-2xl border border-dashed bg-white/70 py-3 px-4 text-[12px] font-bold hover:bg-white transition-all active:scale-98"
+                            style={{ borderColor: regTerreiroCorTema + '55', color: regTerreiroCorTema }}
+                          >
+                            <Upload className="h-4 w-4" />
+                            <span className="truncate max-w-[170px]">
+                              {regTerreiroLogoFile ? regTerreiroLogoFile.name : 'Escolher imagem da logo'}
+                            </span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  if (!file.type.startsWith('image/')) {
+                                    setError('Selecione um arquivo de imagem.');
+                                    return;
+                                  }
+                                  if (file.size > 5 * 1024 * 1024) {
+                                    setError('A imagem deve ter no máximo 5 MB.');
+                                    return;
+                                  }
+                                  setRegTerreiroLogoFile(file);
+                                  setRegTerreiroLogoPreview(URL.createObjectURL(file));
+                                }
+                              }}
+                            />
+                          </label>
+                          {regTerreiroLogoPreview && (
+                            <div className="relative h-11 w-11 rounded-2xl border border-black/10 overflow-hidden bg-white shrink-0 shadow-sm">
+                              <img src={regTerreiroLogoPreview} alt="Logo Preview" className="h-full w-full object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRegTerreiroLogoFile(null);
+                                  setRegTerreiroLogoPreview(null);
+                                }}
+                                className="absolute top-0.5 right-0.5 p-0.5 rounded-full bg-black/60 text-white hover:bg-black"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Live Home Welcome Card Preview */}
+                      <div className="text-left space-y-1 pt-1">
+                        <span className="text-[10px] font-black text-[#414141]/50 uppercase tracking-wider">
+                          Pré-visualização do seu Card da Home
+                        </span>
                         <div
-                          className="absolute w-[90%] h-[160%] rounded-full blur-[30px] -top-[30%] -left-[10%]"
-                          style={{ background: regTerreiroCorTema + 'cc', transition: 'background 0.4s ease' }}
-                        />
-                        <div
-                          className="absolute w-[70%] h-[160%] rounded-full blur-[25px] -top-[20%] -right-[15%]"
-                          style={{ background: regTerreiroCorTema + '99', transition: 'background 0.4s ease' }}
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-[11px] font-black text-white/90 tracking-widest uppercase" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.3)' }}>
-                            Preview — {regTerreiroSigla || 'SIGLA'}
-                          </span>
+                          className="relative w-full rounded-[24px] p-4 text-white overflow-hidden shadow-lg border border-white/20 transition-all duration-500"
+                          style={{
+                            background: `linear-gradient(135deg, ${regTerreiroCorTema} 0%, #111111 100%)`,
+                          }}
+                        >
+                          {/* Dynamic Aurora glow background inside preview */}
+                          <div
+                            className="absolute w-[120%] h-[120%] rounded-full blur-[22px] -top-[30%] -left-[20%] opacity-90 transition-colors duration-500 pointer-events-none"
+                            style={{ background: regTerreiroCorTema }}
+                          />
+                          <div
+                            className="absolute w-[80%] h-[80%] rounded-full blur-[18px] -bottom-[20%] -right-[10%] opacity-70 transition-colors duration-500 pointer-events-none"
+                            style={{ background: regTerreiroCorTema }}
+                          />
+
+                          {/* Header of mini-card */}
+                          <div className="relative z-10 flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 rounded-full bg-white/20 border border-white/40 overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
+                                {regTerreiroLogoPreview ? (
+                                  <img src={regTerreiroLogoPreview} alt="Logo" className="h-full w-full object-cover" />
+                                ) : (
+                                  <img src="/img/login/icone.webp" alt="Logo" className="h-5 w-5 object-contain brightness-0 invert" />
+                                )}
+                              </div>
+                              <span className="text-[13px] font-black tracking-widest uppercase font-inter drop-shadow-sm">
+                                {regTerreiroSigla || 'SIGLA'}
+                              </span>
+                            </div>
+                            <div className="h-7 w-7 rounded-full bg-white/20 border border-white/30 flex items-center justify-center">
+                              <div className="h-3 w-3 rounded-full border-2 border-white" />
+                            </div>
+                          </div>
+
+                          {/* Dirigente Welcome text */}
+                          <div className="relative z-10 space-y-1 my-1">
+                            <h4 className="text-[20px] font-normal leading-none font-behind-it italic text-white/95 drop-shadow-md">
+                              Olá pai {regTerreiroDirigente ? regTerreiroDirigente.split(' ')[0] : 'Dirigente'}
+                            </h4>
+                            <div className="inline-flex items-center gap-1.5 rounded-full bg-black/40 border border-white/15 px-2.5 py-0.5 text-[8.5px] font-bold tracking-wider font-mono">
+                              CONVITE: T0000
+                            </div>
+                          </div>
                         </div>
                       </div>
 

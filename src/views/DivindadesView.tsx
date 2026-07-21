@@ -1,6 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, ArrowLeft, X, BookOpen, Wind, Droplets, Hammer, Zap, CloudLightning, Trees, Sparkles, Waves, ShieldAlert, Compass, Rainbow, Smile, Calendar, Palette, Sparkle, Heart, Youtube, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useAppData } from '../context/AppDataContext';
+import { Terreiro } from '../types';
 
 interface Divindade {
   id: string;
@@ -414,6 +416,10 @@ interface DivindadesViewProps {
 }
 
 export default function DivindadesView({ onToggleMenu, onBack, onModalToggle }: DivindadesViewProps) {
+  const { currentAccount, terreiros } = useAppData();
+  const currentTerreiro = terreiros.find((t: Terreiro) => t.id === currentAccount?.terreiroId);
+  const themeColor = currentTerreiro?.corTema || '#BF2429';
+
   const [selectedDivindade, setSelectedDivindade] = useState<Divindade | null>(null);
   const [direction, setDirection] = useState(0);
   const [imageIdx, setImageIdx] = useState(0);
@@ -456,21 +462,21 @@ export default function DivindadesView({ onToggleMenu, onBack, onModalToggle }: 
       style={{ background: '#FFFFFF' }}
       className={`flex flex-col min-h-[100dvh] relative overflow-x-hidden z-10 ${selectedDivindade ? 'h-[100dvh] overflow-hidden' : ''}`}
     >
-      {/* Aurora Backdrop Effect (Vivid Light/Dark Blue glows pushed closer to the top) */}
+      {/* Aurora Backdrop Effect */}
       <div
-        className="absolute inset-x-0 top-0 h-[35dvh] pointer-events-none overflow-hidden z-0 select-none"
+        className="absolute inset-x-0 top-0 h-[40dvh] pointer-events-none overflow-hidden z-0 select-none opacity-90"
         style={{
-          maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 100%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 100%)'
+          maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 100%)'
         }}
       >
-        {/* Strong Dark Blue Glow */}
         <div
-          className="absolute w-[68vw] h-[68vw] rounded-full bg-gradient-to-br from-[#0d47a1]/85 to-[#1565c0]/45 blur-[50px] -top-[35%] -left-[10%] animate-[pulse_6s_ease-in-out_infinite]"
+          className="absolute w-[80vw] h-[80vw] rounded-full blur-[55px] -top-[25%] -left-[10%] animate-[pulse_6s_ease-in-out_infinite]"
+          style={{ background: `radial-gradient(circle, ${themeColor}dd 0%, ${themeColor}44 60%, transparent 100%)` }}
         />
-        {/* Strong Light Blue Glow */}
         <div
-          className="absolute w-[75vw] h-[75vw] rounded-full bg-gradient-to-tr from-[#00b0ff]/80 to-[#00e5ff]/35 blur-[60px] -top-[40%] -right-[15%] animate-[pulse_8s_ease-in-out_infinite_1.2s]"
+          className="absolute w-[85vw] h-[85vw] rounded-full blur-[65px] -top-[28%] -right-[15%] animate-[pulse_8s_ease-in-out_infinite_1.2s]"
+          style={{ background: `radial-gradient(circle, ${themeColor}bb 0%, ${themeColor}22 60%, transparent 100%)`, filter: 'hue-rotate(15deg)' }}
         />
       </div>
 
@@ -492,7 +498,7 @@ export default function DivindadesView({ onToggleMenu, onBack, onModalToggle }: 
         </button>
 
         {/* Centered Title */}
-        <h1 className="text-4xl font-bold text-[#414141] font-behind-it tracking-wide">
+        <h1 className="text-4xl font-bold font-behind-it tracking-wide" style={{ color: themeColor }}>
           Divindades
         </h1>
 

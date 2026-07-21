@@ -49,8 +49,8 @@ export default function LiquidNavbar({ currentView, onNavigate }: LiquidNavbarPr
                   layoutId="nav-active-pill"
                   className="absolute inset-x-1 inset-y-0.5 rounded-full"
                   style={{
-                    background: 'rgba(21, 101, 192, 0.08)',
-                    border: '1px solid rgba(21, 101, 192, 0.12)',
+                    background: 'rgba(var(--theme-color-rgb, 191, 36, 41), 0.12)',
+                    border: '1px solid rgba(var(--theme-color-rgb, 191, 36, 41), 0.22)',
                     boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.3)',
                   }}
                   transition={{ type: "spring", stiffness: 400, damping: 28 }}
@@ -61,9 +61,10 @@ export default function LiquidNavbar({ currentView, onNavigate }: LiquidNavbarPr
               <Icon 
                 className={`relative z-10 transition-all duration-200 ${
                   isActive 
-                    ? 'h-[23px] w-[23px] text-[#1565c0]' 
+                    ? 'h-[23px] w-[23px]' 
                     : 'h-[20px] w-[20px] text-[#414141]/35 hover:text-[#414141]/55'
                 }`} 
+                style={isActive ? { color: 'var(--theme-color, #BF2429)' } : undefined}
                 strokeWidth={isActive ? 2.5 : 1.8}
                 fill="none"
               />

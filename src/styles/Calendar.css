@@ -23,7 +23,7 @@
   height: 38px;
   background: none;
   font-size: 16px;
-  color: #1565c0;
+  color: var(--theme-color, #BF2429);
   font-weight: 700;
   border-radius: 50%;
   border: none;
@@ -36,7 +36,7 @@
 
 .react-calendar__navigation button:enabled:hover,
 .react-calendar__navigation button:enabled:focus {
-  background-color: #e3f2fd;
+  background-color: rgba(var(--theme-color-rgb, 191, 36, 41), 0.1);
   transform: scale(1.05);
 }
 
@@ -47,7 +47,7 @@
 .react-calendar__navigation__label {
   font-weight: 800 !important;
   font-size: 1.15rem !important;
-  color: #1565c0 !important;
+  color: var(--theme-color, #BF2429) !important;
   text-transform: capitalize;
   letter-spacing: -0.02em;
   pointer-events: none;
@@ -104,11 +104,11 @@
   background-color: rgba(0, 0, 0, 0.03);
 }
 
-/* Active Selected Day (Apple Style: Blue Circle) */
+/* Active Selected Day (Apple Style: Dynamic Theme Circle) */
 .react-calendar__tile--active {
-  background: #1565c0 !important;
+  background: var(--theme-color, #BF2429) !important;
   color: #ffffff !important;
-  box-shadow: 0 6px 12px rgba(21, 101, 192, 0.15) !important;
+  box-shadow: 0 6px 16px rgba(var(--theme-color-rgb, 191, 36, 41), 0.35) !important;
   font-weight: 700 !important;
   border-radius: 50% !important;
   z-index: 2;
@@ -116,19 +116,19 @@
 
 .react-calendar__tile--active:enabled:hover,
 .react-calendar__tile--active:enabled:focus {
-  background: #0d47a1 !important;
+  opacity: 0.9;
 }
 
-/* Today (Apple style: blue font, subtle outline or dot) */
+/* Today */
 .react-calendar__tile--now {
-  color: #1565c0;
-  background: rgba(21, 101, 192, 0.05);
+  color: var(--theme-color, #BF2429);
+  background: rgba(var(--theme-color-rgb, 191, 36, 41), 0.08);
   font-weight: 800;
 }
 
 .react-calendar__tile--now.react-calendar__tile--active {
   color: #ffffff !important;
-  background: #1565c0 !important;
+  background: var(--theme-color, #BF2429) !important;
 }
 
 /* Neighboring Month Days */
@@ -162,7 +162,7 @@ button:focus {
 
 /* Extra calendar cleanups */
 .react-calendar__month-view__days__day--weekend {
-  color: rgba(21, 101, 192, 0.8);
+  color: var(--theme-color, #BF2429);
 }
 
 .react-calendar__month-view__days__day--weekend.react-calendar__tile--active {

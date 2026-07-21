@@ -32,8 +32,12 @@ export default function AvisosView({
     saveNotice, 
     deleteNotice, 
     currentAccount, 
-    isTerreiroAdmin 
+    isTerreiroAdmin,
+    terreiros
   } = useAppData();
+
+  const currentTerreiro = terreiros.find(t => t.id === currentAccount?.terreiroId);
+  const themeColor = currentTerreiro?.corTema || '#BF2429';
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingNoticeId, setEditingNoticeId] = useState<string | null>(null);
@@ -145,14 +149,20 @@ export default function AvisosView({
       
       {/* Aurora Backdrop Effect */}
       <div 
-        className="absolute inset-x-0 top-0 h-[35dvh] pointer-events-none overflow-hidden z-0 select-none"
+        className="absolute inset-x-0 top-0 h-[40dvh] pointer-events-none overflow-hidden z-0 select-none opacity-90"
         style={{
-          maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 100%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 100%)'
+          maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 100%)'
         }}
       >
-        <div className="absolute w-[70vw] h-[70vw] rounded-full bg-gradient-to-br from-rose-500/15 to-red-700/5 blur-[60px] -top-[18%] -left-[10%] animate-[pulse_8s_ease-in-out_infinite]" />
-        <div className="absolute w-[80vw] h-[80vw] rounded-full bg-gradient-to-tr from-pink-400/25 to-rose-600/10 blur-[70px] -top-[20%] -right-[15%] animate-[pulse_10s_ease-in-out_infinite_2s]" />
+        <div 
+          className="absolute w-[80vw] h-[80vw] rounded-full blur-[55px] -top-[20%] -left-[10%] animate-[pulse_8s_ease-in-out_infinite]" 
+          style={{ background: `radial-gradient(circle, ${themeColor}dd 0%, ${themeColor}44 60%, transparent 100%)` }}
+        />
+        <div 
+          className="absolute w-[85vw] h-[85vw] rounded-full blur-[65px] -top-[22%] -right-[15%] animate-[pulse_10s_ease-in-out_infinite_2s]" 
+          style={{ background: `radial-gradient(circle, ${themeColor}bb 0%, ${themeColor}22 60%, transparent 100%)`, filter: 'hue-rotate(15deg)' }}
+        />
       </div>
 
       {/* Header */}
@@ -165,7 +175,7 @@ export default function AvisosView({
         </button>
         
         <div className="w-full text-center px-14">
-          <h1 className="text-2xl font-black bg-gradient-to-r from-zinc-800 to-rose-700 bg-clip-text text-transparent leading-none font-behind-it">Mural</h1>
+          <h1 className="text-2xl font-black leading-none font-behind-it" style={{ color: themeColor }}>Mural</h1>
           <p className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-[0.25em] mt-2 leading-none">
             Avisos e Comunicados
           </p>
@@ -182,7 +192,7 @@ export default function AvisosView({
       {/* Sub-Header Row matching Pontos inline styling */}
       <div className="relative z-10 flex items-end justify-between mb-8 px-1">
         <div>
-          <span className="text-[10px] font-black text-rose-700 uppercase tracking-[0.25em]">Mural Virtual</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: themeColor }}>Mural Virtual</span>
           <h3 className="text-xl font-extrabold text-zinc-800 tracking-tight mt-1.5">Comunicados Fixados</h3>
         </div>
         {isTerreiroAdmin && (
@@ -193,7 +203,8 @@ export default function AvisosView({
               setFormError(null);
               setShowAddForm(true);
             }}
-            className="flex h-11 px-4 gap-1.5 items-center justify-center rounded-full bg-gradient-to-r from-rose-600 to-rose-700 text-white shadow-[0_4px_16px_rgba(225,29,72,0.22)] border border-rose-600/10 text-xs font-bold transition-all"
+            className="flex h-11 px-4 gap-1.5 items-center justify-center rounded-full text-white shadow-sm border border-white/10 text-xs font-bold transition-all"
+            style={{ backgroundColor: themeColor }}
           >
             <Plus className="h-4 w-4" strokeWidth={2.5} />
             <span>Novo</span>
@@ -427,7 +438,8 @@ export default function AvisosView({
                     type="submit"
                     whileTap={{ scale: 0.98 }}
                     transition={{ type: 'spring', bounce: 0, duration: 0.2 }}
-                    className="w-full py-4 rounded-2xl text-sm font-bold text-white bg-rose-700 shadow-lg shadow-rose-700/20 active:scale-[0.98] transition-all hover:bg-rose-800 flex items-center justify-center gap-2"
+                    className="w-full py-4 rounded-2xl text-sm font-bold text-white shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                    style={{ backgroundColor: themeColor }}
                   >
                     <Sparkles className="h-4.5 w-4.5" strokeWidth={2.5} />
                     {editingNoticeId ? 'Salvar Alterações' : 'Publicar Comunicado'}

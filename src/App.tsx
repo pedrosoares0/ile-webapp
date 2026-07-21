@@ -9,6 +9,7 @@ import HubView from './views/HubView'
 import PontosView from './views/PontosView'
 import OracaoView from './views/OracaoView'
 import AvisosView from './views/AvisosView'
+import FinanceiroView from './views/FinanceiroView'
 import BurgerMenu from './components/BurgerMenu'
 import LiquidNavbar from './components/LiquidNavbar'
 import { ViewType } from './types'
@@ -21,7 +22,21 @@ export default function App() {
   const [hideNavbar, setHideNavbar] = useState(false)
   const [isGuestHub, setIsGuestHub] = useState(false)
   const { isAuthenticated, logout } = useAuth()
-  const { currentAccount, isLoading } = useAppData()
+  const { currentAccount, isLoading, terreiros } = useAppData();
+  const currentTerreiro = terreiros.find(t => t.id === currentAccount?.terreiroId);
+  const themeColor = currentTerreiro?.corTema || '#BF2429';
+
+  // Inject dynamic theme color variables into :root
+  useEffect(() => {
+    document.documentElement.style.setProperty('--theme-color', themeColor);
+    const hex = themeColor.replace('#', '');
+    if (hex.length === 6) {
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      document.documentElement.style.setProperty('--theme-color-rgb', `${r}, ${g}, ${b}`);
+    }
+  }, [themeColor]);
 
   const isHubUser = isGuestHub || (currentAccount?.role === 'terreiro_user' && !currentAccount?.terreiroId);
   const showNavbar = isAuthenticated && !isHubUser && !hideNavbar;
@@ -106,6 +121,12 @@ export default function App() {
               onToggleMenu={() => setIsMenuOpen(true)} 
               onToggleNavbar={setHideNavbar}
             />
+          ) : currentView === 'financeiro' ? (
+            <FinanceiroView 
+              key="financeiro" 
+              onBack={() => setCurrentView('home')} 
+              onToggleMenu={() => setIsMenuOpen(true)} 
+            />
           ) : (
             <motion.div 
               key="coming-soon"
@@ -115,10 +136,10 @@ export default function App() {
               className="flex-1 flex flex-col items-center justify-center p-10 text-center"
             >
               <div className="h-24 w-24 rounded-full bg-[#1565c0]/10 flex items-center justify-center mb-6">
-                <img src={`/img/${currentView === 'financeiro' ? 'financeiro' : 'avisos'}-icon-navbar.webp`} className="h-12 w-12 opacity-40 grayscale" alt="" />
+                <img src="/img/avisos-icon-navbar.webp" className="h-12 w-12 opacity-40 grayscale" alt="" />
               </div>
               <h2 className="text-2xl font-bold text-[#1565c0] mb-2 uppercase tracking-tight">Em breve</h2>
-              <p className="text-sm opacity-60">A seção de {currentView === 'financeiro' ? 'Financeiro' : 'Avisos'} está sendo preparada com muito carinho.</p>
+              <p className="text-sm opacity-60">Esta seção está sendo preparada com muito carinho.</p>
               <button 
                 onClick={() => setCurrentView('home')}
                 className="mt-8 px-6 py-3 bg-[#1565c0] text-white rounded-full font-bold text-sm shadow-lg shadow-[#1565c0]/20"

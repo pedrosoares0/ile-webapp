@@ -239,6 +239,8 @@ export default function EventsView({ onToggleMenu, onBack }: { onToggleMenu: () 
     }
   }, [activePreset]);
 
+  const themeColor = currentTerreiro?.corTema || '#BF2429';
+
   const tileContent = ({ date, view }: { date: Date; view: string }) => {
     if (view === 'month') {
       const formattedDate = formatDateYYYYMMDD(date);
@@ -249,7 +251,7 @@ export default function EventsView({ onToggleMenu, onBack }: { onToggleMenu: () 
       });
       return hasEvents ? (
         <div className="dot-container">
-          <div className="dot bg-[#1565c0]" />
+          <div className="dot" style={{ backgroundColor: themeColor }} />
         </div>
       ) : null;
     }
@@ -353,7 +355,7 @@ export default function EventsView({ onToggleMenu, onBack }: { onToggleMenu: () 
         </button>
           
           <div className="w-full text-center px-14">
-            <h1 className="text-3xl font-bold text-[#1565c0] leading-tight font-behind-it">Calendário</h1>
+            <h1 className="text-3xl font-bold leading-tight font-behind-it" style={{ color: themeColor }}>Calendário</h1>
             <p className="text-[9px] font-bold text-[#414141]/40 uppercase tracking-[0.2em] mt-0.5 leading-relaxed">
               {currentTerreiro?.nome ?? 'Agenda da Comunidade'}
             </p>
@@ -385,7 +387,7 @@ export default function EventsView({ onToggleMenu, onBack }: { onToggleMenu: () 
         <div className="space-y-5">
           <div className="flex items-end justify-between px-1">
             <div>
-              <span className="text-[10px] font-black text-[#1565c0] uppercase tracking-[0.2em]">Programação</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: themeColor }}>Programação</span>
               <p className="text-2xl font-bold text-[#414141] tracking-tight mt-0.5">
                 {selectedDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}
               </p>
@@ -398,7 +400,8 @@ export default function EventsView({ onToggleMenu, onBack }: { onToggleMenu: () 
                   setFormError(null);
                   setShowAddForm(true);
                 }}
-                className="flex h-11 px-4 gap-1.5 items-center justify-center rounded-full bg-[#1565c0] hover:bg-[#0d47a1] text-white shadow-sm text-xs font-bold transition-all"
+                className="flex h-11 px-4 gap-1.5 items-center justify-center rounded-full text-white shadow-sm text-xs font-bold transition-all"
+                style={{ backgroundColor: themeColor }}
               >
                 <Plus className="h-4 w-4" strokeWidth={2.5} />
                 <span>Novo</span>

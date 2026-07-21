@@ -529,16 +529,16 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
       <div className="rounded-[45px] border border-white/40 bg-white/60 p-8 shadow-[0_10px_40px_rgba(0,0,0,0.02)] backdrop-blur-xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-[12px] font-behind uppercase tracking-[0.2em] text-[#1565c0]/40">ADMINISTRAÇÃO</p>
-            <h1 className="mt-1 text-[44px] font-behind leading-tight text-[#1565c0]">Cadastros</h1>
-            <p className="mt-3 max-w-[240px] text-[13px] font-medium leading-relaxed text-[#1565c0]/40">
+            <p className="text-[12px] font-behind uppercase tracking-[0.2em] text-[#414141]/50">ADMINISTRAÇÃO</p>
+            <h1 className="mt-1 text-[44px] font-behind leading-tight" style={{ color: 'var(--theme-color, #BF2429)' }}>Cadastros</h1>
+            <p className="mt-3 max-w-[240px] text-[13px] font-medium leading-relaxed text-[#414141]/50">
               Estruture usuários, terreiros e agenda em uma base pronta para backend.
             </p>
-            <div className="mt-4 inline-flex rounded-full bg-[#1565c0]/6 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#1565c0]/50">
+            <div className="mt-4 inline-flex rounded-full bg-black/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#414141]/60">
               {isGlobalAdmin ? 'Admin geral' : 'Admin do terreiro'} · {currentAccount?.email}
             </div>
           </div>
-          <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-[#1565c0] text-white shadow-lg shadow-[#1565c0]/20">
+          <div className="flex h-16 w-16 items-center justify-center rounded-[22px] text-white shadow-lg" style={{ backgroundColor: 'var(--theme-color, #BF2429)' }}>
             <ShieldCheck className="h-8 w-8" />
           </div>
         </div>
@@ -552,7 +552,7 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
             onClick={() => setTab(stat.id as AdminTab)}
             className="rounded-[28px] bg-white px-5 py-5 text-left shadow-[0_6px_15px_rgba(0,0,0,0.02)]"
           >
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1565c0]/40">{stat.title}</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--theme-color, #BF2429)', opacity: 0.6 }}>{stat.title}</p>
             <p className="mt-3 text-3xl font-black tracking-tight text-[#414141]">{stat.value}</p>
           </button>
         ))}
@@ -567,11 +567,12 @@ export default function CadastrosView({ onBack }: { onBack: () => void }) {
               clearMessages();
               setTab(currentTab.id);
             }}
-            className={`whitespace-nowrap rounded-[20px] px-7 py-4 text-[11px] font-black shadow-sm transition-all duration-300 ${
+            className="whitespace-nowrap rounded-[20px] px-7 py-4 text-[11px] font-black shadow-sm transition-all duration-300"
+            style={
               tab === currentTab.id
-                ? 'bg-[#1565c0] text-white shadow-[#1565c0]/20'
-                : 'border border-[#1565c0]/5 bg-white text-[#1565c0]'
-            }`}
+                ? { backgroundColor: 'var(--theme-color, #BF2429)', color: '#ffffff' }
+                : { backgroundColor: '#ffffff', color: 'var(--theme-color, #BF2429)', border: '1px solid rgba(var(--theme-color-rgb, 191, 36, 41), 0.15)' }
+            }
           >
             {currentTab.label}
           </button>

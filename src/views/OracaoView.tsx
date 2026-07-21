@@ -89,7 +89,17 @@ const CATEGORY_CONFIGS: CategoryConfig[] = [
 ];
 
 export default function OracaoView({ onBack }: { onBack: () => void }) {
-  const { prayers, savePrayer, answerPrayer, currentAccount, isTerreiroAdmin } = useAppData();
+  const { 
+    prayers, 
+    savePrayer, 
+    answerPrayer, 
+    currentAccount, 
+    isTerreiroAdmin,
+    terreiros
+  } = useAppData();
+
+  const currentTerreiro = terreiros.find(t => t.id === currentAccount?.terreiroId);
+  const themeColor = currentTerreiro?.corTema || '#BF2429';
   const [showAddForm, setShowAddForm] = useState(false);
 
   // Filters state
@@ -183,9 +193,15 @@ export default function OracaoView({ onBack }: { onBack: () => void }) {
     <div className="min-h-[100dvh] bg-[#F9F7F3] px-6 safe-pt-view pb-36 relative overflow-x-hidden z-10 font-sans">
       
       {/* Background Soft Shadows / Lights */}
-      <div className="absolute inset-x-0 top-0 h-[40dvh] pointer-events-none overflow-hidden z-0 select-none">
-        <div className="absolute w-[80vw] h-[80vw] rounded-full bg-[#f3e8ff]/25 blur-[100px] -top-[30%] -left-[10%]" />
-        <div className="absolute w-[80vw] h-[80vw] rounded-full bg-[#fef3c7]/25 blur-[100px] -top-[30%] -right-[10%]" />
+      <div className="absolute inset-x-0 top-0 h-[40dvh] pointer-events-none overflow-hidden z-0 select-none opacity-90">
+        <div 
+          className="absolute w-[80vw] h-[80vw] rounded-full blur-[55px] -top-[20%] -left-[10%] animate-[pulse_8s_ease-in-out_infinite]" 
+          style={{ background: `radial-gradient(circle, ${themeColor}dd 0%, ${themeColor}44 60%, transparent 100%)` }}
+        />
+        <div 
+          className="absolute w-[85vw] h-[85vw] rounded-full blur-[65px] -top-[22%] -right-[15%] animate-[pulse_10s_ease-in-out_infinite_2s]" 
+          style={{ background: `radial-gradient(circle, ${themeColor}bb 0%, ${themeColor}22 60%, transparent 100%)`, filter: 'hue-rotate(15deg)' }}
+        />
       </div>
 
       {/* Header Row */}
@@ -198,7 +214,7 @@ export default function OracaoView({ onBack }: { onBack: () => void }) {
         </button>
         
         <div className="w-full text-center px-14">
-          <h1 className="text-2xl font-black text-amber-950 leading-none font-behind-it tracking-tight">Pedidos de Oração</h1>
+          <h1 className="text-2xl font-black leading-none font-behind-it tracking-tight" style={{ color: themeColor }}>Pedidos de Oração</h1>
           <p className="text-[9.5px] font-black text-amber-700/60 uppercase tracking-[0.25em] mt-2.5 leading-none">
             {isTerreiroAdmin ? 'Corrente do Terreiro' : 'Suas Conexões de Fé'}
           </p>

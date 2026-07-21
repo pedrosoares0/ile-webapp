@@ -137,6 +137,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             ativo: t.ativo,
             accessAccountId: t.access_account_id || '',
             corTema: t.cor_tema || '#BF2429',
+            logoUrl: t.logo_url || '',
             createdAt: t.created_at,
           }))
         );

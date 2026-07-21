@@ -187,12 +187,13 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
   const { currentAccount, events, terreiros } = useAppData();
 
   const isGlobalAdmin = currentAccount?.email === 'admin@ile.app';
-  const logoSrc = isGlobalAdmin ? '/img/logo-ile.webp' : '/img/logo-T7CA.webp';
 
   const currentTerreiro = useMemo(() => {
     if (!currentAccount) return null;
     return terreiros.find((t) => t.id === currentAccount.terreiroId) ?? null;
   }, [currentAccount, terreiros]);
+
+  const terreiroLogo = currentTerreiro?.logoUrl || (isGlobalAdmin ? '/img/logo-ile.webp' : '/img/logo-T7CA.webp');
 
   // Use sigla when available, otherwise extract from name
   const terreiroDisplayName = useMemo(() => {
@@ -335,19 +336,23 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
 
       {/* Aurora Backdrop Effect behind the main card — color driven by terreiro.corTema */}
       <div
-        className="absolute inset-x-0 top-0 h-[45dvh] pointer-events-none overflow-hidden z-0 select-none"
+        className="absolute inset-x-0 top-0 h-[60dvh] pointer-events-none overflow-hidden z-0 select-none opacity-95"
         style={{
-          maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 100%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 100%)'
+          maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 100%)'
         }}
       >
         <div
-          className="absolute w-[72vw] h-[72vw] rounded-full blur-[60px] -top-[18%] -left-[12%] aurora-blob-1"
-          style={{ background: `radial-gradient(circle, ${auroraColor}dd 0%, ${auroraColor}55 60%, transparent 100%)`, transition: 'background 0.8s ease' }}
+          className="absolute w-[95vw] h-[95vw] rounded-full blur-[50px] -top-[20%] -left-[15%] aurora-blob-1"
+          style={{ background: `radial-gradient(circle, ${auroraColor} 0%, ${auroraColor}cc 40%, ${auroraColor}33 75%, transparent 100%)`, transition: 'background 0.8s ease' }}
         />
         <div
-          className="absolute w-[85vw] h-[85vw] rounded-full blur-[70px] -top-[22%] -right-[18%] aurora-blob-2"
-          style={{ background: `radial-gradient(circle, ${auroraColor}bb 0%, ${auroraColor}33 60%, transparent 100%)`, filter: 'hue-rotate(20deg)', transition: 'background 0.8s ease' }}
+          className="absolute w-[90vw] h-[90vw] rounded-full blur-[55px] -top-[15%] -right-[15%] aurora-blob-2"
+          style={{ background: `radial-gradient(circle, ${auroraColor}ee 0%, ${auroraColor}88 50%, transparent 90%)`, filter: 'hue-rotate(15deg)', transition: 'background 0.8s ease' }}
+        />
+        <div
+          className="absolute w-[65vw] h-[65vw] rounded-full blur-[40px] top-[10%] left-[20%] animate-pulse"
+          style={{ background: `radial-gradient(circle, ${auroraColor}aa 0%, transparent 70%)`, transition: 'background 0.8s ease' }}
         />
       </div>
 
@@ -371,18 +376,20 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
 
           {/* Top Header Row inside the card */}
           <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-20">
-            <img src={logoSrc} alt="Logo" className="h-11 w-11 object-contain brightness-110 shrink-0" />
-
-            <h2
-              className="text-[16px] sm:text-[18px] font-black tracking-[0.18em] text-white uppercase font-inter"
-              style={{ textShadow: '0 2px 5px rgba(0,0,0,0.5)' }}
-            >
-              {terreiroDisplayName}
-            </h2>
+            <div className="flex items-center gap-2.5">
+              <div className="h-10 w-10 rounded-full border border-white/40 bg-white/20 overflow-hidden flex items-center justify-center shrink-0 shadow-md backdrop-blur-xs">
+                <img src={terreiroLogo} alt="Logo" className="h-full w-full object-cover" />
+              </div>
+              <h2
+                className="text-[16px] sm:text-[18px] font-black tracking-[0.18em] text-white uppercase font-inter drop-shadow-md"
+              >
+                {terreiroDisplayName}
+              </h2>
+            </div>
 
             <button
               onClick={onToggleMenu}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20 backdrop-blur-md border border-white/25 text-white active:scale-95 transition-all shrink-0 z-30"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20 backdrop-blur-md border border-white/25 text-white active:scale-95 transition-all shrink-0 z-30 shadow-md"
             >
               <Menu className="h-5 w-5" strokeWidth={2} />
             </button>

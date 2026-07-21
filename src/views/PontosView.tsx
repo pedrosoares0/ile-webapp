@@ -35,7 +35,11 @@ function buildYoutubeThumbnail(videoId: string) {
 }
 
 export default function PontosView({ onBack, onToggleMenu }: { onBack: () => void; onToggleMenu: () => void }) {
-  const { pontos, savePonto, deletePonto, currentAccount, isTerreiroAdmin } = useAppData();
+  const { currentAccount, canAccessCadastros, pontos, savePonto, deletePonto, terreiros } = useAppData();
+  const currentTerreiro = terreiros.find(t => t.id === currentAccount?.terreiroId);
+  const themeColor = currentTerreiro?.corTema || '#BF2429';
+
+  const isTerreiroAdmin = canAccessCadastros;
 
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -185,14 +189,20 @@ export default function PontosView({ onBack, onToggleMenu }: { onBack: () => voi
       
       {/* Aurora Backdrop Effect at top */}
       <div 
-        className="absolute inset-x-0 top-0 h-[35dvh] pointer-events-none overflow-hidden z-0 select-none"
+        className="absolute inset-x-0 top-0 h-[40dvh] pointer-events-none overflow-hidden z-0 select-none opacity-90"
         style={{
-          maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 100%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 100%)'
+          maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 100%)'
         }}
       >
-        <div className="absolute w-[70vw] h-[70vw] rounded-full bg-gradient-to-br from-[#0d47a1]/70 to-[#1565c0]/35 blur-[60px] -top-[18%] -left-[10%] animate-[pulse_8s_ease-in-out_infinite]" />
-        <div className="absolute w-[80vw] h-[80vw] rounded-full bg-gradient-to-tr from-[#00b0ff]/60 to-[#00e5ff]/25 blur-[70px] -top-[20%] -right-[15%] animate-[pulse_10s_ease-in-out_infinite_2s]" />
+        <div 
+          className="absolute w-[80vw] h-[80vw] rounded-full blur-[55px] -top-[20%] -left-[10%] animate-[pulse_8s_ease-in-out_infinite]" 
+          style={{ background: `radial-gradient(circle, ${themeColor}dd 0%, ${themeColor}44 60%, transparent 100%)` }}
+        />
+        <div 
+          className="absolute w-[85vw] h-[85vw] rounded-full blur-[65px] -top-[22%] -right-[15%] animate-[pulse_10s_ease-in-out_infinite_2s]" 
+          style={{ background: `radial-gradient(circle, ${themeColor}bb 0%, ${themeColor}22 60%, transparent 100%)`, filter: 'hue-rotate(15deg)' }}
+        />
       </div>      {/* Header Row */}
       <div className="relative flex items-center justify-between h-14 w-full z-10 mb-8">
         <button 
@@ -203,7 +213,7 @@ export default function PontosView({ onBack, onToggleMenu }: { onBack: () => voi
         </button>
         
         <div className="w-full text-center px-14">
-          <h1 className="text-2xl font-black bg-gradient-to-r from-zinc-800 to-[#1565c0] bg-clip-text text-transparent leading-none font-behind-it">Curimba</h1>
+          <h1 className="text-2xl font-black leading-none font-behind-it" style={{ color: themeColor }}>Curimba</h1>
           <p className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-[0.25em] mt-2 leading-none">
             Pontos e Cantos Sagrados
           </p>
@@ -250,11 +260,12 @@ export default function PontosView({ onBack, onToggleMenu }: { onBack: () => voi
       >
         <button
           onClick={() => setSelectedCategory('TODOS')}
-          className={`px-5 py-2.5 rounded-full text-[12.5px] font-bold tracking-wide transition-all shrink-0 active:scale-95 ${
+          className="px-5 py-2.5 rounded-full text-[12.5px] font-bold tracking-wide transition-all shrink-0 active:scale-95 border border-zinc-150 shadow-xs"
+          style={
             selectedCategory === 'TODOS'
-              ? 'bg-[#1565c0] text-white border border-transparent shadow-[0_4px_16px_rgba(21,101,192,0.25)]'
-              : 'bg-white border border-zinc-150 text-zinc-600 shadow-[0_4px_12px_rgba(0,0,0,0.05),_0_1px_3px_rgba(0,0,0,0.02)] hover:bg-zinc-50/50'
-          }`}
+              ? { backgroundColor: themeColor, color: '#ffffff', borderColor: 'transparent' }
+              : { backgroundColor: '#ffffff', color: '#52525b' }
+          }
         >
           Todos
         </button>
@@ -262,11 +273,12 @@ export default function PontosView({ onBack, onToggleMenu }: { onBack: () => voi
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`px-5 py-2.5 rounded-full text-[12.5px] font-bold tracking-wide transition-all shrink-0 active:scale-95 ${
+            className="px-5 py-2.5 rounded-full text-[12.5px] font-bold tracking-wide transition-all shrink-0 active:scale-95 border border-zinc-150 shadow-xs"
+            style={
               selectedCategory === cat
-                ? 'bg-[#1565c0] text-white border border-transparent shadow-[0_4px_16px_rgba(21,101,192,0.25)]'
-                : 'bg-white border border-zinc-150 text-zinc-600 shadow-[0_4px_12px_rgba(0,0,0,0.05),_0_1px_3px_rgba(0,0,0,0.02)] hover:bg-zinc-50/50'
-            }`}
+                ? { backgroundColor: themeColor, color: '#ffffff', borderColor: 'transparent' }
+                : { backgroundColor: '#ffffff', color: '#52525b' }
+            }
           >
             {cat}
           </button>
@@ -276,7 +288,7 @@ export default function PontosView({ onBack, onToggleMenu }: { onBack: () => voi
       {/* Sub-Header Row following standard calendar event styling */}
       <div className="relative z-10 flex items-end justify-between mb-5 px-1 mt-4">
         <div>
-          <span className="text-[10px] font-black text-[#1565c0] uppercase tracking-[0.25em]">Acervo de Pontos</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: themeColor }}>Acervo de Pontos</span>
           <h3 className="text-xl font-extrabold text-zinc-800 tracking-tight mt-1.5">Cantos Gravados</h3>
         </div>
         {isTerreiroAdmin && (
@@ -287,7 +299,8 @@ export default function PontosView({ onBack, onToggleMenu }: { onBack: () => voi
               setFormError(null);
               setShowAddForm(true);
             }}
-            className="flex h-11 px-4 gap-1.5 items-center justify-center rounded-full bg-gradient-to-r from-[#1565c0] to-[#0d47a1] text-white shadow-[0_4px_16px_rgba(21,101,192,0.22)] border border-[#1565c0]/10 text-xs font-bold transition-all"
+            className="flex h-11 px-4 gap-1.5 items-center justify-center rounded-full text-white shadow-sm border border-white/10 text-xs font-bold transition-all"
+            style={{ backgroundColor: themeColor }}
           >
             <Plus className="h-4 w-4" strokeWidth={2.5} />
             <span>Novo</span>

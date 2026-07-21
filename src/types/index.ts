@@ -51,6 +51,7 @@ export interface Terreiro {
   ativo: boolean;
   accessAccountId: string;
   corTema: string;
+  logoUrl?: string;
   createdAt: string;
 }
 

@@ -239,3 +239,11 @@ body {
   }
 }
 
+/* Prevent auto-zoom on iOS Safari and mobile browsers */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+

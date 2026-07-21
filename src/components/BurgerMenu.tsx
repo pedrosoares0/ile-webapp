@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ViewType } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useAppData } from '../context/AppDataContext';
+import PerfilTerreiroModal from './PerfilTerreiroModal';
 import { 
   Home, 
   Calendar, 
@@ -11,7 +13,9 @@ import {
   Music,
   HeartHandshake,
   Bell,
-  Users
+  Users,
+  Sparkles,
+  Wallet
 } from 'lucide-react';
 
 interface BurgerMenuProps {
@@ -22,21 +26,23 @@ interface BurgerMenuProps {
 }
 
 interface MenuItem {
-  id: ViewType;
+  id: ViewType | 'perfil';
   label: string;
   icon: any;
   isExit?: boolean;
 }
 
 const MENU_ITEMS: MenuItem[] = [
-  { id: 'home', label: 'Início', icon: Home },
-  { id: 'divindades', label: 'Divindades', icon: BookOpen },
-  { id: 'eventos', label: 'Calendário de Eventos', icon: Calendar },
-  { id: 'pontos', label: 'Músicas & Pontos', icon: Music },
-  { id: 'oracao', label: 'Pedidos de Oração', icon: HeartHandshake },
-  { id: 'avisos', label: 'Avisos & Comunicados', icon: Bell },
+  { id: 'home', label: 'Home', icon: Home },
+  { id: 'perfil', label: 'Perfil', icon: Sparkles },
   { id: 'cadastros', label: 'Cadastros', icon: Users },
-  { id: 'sair', label: 'Desconectar conta', icon: LogOut, isExit: true },
+  { id: 'financeiro', label: 'Financeiro', icon: Wallet },
+  { id: 'divindades', label: 'Divindades', icon: BookOpen },
+  { id: 'eventos', label: 'Eventos', icon: Calendar },
+  { id: 'pontos', label: 'Pontos', icon: Music },
+  { id: 'oracao', label: 'Oração', icon: HeartHandshake },
+  { id: 'avisos', label: 'Mural', icon: Bell },
+  { id: 'sair', label: 'Sair', icon: LogOut, isExit: true },
 ];
 
 // Apple staggered entry variants for items
@@ -65,13 +71,14 @@ const itemVariants = {
 export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }: BurgerMenuProps) {
   const { logout } = useAuth();
   const { canAccessCadastros, currentAccount } = useAppData();
+  const [isPerfilModalOpen, setIsPerfilModalOpen] = useState(false);
 
   const isGlobalAdmin = currentAccount?.email === 'admin@ile.app';
   const isHubUser = currentAccount?.role === 'terreiro_user' && !currentAccount?.terreiroId;
-  const logoSrc = (isGlobalAdmin || isHubUser) ? '/img/login/icone.webp' : '/img/logo-T7CA.webp';
 
   const { terreiros } = useAppData();
-  const currentTerreiro = terreiros.find(t => t.id === currentAccount?.terreiroId);
+  const currentTerreiro = terreiros.find(t => t.id === currentAccount?.terreiroId) || null;
+  const logoSrc = currentTerreiro?.logoUrl || ((isGlobalAdmin || isHubUser) ? '/img/login/icone.webp' : '/img/logo-T7CA.webp');
   const terreiroSigla = currentTerreiro?.sigla || currentTerreiro?.nome?.split(' - ')[0] || 'Terreiro';
 
   const filteredMenuItems = MENU_ITEMS.filter(item => {
@@ -79,6 +86,7 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
       return item.id === 'home' || item.id === 'divindades' || item.id === 'sair';
     }
     if (item.id === 'cadastros' && !canAccessCadastros) return false;
+    if (item.id === 'perfil' && !currentTerreiro) return false;
     return true;
   });
 
@@ -117,7 +125,7 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
               {/* Top Section */}
               <div>
                 {/* Close Button Header Row */}
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex justify-between items-center mb-4">
                   <span className="text-[10px] font-black tracking-[0.2em] text-[#414141]/30 uppercase">Navegação</span>
                   <button 
                     onClick={onClose}
@@ -127,17 +135,18 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
                   </button>
                 </div>
 
-                {/* Brand Identity Card - Floating frosted glass card */}
-                <div className="flex flex-col items-center text-center px-4 py-5 mb-8 bg-white/40 border border-white/40 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.02)] backdrop-blur-xs">
+                {/* Profile Header — Clean, no background card */}
+                <div className="flex flex-col items-center text-center px-2 py-2 mb-6">
                   <div className="relative mb-3">
-                    <div className="absolute inset-0 rounded-full bg-[#1565c0]/5 blur-md" />
-                    <img src={logoSrc} alt="Logo" className="relative h-14 w-14 object-contain" />
+                    <div className="h-20 w-20 rounded-full border-2 border-white shadow-md overflow-hidden bg-white/80 flex items-center justify-center shrink-0">
+                      <img src={logoSrc} alt="Logo" className="h-full w-full object-cover" />
+                    </div>
                   </div>
-                  <h2 className="text-[16px] font-bold text-[#242424] tracking-[0.25em] leading-none uppercase">
-                    {(isGlobalAdmin || isHubUser) ? 'Ilê' : terreiroSigla}
+                  <h2 className="text-[17px] font-black text-[#242424] tracking-[0.18em] leading-none uppercase">
+                    {(isGlobalAdmin || isHubUser) ? 'ILÊ' : terreiroSigla}
                   </h2>
-                  <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#414141]/40 mt-2">
-                    {isGlobalAdmin ? 'Portal Administrativo' : isHubUser ? 'Hub de Terreiros' : 'Terreiro de Umbanda'}
+                  <p className="text-[11px] font-semibold text-[#414141]/55 mt-1.5 leading-snug max-w-[220px]">
+                    {isGlobalAdmin ? 'Portal Administrativo' : isHubUser ? 'Hub de Terreiros' : (currentTerreiro?.nome || 'Terreiro de Umbanda')}
                   </p>
                 </div>
 
@@ -163,24 +172,28 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
                           if (isExit) {
                             logout();
                             onClose();
+                          } else if (item.id === 'perfil') {
+                            setIsPerfilModalOpen(true);
                           } else {
-                            onNavigate(item.id);
+                            onNavigate(item.id as ViewType);
                             onClose();
                           }
                         }}
                         className={`group relative flex w-full items-center gap-4 rounded-2xl px-4 py-3.5 transition-all duration-200 ${
                           isActive 
-                            ? 'text-[#1565c0] bg-white border border-black/[0.03] shadow-[0_4px_12px_rgba(0,0,0,0.03)] font-bold' 
+                            ? 'bg-white border border-black/[0.03] shadow-[0_4px_12px_rgba(0,0,0,0.03)] font-bold' 
                             : isExit 
                               ? 'text-red-500 hover:bg-red-50/50 hover:text-red-600 border border-transparent' 
                               : 'text-[#414141]/75 hover:bg-white/40 hover:text-[#242424] border border-transparent'
                         }`}
+                        style={isActive ? { color: 'var(--theme-color, #BF2429)' } : undefined}
                       >
                         {/* Selected vertical bar indicator */}
                         {isActive && (
                           <motion.div 
                             layoutId="active-menu-bar"
-                            className="absolute left-1.5 top-3.5 bottom-3.5 w-1 rounded-full bg-[#1565c0]"
+                            className="absolute left-1.5 top-3.5 bottom-3.5 w-1 rounded-full"
+                            style={{ backgroundColor: 'var(--theme-color, #BF2429)' }}
                             transition={{ type: "spring", stiffness: 350, damping: 30 }}
                           />
                         )}
@@ -188,11 +201,12 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
                         <Icon 
                           className={`h-4.5 w-4.5 transition-transform duration-200 group-hover:scale-105 ${
                             isActive 
-                              ? 'text-[#1565c0]' 
+                              ? '' 
                               : isExit 
                                 ? 'text-red-400 group-hover:text-red-500' 
                                 : 'text-[#414141]/40 group-hover:text-[#242424]'
                           }`} 
+                          style={isActive ? { color: 'var(--theme-color, #BF2429)' } : undefined}
                           strokeWidth={isActive ? 2.5 : 2} 
                         />
                         
@@ -219,6 +233,13 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
           </motion.div>
         </>
       )}
+
+      {/* Terreiro Profile Modal for Color & Logo customization */}
+      <PerfilTerreiroModal
+        isOpen={isPerfilModalOpen}
+        onClose={() => setIsPerfilModalOpen(false)}
+        terreiro={currentTerreiro}
+      />
     </AnimatePresence>
   );
 }
