@@ -49,6 +49,7 @@ Backups gerados nesta implantação:
 - `ile_before_production_20260721_074146.sql`: antes de qualquer alteração;
 - `ile_after_migrations_20260721_075040.sql`: após foundation/Hub/RLS;
 - `ile_membership_storage_20260721_080343.sql`: inclui `public`, `auth` e `storage` após participação e uploads.
+- `ile_before_finance_20260722_204532.sql`: imediatamente antes da migration financeira.
 
 Para novos backups, use `pg_dump` da mesma versão principal do servidor. O servidor auditado usa PostgreSQL 17.
 
@@ -87,3 +88,7 @@ Restaurações de `auth` e `storage` devem ser testadas primeiro em um projeto i
 - separação formal de desenvolvimento, homologação e produção;
 - política de privacidade/LGPD;
 - resolver três vínculos históricos órfãos.
+
+## Produção na Hostinger
+
+A implantação oficial planejada usa Ubuntu 24.04 LTS, Docker Compose e Nginx/Caddy. A VPS executa frontend, worker, scheduler e monitoramento; PostgreSQL, Auth e Storage permanecem no Supabase. O procedimento completo está em [DEPLOY_HOSTINGER.md](DEPLOY_HOSTINGER.md).

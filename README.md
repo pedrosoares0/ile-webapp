@@ -34,18 +34,18 @@
 
 ### 💰 3. Nova Aba de Controle Financeiro & Dashboard (Estética Bevel)
 - **Dashboard & Indicadores**:
-  - Medidor circular tracejado de meta mensal (**89% atingido**).
+  - Medidor circular baseado na meta mensal cadastrada no banco.
   - Cards numéricos limpos por origem de receita (*Mensalidades*, *Doações*, *Velas & Artigos*).
   - Toolbar rápida com legendas explicativas abaixo de cada ícone (`Lançar`, `Exportar`, `Pix`, `Cobrar`, `Extrato`).
 - **Saldo Líquido em Caixa**:
   - Exibição de saldo acumulado com badge de status (`▲ Em Dia` ou `▼ Saldo Negativo`).
   - Barra visual comparativa entre Entradas (+R$) e Saídas (-R$).
 - **Situação dos Filhos (Adimplência & Inadimplência)**:
-  - Balanço dos filhos em dia (22) vs em atraso (3) com valor pendente total.
+  - Balanço calculado a partir das mensalidades e valores pendentes persistidos.
   - Botão direto para **Cobrar via WhatsApp** com mensagem pré-formatada.
 - **Cobrança Automática & Chave Pix**:
-  - Toggle de automação mensal (dia 05), disparo em lote e botão de copiar Chave Pix CNPJ em 1 clique.
-- **Relatórios Mensais**: Balanço por período e exportação simulada em PDF/Excel.
+  - Preferência mensal e chave Pix persistidas; o disparo efetivo dependerá do worker e provedor oficial.
+- **Relatórios Mensais**: Balanço por categoria e exportação real em CSV.
 
 ---
 
@@ -80,6 +80,11 @@ O **Ilê** centraliza e organiza a rotina da comunidade:
 - **Tailwind CSS**: Design system utilitário e responsivo.
 - **Framer Motion**: Micro-animações e transições fluidas.
 - **Supabase**: Backend serverless (Auth, RPCs, Storage e Database).
+- **Hostinger VPS**: frontend, HTTPS, workers, tarefas agendadas e monitoramento na produção planejada.
+
+## 📚 Documentação técnica
+
+Consulte o [índice da documentação](docs/README.md) para arquitetura, banco, segurança, fluxos, operação, implantação na Hostinger, escalabilidade e pendências de produção.
 
 ---
 

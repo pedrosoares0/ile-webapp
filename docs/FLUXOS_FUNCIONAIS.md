@@ -48,6 +48,29 @@ Se o usuário estiver com o Hub aberto durante a aprovação, deve atualizar a p
 
 O Hub consulta dados de `posts` e `stories`; não existem arrays mockados. Reações, favoritos e salvos também são persistidos.
 
+## Financeiro
+
+1. Somente administrador acessa a tela.
+2. Configurações, movimentações, membros financeiros e mensalidades são carregados do Supabase.
+3. Novo lançamento é inserido em `financial_transactions`.
+4. Indicadores e categorias são recalculados a partir dos registros carregados.
+5. Exportação gera CSV com as movimentações reais.
+6. Cobrança manual registra `collection_attempts`.
+7. Quando o membro possui telefone, o navegador abre o WhatsApp com a mensagem pronta.
+
+O status atual registra tentativa ou abertura, não entrega. Envio automático, confirmação de entrega e retentativa serão responsabilidade do worker planejado.
+
+## Comunicação entre usuários planejada
+
+1. O remetente cria a mensagem no PostgreSQL.
+2. RLS valida sua participação na conversa.
+3. Um canal Broadcast privado avisa os participantes conectados.
+4. Destinatários desconectados recuperam o conteúdo diretamente do banco ao retornar.
+5. Entrega e leitura são persistidas separadamente.
+6. Notificações externas entram em uma fila durável e são processadas pelo worker da Hostinger.
+
+Esse fluxo ainda não está implementado; ele é a especificação oficial para a próxima etapa.
+
 ## Publicação com upload
 
 Em `Cadastros > Publicações`:

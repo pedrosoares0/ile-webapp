@@ -120,7 +120,7 @@ export default function HubView({ onToggleMenu, isGuestMode = false, onExitGuest
     setPublicTerreiros((terreirosResult.data || []).map((t: any) => ({
       id:t.id,nome:t.nome,sigla:t.sigla||'',cidade:t.cidade||'',estado:t.estado||'',dirigente:t.dirigente||'',
       contato:t.contato||'',observacoes:t.observacoes||'',ativo:t.ativo,accessAccountId:t.access_account_id||'',
-      corTema:t.cor_tema||'#BF2429',createdAt:t.created_at,
+      corTema:t.cor_tema||'#BF2429',logoUrl:t.logo_url||undefined,createdAt:t.created_at,
     })));
     setPublicEvents((eventsResult.data || []).map((e: any) => ({
       id:e.id,date:parseLocalDate(`${e.date}T12:00:00`),title:e.title,time:e.time||'',location:e.location||'',
@@ -667,7 +667,7 @@ export default function HubView({ onToggleMenu, isGuestMode = false, onExitGuest
 
                           {/* Map Button */}
                           <button
-                            onClick={() => showToast('Mapa de terreiros em breve!')}
+                            onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(post.location || post.terreiroNome)}`, '_blank', 'noopener,noreferrer')}
                             className="flex items-center gap-1.5 text-xs font-semibold text-[#414141]/50 hover:text-[#8B0000] transition-all active:scale-90"
                           >
                             <Map className="h-5 w-5" />
@@ -741,7 +741,7 @@ export default function HubView({ onToggleMenu, isGuestMode = false, onExitGuest
                     {/* Photo Frame Section */}
                     <div className="relative w-full aspect-square rounded-[26px] overflow-hidden bg-black/5 shadow-sm">
                       <img
-                        src={CARD_BACKGROUNDS[idx % CARD_BACKGROUNDS.length]}
+                        src={terreiro.logoUrl || CARD_BACKGROUNDS[idx % CARD_BACKGROUNDS.length]}
                         alt=""
                         className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-[800ms] ease-out"
                       />
@@ -773,36 +773,6 @@ export default function HubView({ onToggleMenu, isGuestMode = false, onExitGuest
                         <Heart className={`h-5 w-5 ${isFav ? 'fill-white' : ''}`} />
                       </button>
 
-                      {/* Bottom-Left: Activity Pills */}
-                      <div className="absolute bottom-4 left-4 z-20 flex items-center gap-2 bg-white/15 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 text-white text-[10.5px] font-bold shadow-sm">
-                        <span className="flex items-center gap-1">
-                          <Heart className="h-3.5 w-3.5 fill-red-500 text-red-500" />
-                          <span>1.2k</span>
-                        </span>
-                        <span className="w-1 h-1 rounded-full bg-white/40" />
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5 text-white/90" />
-                          <span>Giras Ativas</span>
-                        </span>
-                      </div>
-
-                      {/* Bottom-Right: Active Community Floating Avatars */}
-                      <div className="absolute bottom-4 right-4 z-20 h-14 w-14 select-none pointer-events-none">
-                        <motion.div
-                          animate={{ y: [0, -3, 0] }}
-                          transition={{ repeat: Infinity, duration: 2.8, ease: "easeInOut" }}
-                          className="absolute top-0 left-0 h-[24px] w-[24px] rounded-full border border-white bg-slate-300 overflow-hidden shadow-md z-10"
-                        >
-                          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100" className="object-cover w-full h-full" alt="" />
-                        </motion.div>
-                        <motion.div
-                          animate={{ y: [0, -4, 0] }}
-                          transition={{ repeat: Infinity, duration: 3.4, ease: "easeInOut", delay: 0.2 }}
-                          className="absolute top-3 right-0 h-[24px] w-[24px] rounded-full border border-white bg-slate-400 overflow-hidden shadow-md z-10"
-                        >
-                          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100" className="object-cover w-full h-full" alt="" />
-                        </motion.div>
-                      </div>
                     </div>
 
                     {/* Card Body - Profile & Title */}

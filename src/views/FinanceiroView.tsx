@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, 
@@ -23,6 +23,7 @@ import {
   Zap
 } from 'lucide-react';
 import { useAppData } from '../context/AppDataContext';
+import { supabase } from '../lib/supabase';
 
 interface Transaction {
   id: string;
@@ -43,24 +44,9 @@ interface Inadimplente {
   mesesAtraso: number;
   valorTotal: number;
   ultimoPagamento: string;
+  telefone?: string;
+  email?: string;
 }
-
-// Mock initial financial data
-const INITIAL_TRANSACTIONS: Transaction[] = [
-  { id: '1', descricao: 'Mensalidade - Julho', categoria: 'Mensalidades', tipo: 'entrada', valor: 120.00, data: '2026-07-20', status: 'pago', responsavel: 'Ialorixá Maria' },
-  { id: '2', descricao: 'Mensalidade - Julho', categoria: 'Mensalidades', tipo: 'entrada', valor: 120.00, data: '2026-07-19', status: 'pago', responsavel: 'Ogum João' },
-  { id: '3', descricao: 'Doação de Velas e Ervas', categoria: 'Doações', tipo: 'entrada', valor: 250.00, data: '2026-07-18', status: 'pago', responsavel: 'Anônimo' },
-  { id: '4', descricao: 'Conta de Energia (Luz)', categoria: 'Manutenção', tipo: 'saida', valor: 345.80, data: '2026-07-15', status: 'pago' },
-  { id: '5', descricao: 'Compra de Alguidar e Velas', categoria: 'Materiais', tipo: 'saida', valor: 180.00, data: '2026-07-12', status: 'pago' },
-  { id: '6', descricao: 'Mensalidade - Julho', categoria: 'Mensalidades', tipo: 'entrada', valor: 120.00, data: '2026-07-05', status: 'pendente', responsavel: 'Carlos Eduardo' },
-  { id: '7', descricao: 'Mensalidade - Julho', categoria: 'Mensalidades', tipo: 'entrada', valor: 120.00, data: '2026-07-05', status: 'pendente', responsavel: 'Ana Paula' },
-];
-
-const MOCK_INADIMPLENTES: Inadimplente[] = [
-  { id: '101', nome: 'Carlos Eduardo', cargo: 'Filho de Santo', mesesAtraso: 2, valorTotal: 240.00, ultimoPagamento: '10/05/2026' },
-  { id: '102', nome: 'Ana Paula Souza', cargo: 'Ekedi', mesesAtraso: 1, valorTotal: 120.00, ultimoPagamento: '05/06/2026' },
-  { id: '103', nome: 'Rodrigo Alves', cargo: 'Ogan', mesesAtraso: 3, valorTotal: 360.00, ultimoPagamento: '12/04/2026' },
-];
 
 interface FinanceiroViewProps {
   onBack: () => void;
@@ -69,14 +55,21 @@ interface FinanceiroViewProps {
 
 export default function FinanceiroView({ onBack, onToggleMenu }: FinanceiroViewProps) {
   const { currentAccount, terreiros } = useAppData();
-  const currentTerreiro = terreiros.find(t => t.id === currentAccount?.terreiroId);
+  const currentTerreiro = terreiros.find(t => t.id === currentAccount?.terreiroId)
+    || (currentAccount?.role === 'global_admin' ? terreiros[0] : undefined);
   const themeColor = currentTerreiro?.corTema || '#BF2429';
 
   // Navigation tabs: 'dashboard' | 'entradas_saidas' | 'inadimplencia' | 'cobranca' | 'relatorios'
   const [activeTab, setActiveTab] = useState<'dashboard' | 'entradas_saidas' | 'inadimplencia' | 'cobranca' | 'relatorios'>('dashboard');
 
   // Transactions state
-  const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [inadimplentes, setInadimplentes] = useState<Inadimplente[]>([]);
+  const [metaMensal, setMetaMensal] = useState(0);
+  const [pixKey, setPixKey] = useState('');
+  const [pixKeyType, setPixKeyType] = useState('Pix');
+  const [chargeDay, setChargeDay] = useState(5);
+  const [loadingFinance, setLoadingFinance] = useState(true);
   const [filterType, setFilterType] = useState<'todos' | 'entrada' | 'saida'>('todos');
 
   // Modal New Transaction
@@ -90,7 +83,7 @@ export default function FinanceiroView({ onBack, onToggleMenu }: FinanceiroViewP
   const [showChargeModal, setShowChargeModal] = useState(false);
   const [selectedInadimplente, setSelectedInadimplente] = useState<Inadimplente | null>(null);
   const [chargeSuccessMessage, setChargeSuccessMessage] = useState<string | null>(null);
-  const [autoChargeEnabled, setAutoChargeEnabled] = useState(true);
+  const [autoChargeEnabled, setAutoChargeEnabled] = useState(false);
   const [copiedPix, setCopiedPix] = useState(false);
 
   // Month selector for reports
@@ -111,45 +104,96 @@ export default function FinanceiroView({ onBack, onToggleMenu }: FinanceiroViewP
 
   const saldoEmCaixa = totalEntradas - totalSaidas;
 
-  const totalEmAtraso = useMemo(() => {
-    return MOCK_INADIMPLENTES.reduce((sum, i) => sum + i.valorTotal, 0);
-  }, []);
+  const totalEmAtraso = useMemo(() => inadimplentes.reduce((sum, i) => sum + i.valorTotal, 0), [inadimplentes]);
+  const percentualMeta = metaMensal > 0 ? Math.min(Math.round((totalEntradas / metaMensal) * 100), 100) : 0;
 
-  const metaMensal = 2800;
-  const percentualMeta = Math.min(Math.round((totalEntradas / metaMensal) * 100), 100);
+  const receitasPorCategoria = useMemo(() => Object.entries(transactions
+    .filter(t => t.tipo === 'entrada' && t.status === 'pago')
+    .reduce<Record<string, number>>((acc, t) => ({ ...acc, [t.categoria]: (acc[t.categoria] || 0) + t.valor }), {}))
+    .sort((a, b) => b[1] - a[1]), [transactions]);
+
+  const loadFinance = useCallback(async () => {
+    if (!currentTerreiro?.id) return;
+    setLoadingFinance(true);
+    const [settingsResult, transactionsResult, membersResult] = await Promise.all([
+      supabase.from('financial_settings').select('*').eq('terreiro_id', currentTerreiro.id).maybeSingle(),
+      supabase.from('financial_transactions').select('*').eq('terreiro_id', currentTerreiro.id).order('occurred_on', { ascending: false }),
+      supabase.from('financial_members').select('*, financial_dues(*)').eq('terreiro_id', currentTerreiro.id).eq('active', true),
+    ]);
+    const error = settingsResult.error || transactionsResult.error || membersResult.error;
+    if (error) {
+      setChargeSuccessMessage(`Não foi possível carregar o financeiro: ${error.message}`);
+      setLoadingFinance(false);
+      return;
+    }
+    if (settingsResult.data) {
+      setMetaMensal(Number(settingsResult.data.monthly_goal));
+      setPixKey(settingsResult.data.pix_key || '');
+      setPixKeyType(settingsResult.data.pix_key_type || 'Pix');
+      setAutoChargeEnabled(settingsResult.data.auto_charge_enabled);
+      setChargeDay(settingsResult.data.charge_day);
+    }
+    setTransactions((transactionsResult.data || []).map(row => ({
+      id: row.id, descricao: row.description, categoria: row.category,
+      tipo: row.transaction_type === 'income' ? 'entrada' : 'saida', valor: Number(row.amount),
+      data: row.occurred_on, status: row.status === 'pending' ? 'pendente' : 'pago', responsavel: row.responsible || undefined,
+    })));
+    setInadimplentes((membersResult.data || []).map(member => {
+      const pending = (member.financial_dues || []).filter((due: any) => due.status === 'pending');
+      return {
+        id: member.id, nome: member.name, cargo: member.role_label || 'Membro',
+        mesesAtraso: pending.length, valorTotal: pending.reduce((sum: number, due: any) => sum + Number(due.amount), 0),
+        ultimoPagamento: member.last_payment_on ? new Date(`${member.last_payment_on}T12:00:00`).toLocaleDateString('pt-BR') : 'Não informado',
+        telefone: member.phone || undefined, email: member.email || undefined,
+      };
+    }).filter(member => member.mesesAtraso > 0));
+    setLoadingFinance(false);
+  }, [currentTerreiro?.id]);
+
+  useEffect(() => { void loadFinance(); }, [loadFinance]);
 
   const filteredTransactions = useMemo(() => {
     if (filterType === 'todos') return transactions;
     return transactions.filter(t => t.tipo === filterType);
   }, [transactions, filterType]);
 
-  const handleAddTransaction = (e: React.FormEvent) => {
+  const handleAddTransaction = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newDesc || !newValor) return;
 
     const val = parseFloat(newValor.replace(',', '.'));
     if (isNaN(val)) return;
 
-    const newTx: Transaction = {
-      id: Date.now().toString(),
-      descricao: newDesc,
-      categoria: newCategoria,
-      tipo: newTipo,
-      valor: val,
-      data: new Date().toISOString().split('T')[0],
-      status: 'pago',
-      responsavel: currentAccount?.nome || 'Administração'
-    };
-
-    setTransactions([newTx, ...transactions]);
+    if (!currentTerreiro?.id) return;
+    const { error } = await supabase.from('financial_transactions').insert({
+      terreiro_id: currentTerreiro.id, description: newDesc, category: newCategoria,
+      transaction_type: newTipo === 'entrada' ? 'income' : 'expense', amount: val,
+      occurred_on: new Date().toISOString().split('T')[0], status: 'paid',
+      responsible: currentAccount?.nome || 'Administração', created_by: currentAccount?.id,
+    });
+    if (error) { setChargeSuccessMessage(`Erro ao salvar: ${error.message}`); return; }
     setShowAddModal(false);
     setNewDesc('');
     setNewValor('');
+    await loadFinance();
   };
 
-  const handleSendChargeNotification = (inadimplente?: Inadimplente) => {
-    const name = inadimplente ? inadimplente.nome : 'todos os 3 filhos inadimplentes';
-    setChargeSuccessMessage(`Notificação de cobrança enviada com sucesso para ${name} via WhatsApp e E-mail!`);
+  const handleSendChargeNotification = async (inadimplente?: Inadimplente) => {
+    if (!currentTerreiro?.id) return;
+    const targets = inadimplente ? [inadimplente] : inadimplentes;
+    const attempts = targets.map(item => ({
+      terreiro_id: currentTerreiro.id, financial_member_id: item.id, channel: 'whatsapp',
+      status: item.telefone ? 'opened' : 'registered', attempted_by: currentAccount?.id,
+      message: `Olá, ${item.nome}. Consta uma pendência de R$ ${item.valorTotal.toFixed(2)}. Chave Pix: ${pixKey || 'não cadastrada'}.`,
+    }));
+    const { error } = await supabase.from('collection_attempts').insert(attempts);
+    if (error) { setChargeSuccessMessage(`Erro ao registrar cobrança: ${error.message}`); return; }
+    if (inadimplente?.telefone) {
+      const phone = inadimplente.telefone.replace(/\D/g, '');
+      window.open(`https://wa.me/${phone.startsWith('55') ? phone : `55${phone}`}?text=${encodeURIComponent(attempts[0].message)}`, '_blank', 'noopener,noreferrer');
+    }
+    const opened = targets.filter(item => item.telefone).length;
+    setChargeSuccessMessage(`${targets.length} tentativa(s) registrada(s). ${opened ? 'WhatsApp aberto para o contato selecionado.' : 'Cadastre telefone(s) para abrir o WhatsApp.'}`);
     setShowChargeModal(false);
     setTimeout(() => {
       setChargeSuccessMessage(null);
@@ -157,9 +201,25 @@ export default function FinanceiroView({ onBack, onToggleMenu }: FinanceiroViewP
   };
 
   const copyPixKey = () => {
-    navigator.clipboard.writeText('00.123.456/0001-99');
+    if (!pixKey) return;
+    navigator.clipboard.writeText(pixKey);
     setCopiedPix(true);
     setTimeout(() => setCopiedPix(false), 2000);
+  };
+
+  const toggleAutoCharge = async () => {
+    if (!currentTerreiro?.id) return;
+    const next = !autoChargeEnabled;
+    const { error } = await supabase.from('financial_settings').update({ auto_charge_enabled: next, updated_at: new Date().toISOString() }).eq('terreiro_id', currentTerreiro.id);
+    if (error) { setChargeSuccessMessage(`Erro ao atualizar: ${error.message}`); return; }
+    setAutoChargeEnabled(next);
+  };
+
+  const exportCsv = () => {
+    const rows = [['Data','Descrição','Categoria','Tipo','Status','Valor','Responsável'], ...transactions.map(t => [t.data,t.descricao,t.categoria,t.tipo,t.status,t.valor.toFixed(2),t.responsavel || ''])];
+    const csv = rows.map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(';')).join('\n');
+    const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a'); link.href = url; link.download = `financeiro-${currentTerreiro?.id || 'terreiro'}.csv`; link.click(); URL.revokeObjectURL(url);
   };
 
   return (
@@ -214,12 +274,14 @@ export default function FinanceiroView({ onBack, onToggleMenu }: FinanceiroViewP
         )}
       </AnimatePresence>
 
+      {loadingFinance && <p className="relative z-10 mb-4 text-center text-xs font-bold text-zinc-500">Carregando dados financeiros...</p>}
+
       {/* Navigation Segmented Pill Bar */}
       <div className="relative z-10 flex gap-1.5 overflow-x-auto touch-pan-x cursor-grab active:cursor-grabbing select-none no-scrollbar p-1.5 mb-5 rounded-full bg-white/80 border border-black/[0.04] shadow-[0_2px_12px_rgba(0,0,0,0.03)] backdrop-blur-xl snap-x">
         {[
           { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
           { id: 'entradas_saidas', label: 'Extrato', icon: DollarSign },
-          { id: 'inadimplencia', label: 'Inadimplência', badge: MOCK_INADIMPLENTES.length, icon: Users },
+          { id: 'inadimplencia', label: 'Inadimplência', badge: inadimplentes.length, icon: Users },
           { id: 'cobranca', label: 'Cobrança', icon: BellRing },
           { id: 'relatorios', label: 'Relatórios', icon: FileText },
         ].map((tab) => {
@@ -291,21 +353,14 @@ export default function FinanceiroView({ onBack, onToggleMenu }: FinanceiroViewP
 
             {/* Simplified & Clean 3 Category Revenue Breakdown Pills */}
             <div className="grid grid-cols-3 gap-2 pt-1">
-              <div className="p-3 rounded-2xl bg-zinc-50 border border-zinc-100 space-y-1">
-                <span className="text-[10px] font-bold text-zinc-400 block">Mensalidades</span>
-                <p className="text-sm font-black text-indigo-600 font-mono">R$ 1.800</p>
-                <span className="text-[9px] font-bold text-zinc-400">72% do total</span>
-              </div>
-              <div className="p-3 rounded-2xl bg-zinc-50 border border-zinc-100 space-y-1">
-                <span className="text-[10px] font-bold text-zinc-400 block">Doações</span>
-                <p className="text-sm font-black text-amber-600 font-mono">R$ 450</p>
-                <span className="text-[9px] font-bold text-zinc-400">18% do total</span>
-              </div>
-              <div className="p-3 rounded-2xl bg-zinc-50 border border-zinc-100 space-y-1">
-                <span className="text-[10px] font-bold text-zinc-400 block">Velas & Artigos</span>
-                <p className="text-sm font-black text-rose-600 font-mono">R$ 240</p>
-                <span className="text-[9px] font-bold text-zinc-400">10% do total</span>
-              </div>
+              {receitasPorCategoria.slice(0, 3).map(([categoria, valor]) => (
+                <div key={categoria} className="p-3 rounded-2xl bg-zinc-50 border border-zinc-100 space-y-1">
+                  <span className="text-[10px] font-bold text-zinc-400 block truncate">{categoria}</span>
+                  <p className="text-sm font-black text-indigo-600 font-mono">R$ {valor.toLocaleString('pt-BR')}</p>
+                  <span className="text-[9px] font-bold text-zinc-400">{totalEntradas ? Math.round(valor / totalEntradas * 100) : 0}% do total</span>
+                </div>
+              ))}
+              {!receitasPorCategoria.length && <p className="col-span-3 p-3 text-center text-xs text-zinc-400">Nenhuma receita registrada.</p>}
             </div>
 
             {/* Toolbar with Clear Text Labels below icons */}
@@ -314,7 +369,7 @@ export default function FinanceiroView({ onBack, onToggleMenu }: FinanceiroViewP
                 <Plus className="h-4.5 w-4.5 mb-1 text-zinc-600 group-hover:scale-110 transition-transform" />
                 <span className="text-[9.5px] font-bold">Lançar</span>
               </button>
-              <button onClick={() => alert('Relatório gerado!')} className="flex flex-col items-center justify-center p-2 rounded-xl hover:bg-zinc-100 hover:text-zinc-900 transition-colors group">
+              <button onClick={exportCsv} className="flex flex-col items-center justify-center p-2 rounded-xl hover:bg-zinc-100 hover:text-zinc-900 transition-colors group">
                 <Download className="h-4.5 w-4.5 mb-1 text-zinc-600 group-hover:scale-110 transition-transform" />
                 <span className="text-[9.5px] font-bold">Exportar</span>
               </button>
@@ -383,19 +438,19 @@ export default function FinanceiroView({ onBack, onToggleMenu }: FinanceiroViewP
                     <h3 className="text-sm font-extrabold text-zinc-900">Situação dos Filhos</h3>
                   </div>
                   <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                    88% Adimplentes
+                    {inadimplentes.length ? `${inadimplentes.length} pendência(s)` : 'Em dia'}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2.5 pt-3">
                   <div className="p-3 rounded-2xl bg-emerald-50/80 border border-emerald-100">
                     <span className="text-[10px] font-bold text-emerald-700 block uppercase">Pagamentos em Dia</span>
-                    <p className="text-base font-black text-emerald-950 font-mono mt-0.5">22 Filhos</p>
+                    <p className="text-base font-black text-emerald-950 font-mono mt-0.5">Dados por mensalidade</p>
                   </div>
 
                   <div className="p-3 rounded-2xl bg-rose-50/80 border border-rose-100">
                     <span className="text-[10px] font-bold text-rose-700 block uppercase">Em Atraso</span>
-                    <p className="text-base font-black text-rose-950 font-mono mt-0.5">3 Filhos</p>
+                    <p className="text-base font-black text-rose-950 font-mono mt-0.5">{inadimplentes.length} Filhos</p>
                   </div>
                 </div>
               </div>
@@ -441,14 +496,14 @@ export default function FinanceiroView({ onBack, onToggleMenu }: FinanceiroViewP
                   </div>
                   <div className="flex justify-between text-[11px] font-bold text-zinc-400 pt-1">
                     <span>Meta: R$ {metaMensal.toFixed(2)}</span>
-                    <span>Faltam: R$ {(metaMensal - totalEntradas).toFixed(2)}</span>
+                    <span>Faltam: R$ {Math.max(metaMensal - totalEntradas, 0).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
 
               <div className="p-3 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-between text-xs font-bold text-zinc-600 mt-2">
-                <span>Crescimento vs Junho:</span>
-                <span className="text-emerald-600 font-mono font-black">+18%</span>
+                <span>Movimentações registradas:</span>
+                <span className="text-emerald-600 font-mono font-black">{transactions.length}</span>
               </div>
             </div>
 
@@ -535,7 +590,7 @@ export default function FinanceiroView({ onBack, onToggleMenu }: FinanceiroViewP
           </div>
 
           <div className="space-y-2.5">
-            {MOCK_INADIMPLENTES.map((item) => (
+            {inadimplentes.map((item) => (
               <div key={item.id} className="p-4 rounded-[28px] bg-white border border-black/[0.04] shadow-[0_4px_24px_rgba(0,0,0,0.03)] space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -589,13 +644,13 @@ export default function FinanceiroView({ onBack, onToggleMenu }: FinanceiroViewP
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-zinc-900">Lembrete de Cobrança Automático</h3>
-                  <p className="text-[11px] font-medium text-zinc-400">Disparo mensal no dia 05 via WhatsApp</p>
+                  <p className="text-[11px] font-medium text-zinc-400">Programado para o dia {String(chargeDay).padStart(2, '0')}</p>
                 </div>
               </div>
 
               {/* Toggle Switch */}
               <button
-                onClick={() => setAutoChargeEnabled(!autoChargeEnabled)}
+                onClick={toggleAutoCharge}
                 className={`w-12 h-7 rounded-full p-1 transition-colors duration-300 ${autoChargeEnabled ? 'bg-emerald-500' : 'bg-zinc-300'}`}
               >
                 <div className={`w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-300 ${autoChargeEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
@@ -603,7 +658,7 @@ export default function FinanceiroView({ onBack, onToggleMenu }: FinanceiroViewP
             </div>
 
             <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100 text-xs font-medium text-zinc-600 leading-relaxed">
-              Quando ativado, o sistema gera o QR Code Pix do terreiro e notifica automaticamente os filhos de santo no início de cada mês.
+              Esta opção salva a preferência no banco. O envio automático depende da configuração de um worker agendado e de um provedor oficial de mensagens.
             </div>
 
             <button
@@ -623,11 +678,11 @@ export default function FinanceiroView({ onBack, onToggleMenu }: FinanceiroViewP
                 <QrCode className="h-4 w-4 text-zinc-400" />
                 Chave Pix do Terreiro para Recebimento
               </span>
-              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Ativo</span>
+              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{pixKey ? 'Ativo' : 'Não cadastrado'}</span>
             </div>
 
             <div className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-50 border border-zinc-150 font-mono text-xs font-bold text-zinc-800">
-              <span>CNPJ: 00.123.456/0001-99</span>
+              <span>{pixKeyType.toUpperCase()}: {pixKey || 'Não cadastrada'}</span>
               <button onClick={copyPixKey} className="text-zinc-500 hover:text-zinc-800 transition-colors">
                 {copiedPix ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
               </button>
@@ -661,43 +716,27 @@ export default function FinanceiroView({ onBack, onToggleMenu }: FinanceiroViewP
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Origem das Receitas ({selectedReportMonth})</h3>
             
             <div className="space-y-3">
-              <div>
-                <div className="flex justify-between text-xs font-bold mb-1">
-                  <span className="text-zinc-700">Mensalidades dos Filhos</span>
-                  <span className="text-zinc-900 font-mono">75% (R$ 1.500,00)</span>
-                </div>
-                <div className="h-2.5 w-full bg-zinc-100 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full" style={{ width: '75%', backgroundColor: themeColor }} />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs font-bold mb-1">
-                  <span className="text-zinc-700">Doações nas Giras</span>
-                  <span className="text-zinc-900 font-mono">18% (R$ 360,00)</span>
-                </div>
-                <div className="h-2.5 w-full bg-zinc-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: '18%' }} />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs font-bold mb-1">
-                  <span className="text-zinc-700">Eventos e Cantina</span>
-                  <span className="text-zinc-900 font-mono">7% (R$ 140,00)</span>
-                </div>
-                <div className="h-2.5 w-full bg-zinc-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-amber-500 rounded-full" style={{ width: '7%' }} />
-                </div>
-              </div>
+              {receitasPorCategoria.map(([categoria, valor]) => {
+                const percentual = totalEntradas ? Math.round(valor / totalEntradas * 100) : 0;
+                return <div key={categoria}>
+                  <div className="flex justify-between text-xs font-bold mb-1">
+                    <span className="text-zinc-700">{categoria}</span>
+                    <span className="text-zinc-900 font-mono">{percentual}% (R$ {valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</span>
+                  </div>
+                  <div className="h-2.5 w-full bg-zinc-100 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${percentual}%`, backgroundColor: themeColor }} />
+                  </div>
+                </div>;
+              })}
+              {!receitasPorCategoria.length && <p className="text-xs text-zinc-400">Nenhuma receita no período.</p>}
             </div>
 
             <button
-              onClick={() => alert('Relatório Financeiro em PDF gerado com sucesso!')}
+              onClick={exportCsv}
               className="w-full mt-3 py-3 rounded-2xl border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-800 text-xs font-bold flex items-center justify-center gap-2 transition-all"
             >
               <Download className="h-4 w-4" />
-              <span>Exportar Balanço em PDF / Excel</span>
+              <span>Exportar Balanço em CSV</span>
             </button>
           </div>
         </div>

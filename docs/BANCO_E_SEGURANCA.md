@@ -20,6 +20,20 @@
 - `saved_posts`: posts salvos por conta.
 - `membership_requests`: solicitações de participação e revisão administrativa.
 
+## Financeiro
+
+- `financial_settings`: meta, Pix, dia e preferência de cobrança;
+- `financial_transactions`: entradas e saídas;
+- `financial_members`: responsáveis financeiros e contatos;
+- `financial_dues`: mensalidades, vencimento e pagamento;
+- `collection_attempts`: auditoria das tentativas de cobrança.
+
+As tabelas financeiras são acessíveis somente por administrador do terreiro correspondente ou admin global. Ativar a preferência de cobrança não significa que uma mensagem foi enviada: o envio depende do worker e de um provedor configurado.
+
+## Comunicação planejada
+
+As futuras tabelas `conversations`, `conversation_participants`, `messages`, `message_receipts`, `message_attachments`, `user_blocks`, `message_reports`, `notifications` e `device_tokens` ainda não foram criadas. Quando implementadas, deverão possuir RLS por participante e testes contra leitura cruzada entre conversas e terreiros.
+
 ## Status de participação
 
 - `pending`: aguardando aprovação;
@@ -84,6 +98,7 @@ As imagens novas são enviadas pela interface. O post e story iniciais migrados 
 5. `202607210005_admin_users.sql`: operações administrativas reais no Auth.
 6. `202607210006_crypto_path.sql`: acesso controlado a `pgcrypto` no schema `extensions`.
 7. `202607210007_membership_and_storage.sql`: participação, aprovação e Storage.
+8. `202607220008_financial.sql`: financeiro, RLS e migração dos dados demonstrativos.
 
 As migrations são imutáveis após aplicadas; o runner recusa checksum divergente.
 

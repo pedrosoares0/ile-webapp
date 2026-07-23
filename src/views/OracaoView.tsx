@@ -133,9 +133,6 @@ export default function OracaoView({ onBack }: { onBack: () => void }) {
       createdAt: new Date().toISOString()
     };
 
-    // Wait 1.3 seconds for the color recharge animation
-    await new Promise((resolve) => setTimeout(resolve, 1300));
-
     try {
       await savePrayer(newRequest);
       

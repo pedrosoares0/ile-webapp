@@ -9,7 +9,9 @@ O backend atual utiliza Supabase Auth, PostgreSQL, Row Level Security e Storage.
 - [Banco e segurança](docs/BANCO_E_SEGURANCA.md)
 - [Fluxos funcionais](docs/FLUXOS_FUNCIONAIS.md)
 - [Operação, migrations e backups](docs/OPERACAO.md)
+- [Deploy na Hostinger](docs/DEPLOY_HOSTINGER.md)
 - [Plano de produção](docs/PLANO_PRODUCAO.md)
+- [Escalabilidade e infraestrutura](docs/ESCALABILIDADE.md)
 
 ## Aplicar migrations
 
@@ -40,3 +42,5 @@ O runner aplica `supabase/migrations/*.sql` em transações e registra o checksu
 ## Situação
 
 O build passa e os fluxos principais foram testados com contas/arquivos descartáveis. O sistema ainda não deve ser considerado pronto para abertura pública; consulte as pendências em `docs/PLANO_PRODUCAO.md`.
+
+O módulo financeiro usa tabelas reais para configurações, lançamentos, membros financeiros, mensalidades e tentativas de cobrança. Os dados que antes estavam no componente foram preservados como seed idempotente na migration `202607220008_financial.sql`.

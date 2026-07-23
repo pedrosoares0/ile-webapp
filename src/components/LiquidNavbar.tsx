@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Calendar, Music, Home, Bell, PiggyBank } from 'lucide-react';
 import { ViewType } from '../types';
+import { useAppData } from '../context/AppDataContext';
 
 interface LiquidNavbarProps {
   currentView: ViewType;
@@ -8,13 +9,14 @@ interface LiquidNavbarProps {
 }
 
 export default function LiquidNavbar({ currentView, onNavigate }: LiquidNavbarProps) {
+  const { canAccessCadastros } = useAppData();
   const navItems = [
     { id: 'eventos' as ViewType, icon: Calendar, label: 'Eventos' },
     { id: 'pontos' as ViewType, icon: Music, label: 'Pontos' },
     { id: 'home' as ViewType, icon: Home, label: 'Home' },
     { id: 'avisos' as ViewType, icon: Bell, label: 'Avisos' },
     { id: 'financeiro' as ViewType, icon: PiggyBank, label: 'Financeiro' },
-  ];
+  ].filter(item => item.id !== 'financeiro' || canAccessCadastros);
 
   return (
     <div className="fixed safe-bottom-nav inset-x-0 z-50 flex justify-center px-4 max-w-[430px] mx-auto pointer-events-none">

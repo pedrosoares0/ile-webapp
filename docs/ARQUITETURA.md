@@ -9,9 +9,19 @@ React + Vite + TypeScript
         +-- PostgreSQL: dados e regras transacionais
         +-- Row Level Security: autorização por perfil e terreiro
         +-- Supabase Storage: imagens de posts, stories e terreiros
+        +-- Supabase Realtime: comunicação em tempo real planejada
+        +-- Supabase Queues/pgmq: trabalhos assíncronos planejados
+        |
+        +-- Hostinger VPS
+              +-- Nginx/Caddy e frontend estático
+              +-- worker Node.js/TypeScript
+              +-- scheduler
+              +-- monitoramento local
 ```
 
 O navegador usa somente `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. A `DATABASE_URL` é usada exclusivamente por scripts locais de migration e backup.
+
+Hostinger e Supabase são os únicos fornecedores obrigatórios planejados. Banco, Auth e arquivos permanecem no Supabase; a VPS não mantém uma segunda instância do PostgreSQL. Worker, scheduler e chat ainda são componentes planejados e serão implementados em migrations e código próprios.
 
 ## Estado global
 
@@ -60,6 +70,16 @@ O navegador usa somente `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. A `DATAB
 - o Hub possui botão de menu para navegação e logout;
 - a navbar inferior não é exibida no Hub;
 - administradores veem `Cadastros` no menu.
+- somente administradores veem e acessam `Financeiro`.
+
+## Comunicação planejada
+
+- mensagens são gravadas no PostgreSQL antes de qualquer evento em tempo real;
+- Broadcast privado avisa clientes conectados;
+- Presence informa somente estados leves, como online e digitando;
+- Supabase Queues registra tarefas duráveis;
+- o worker da Hostinger processa notificações, cobranças, mídia e relatórios;
+- reconexão sempre recupera o histórico no banco, nunca apenas no WebSocket.
 
 ## Arquivos centrais
 

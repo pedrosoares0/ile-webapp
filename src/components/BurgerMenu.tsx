@@ -85,8 +85,8 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
     if (isHubUser) {
       return item.id === 'home' || item.id === 'divindades' || item.id === 'sair';
     }
-    if (item.id === 'cadastros' && !canAccessCadastros) return false;
-    if (item.id === 'perfil' && !currentTerreiro) return false;
+    if ((item.id === 'cadastros' || item.id === 'financeiro') && !canAccessCadastros) return false;
+    if (item.id === 'perfil' && (!currentTerreiro || !canAccessCadastros)) return false;
     return true;
   });
 

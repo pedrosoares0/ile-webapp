@@ -22,7 +22,7 @@ export default function App() {
   const [hideNavbar, setHideNavbar] = useState(false)
   const [isGuestHub, setIsGuestHub] = useState(false)
   const { isAuthenticated, logout } = useAuth()
-  const { currentAccount, isLoading, terreiros } = useAppData();
+  const { currentAccount, isLoading, terreiros, canAccessCadastros } = useAppData();
   const currentTerreiro = terreiros.find(t => t.id === currentAccount?.terreiroId);
   const themeColor = currentTerreiro?.corTema || '#BF2429';
 
@@ -65,6 +65,10 @@ export default function App() {
   }, [isAuthenticated, isGuestHub])
 
   const handleNavigate = (view: ViewType) => {
+    if ((view === 'financeiro' || view === 'cadastros') && !canAccessCadastros) {
+      setCurrentView('home');
+      return;
+    }
     setCurrentView(view)
   }
 
@@ -98,7 +102,7 @@ export default function App() {
                 onExitGuest={() => setIsGuestHub(false)}
               />
             ) : (
-              <HomeView key="home" onNavigate={setCurrentView} onToggleMenu={() => setIsMenuOpen(true)} />
+              <HomeView key="home" onNavigate={handleNavigate} onToggleMenu={() => setIsMenuOpen(true)} />
             )
           ) : currentView === 'eventos' ? (
             <EventsView key="eventos" onToggleMenu={() => setIsMenuOpen(true)} onBack={() => setCurrentView('home')} />
@@ -121,7 +125,7 @@ export default function App() {
               onToggleMenu={() => setIsMenuOpen(true)} 
               onToggleNavbar={setHideNavbar}
             />
-          ) : currentView === 'financeiro' ? (
+          ) : currentView === 'financeiro' && canAccessCadastros ? (
             <FinanceiroView 
               key="financeiro" 
               onBack={() => setCurrentView('home')} 
