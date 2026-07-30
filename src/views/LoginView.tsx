@@ -283,9 +283,16 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
     }
   }, []);
 
+  const [logoHasError, setLogoHasError] = useState(false);
+
   const activeThemeColor = detectedTerreiro?.corTema || '#BF2429';
   const activeSigla = detectedTerreiro?.sigla || (detectedTerreiro?.nome ? detectedTerreiro.nome.split(' - ')[0] : 'Terreiro');
-  const activeLogoUrl = detectedTerreiro?.logoUrl;
+  const fallbackLogoUrl = activeSigla && activeSigla !== 'Terreiro' ? `/img/logo-${activeSigla}.webp` : undefined;
+  const activeLogoUrl = !logoHasError ? (detectedTerreiro?.logoUrl || fallbackLogoUrl) : undefined;
+
+  useEffect(() => {
+    setLogoHasError(false);
+  }, [detectedTerreiro?.id]);
 
   const isUsernameError = Boolean(
     error &&
@@ -401,7 +408,7 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
       } finally {
         setIsDetecting(false);
       }
-    }, 150); // 150ms debounce
+    }, 600); // 600ms debounce — waits for user to stop typing
 
     return () => clearTimeout(timer);
   }, [email, isRegister]);
@@ -885,32 +892,32 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
 
       {/* Double Bezel Outer Shell */}
       <div 
-        className="relative mx-4 mb-2 p-1.5 rounded-[44px] bg-white/10 border backdrop-blur-2xl transition-all duration-[300ms] z-10 overflow-hidden"
+        className="relative mx-4 mb-2 p-1.5 rounded-[44px] bg-white/10 border backdrop-blur-2xl transition-all duration-500 ease-out z-10 overflow-hidden"
         style={{
-          borderColor: detectedTerreiro ? `${activeThemeColor}55` : 'rgba(255, 255, 255, 0.18)',
-          boxShadow: detectedTerreiro ? `0 24px 60px ${activeThemeColor}40` : '0 24px 60px rgba(0,0,0,0.25)'
+          borderColor: detectedTerreiro ? `${activeThemeColor}30` : 'rgba(255, 255, 255, 0.18)',
+          boxShadow: detectedTerreiro ? `0 24px 60px ${activeThemeColor}20` : '0 24px 60px rgba(0,0,0,0.25)'
         }}
       >
 
         {/* Double Bezel Inner Core Card */}
         <motion.div
           layout
-          className={`relative rounded-[38px] px-6 pt-6 pb-5 overflow-hidden transition-all duration-[300ms] ${isRegister
+          className={`relative rounded-[38px] px-6 pt-6 pb-5 overflow-hidden transition-all duration-500 ease-out ${isRegister
             ? 'flex flex-col gap-4 border border-white/60 shadow-[inset_0_1px_2px_rgba(255,255,255,0.6)]'
             : 'border shadow-[inset_0_1px_2px_rgba(255,255,255,0.45)]'
             }`}
           style={{
-            borderColor: detectedTerreiro ? `${activeThemeColor}33` : 'rgba(255,255,255,0.4)'
+            borderColor: detectedTerreiro ? `${activeThemeColor}22` : 'rgba(255,255,255,0.4)'
           }}
         >
           {/* Dynamic Background Gradient */}
           <div
-            className="absolute inset-0 z-0 pointer-events-none transition-all duration-[300ms]"
+            className="absolute inset-0 z-0 pointer-events-none transition-all duration-700 ease-out"
             style={{
               background: isRegister
                 ? 'linear-gradient(180deg, rgba(252, 248, 242, 0.88) 0%, rgba(255, 255, 255, 0.78) 100%)'
                 : detectedTerreiro
-                  ? `linear-gradient(180deg, ${activeThemeColor}30 0%, ${activeThemeColor}10 40%, #FAF4E9 100%)`
+                  ? `linear-gradient(180deg, ${activeThemeColor}18 0%, ${activeThemeColor}08 35%, #FAF4E9 100%)`
                   : 'linear-gradient(180deg, #FAF4E9 0%, #eadecc 100%)'
             }}
           />
@@ -922,18 +929,18 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
             {detectedTerreiro && !isRegister && (
               <motion.div
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 0.8 }}
+                animate={{ opacity: 0.45 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.4 }}
+                transition={{ duration: 0.8, ease: 'easeOut' }}
                 className="absolute inset-0 pointer-events-none z-0 select-none overflow-hidden"
               >
                 <div 
-                  className="absolute -top-12 -left-10 w-48 h-48 rounded-full blur-[40px] animate-[pulse_6s_ease-in-out_infinite]"
-                  style={{ background: `radial-gradient(circle, ${activeThemeColor}aa 0%, ${activeThemeColor}20 70%, transparent 100%)` }}
+                  className="absolute -top-16 -left-12 w-44 h-44 rounded-full blur-[55px] animate-[pulse_8s_ease-in-out_infinite]"
+                  style={{ background: `radial-gradient(circle, ${activeThemeColor}55 0%, ${activeThemeColor}10 70%, transparent 100%)` }}
                 />
                 <div 
-                  className="absolute -bottom-14 -right-10 w-52 h-52 rounded-full blur-[45px] animate-[pulse_8s_ease-in-out_infinite_1.2s]"
-                  style={{ background: `radial-gradient(circle, ${activeThemeColor}88 0%, ${activeThemeColor}15 70%, transparent 100%)` }}
+                  className="absolute -bottom-16 -right-12 w-48 h-48 rounded-full blur-[60px] animate-[pulse_10s_ease-in-out_infinite_2s]"
+                  style={{ background: `radial-gradient(circle, ${activeThemeColor}44 0%, ${activeThemeColor}08 70%, transparent 100%)` }}
                 />
               </motion.div>
             )}
@@ -969,12 +976,26 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                     animate={{ width: 36, opacity: 1, scale: 1 }}
                     exit={{ width: 0, opacity: 0, scale: 0.5 }}
                     transition={{ type: 'spring', stiffness: 120, damping: 20 }}
-                    className="h-9 w-9 flex-shrink-0 rounded-full overflow-hidden border border-black/10 bg-white/90 shadow-sm flex items-center justify-center p-0.5"
+                    className="h-9 w-9 flex-shrink-0 rounded-full overflow-hidden border shadow-sm flex items-center justify-center"
+                    style={{
+                      borderColor: `${activeThemeColor}25`,
+                      background: activeLogoUrl ? 'rgba(255,255,255,0.9)' : `${activeThemeColor}18`
+                    }}
                   >
                     {activeLogoUrl ? (
-                      <img src={activeLogoUrl} alt={detectedTerreiro.nome} className="h-full w-full object-cover rounded-full" />
+                      <img
+                        src={activeLogoUrl}
+                        alt={detectedTerreiro.nome}
+                        className="h-full w-full object-cover rounded-full"
+                        onError={() => setLogoHasError(true)}
+                      />
                     ) : (
-                      <img src="/img/login/icone.webp" alt="Ilê Logo" className="h-5 w-5 object-contain" />
+                      <span
+                        className="text-[11px] font-black uppercase tracking-tight leading-none select-none"
+                        style={{ color: activeThemeColor }}
+                      >
+                        {activeSigla.slice(0, 4)}
+                      </span>
                     )}
                   </motion.div>
                 )}
@@ -988,7 +1009,7 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                       ? activeThemeColor
                       : '#BF2429',
                 }}
-                transition={{ duration: 0.24, ease: 'easeOut' }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
                 className="text-[34px] font-behind italic leading-none tracking-tight text-center"
               >
                 {isRegister ? 'Cadastro' : 'Bem-Vindo'}
@@ -1115,8 +1136,8 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                   {/* Email Input */}
                   <div className="group relative">
                     <Mail 
-                      className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors" 
-                      style={{ color: detectedTerreiro ? activeThemeColor : 'rgba(191,36,41,0.5)' }} 
+                      className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors duration-500" 
+                      style={{ color: detectedTerreiro ? activeThemeColor : 'rgba(65,65,65,0.35)' }} 
                     />
                     <input
                       required
@@ -1126,9 +1147,9 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                         setEmail(event.target.value);
                         if (error) setError(null);
                       }}
-                      className="w-full rounded-[22px] bg-white/90 py-3.5 pl-10 pr-10 text-[15px] font-medium outline-none transition-all placeholder:text-[#414141]/25 border shadow-[inset_0_1px_2px_rgba(0,0,0,0.02),_0_2px_5px_rgba(0,0,0,0.015)] text-[#414141] focus:bg-white focus:outline-hidden"
+                      className="w-full rounded-[22px] bg-white/90 py-3.5 pl-10 pr-10 text-[15px] font-medium outline-none transition-all duration-500 placeholder:text-[#414141]/25 border shadow-[inset_0_1px_2px_rgba(0,0,0,0.02),_0_2px_5px_rgba(0,0,0,0.015)] text-[#414141] focus:bg-white focus:outline-hidden"
                       style={{
-                        borderColor: detectedTerreiro ? `${activeThemeColor}66` : 'rgba(191,36,41,0.25)'
+                        borderColor: detectedTerreiro ? `${activeThemeColor}40` : 'rgba(0,0,0,0.08)'
                       }}
                       placeholder="Email ou Usuário"
                     />
@@ -1170,8 +1191,8 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                   {/* Password Input */}
                   <div className="group relative">
                     <Lock 
-                      className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors" 
-                      style={{ color: detectedTerreiro ? activeThemeColor : 'rgba(191,36,41,0.5)' }} 
+                      className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors duration-500" 
+                      style={{ color: detectedTerreiro ? activeThemeColor : 'rgba(65,65,65,0.35)' }} 
                     />
                     <input
                       required
@@ -1181,9 +1202,9 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                         setPassword(event.target.value);
                         if (error) setError(null);
                       }}
-                      className="w-full rounded-[22px] bg-white/90 py-3.5 pl-10 pr-10 text-[15px] font-medium outline-none transition-all placeholder:text-[#414141]/25 border shadow-[inset_0_1px_2px_rgba(0,0,0,0.02),_0_2px_5px_rgba(0,0,0,0.015)] text-[#414141] focus:bg-white focus:outline-hidden"
+                      className="w-full rounded-[22px] bg-white/90 py-3.5 pl-10 pr-10 text-[15px] font-medium outline-none transition-all duration-500 placeholder:text-[#414141]/25 border shadow-[inset_0_1px_2px_rgba(0,0,0,0.02),_0_2px_5px_rgba(0,0,0,0.015)] text-[#414141] focus:bg-white focus:outline-hidden"
                       style={{
-                        borderColor: detectedTerreiro ? `${activeThemeColor}66` : 'rgba(191,36,41,0.25)'
+                        borderColor: detectedTerreiro ? `${activeThemeColor}40` : 'rgba(0,0,0,0.08)'
                       }}
                       placeholder="Senha"
                     />
@@ -1233,10 +1254,10 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                   animate={{
                     backgroundColor: activeThemeColor
                   }}
-                  transition={{ duration: 0.25 }}
+                  transition={{ duration: 0.5, ease: 'easeOut' }}
                   className="w-full rounded-full py-[15px] text-[14px] font-bold tracking-wide text-white transition-all active:scale-[0.97] mt-5 shadow-lg"
                   style={{
-                    boxShadow: `0 0 0 2.5px rgba(255,255,255,0.28), 0 10px 28px ${activeThemeColor}55, inset 0 1px 0 rgba(255,255,255,0.3)`
+                    boxShadow: `0 0 0 2.5px rgba(255,255,255,0.28), 0 10px 28px ${activeThemeColor}35, inset 0 1px 0 rgba(255,255,255,0.3)`
                   }}
                 >
                   <span className="flex items-center justify-center gap-2">
