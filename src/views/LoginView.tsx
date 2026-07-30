@@ -1359,7 +1359,7 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                       key="membro-step1"
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -6 }}
+                      exit={{ opacity: 0, y: -6, transition: { duration: 0.12, ease: 'easeOut' } }}
                       transition={{ duration: 0.14, ease: 'easeOut' }}
                       className="space-y-3 pb-1"
                     >
@@ -1566,7 +1566,7 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                       key="membro-step2-orixa"
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -6 }}
+                      exit={{ opacity: 0, y: -6, transition: { duration: 0.12, ease: 'easeOut' } }}
                       transition={{ duration: 0.14, ease: 'easeOut' }}
                       className="space-y-3.5 pb-1"
                     >
@@ -1782,7 +1782,7 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                       key="membro-step3"
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -6 }}
+                      exit={{ opacity: 0, y: -6, transition: { duration: 0.12, ease: 'easeOut' } }}
                       transition={{ duration: 0.14, ease: 'easeOut' }}
                       className="space-y-3 pb-1"
                     >
