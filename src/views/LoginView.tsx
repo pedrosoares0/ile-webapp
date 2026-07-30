@@ -1573,15 +1573,15 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                       <div className="text-center space-y-1 pt-1">
                         <p className="text-[14px] font-black text-[#414141] tracking-tight">Qual seu Orixá Regente?</p>
                         <p className="text-[10.5px] text-[#414141]/50 font-medium leading-relaxed">
-                          Arraste as cartas para o lado ou use as setas para escolher o Orixá que guia e protege seus caminhos.
+                          Selecione o Orixá que guia e protege seus caminhos.
                         </p>
                       </div>
 
-                      <div className="relative w-full flex items-center justify-center py-4 my-1" style={{ height: '270px' }}>
+                      <div className="relative w-full flex items-center justify-center py-4 my-1" style={{ height: '280px' }}>
                         {/* Stack deck container */}
-                        <div className="relative w-[210px] h-[240px]">
+                        <div className="relative w-[190px] h-[250px]">
                           {/* Navigation buttons overlapping deck */}
-                          <div className="absolute top-1/2 -translate-y-1/2 -left-10 z-40">
+                          <div className="absolute top-1/2 -translate-y-1/2 -left-11 z-40">
                             <button
                               type="button"
                               disabled={activeOrixaCardIdx === 0}
@@ -1591,7 +1591,7 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                               <ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.2} />
                             </button>
                           </div>
-                          <div className="absolute top-1/2 -translate-y-1/2 -right-10 z-40">
+                          <div className="absolute top-1/2 -translate-y-1/2 -right-11 z-40">
                             <button
                               type="button"
                               disabled={activeOrixaCardIdx === ORIXAS_CADASTRO.length - 1}
@@ -1641,8 +1641,8 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                                 className="absolute inset-0 select-none rounded-[24px] overflow-hidden shadow-md flex flex-col justify-end p-4 text-left border cursor-pointer"
                                 style={{
                                   zIndex: 10 - offset,
-                                  borderColor: isSelected ? orixa.cor : 'rgba(255,255,255,0.4)',
-                                  borderWidth: isSelected ? '3px' : '1px',
+                                  borderColor: isSelected ? orixa.cor : 'rgba(255,255,255,0.15)',
+                                  borderWidth: isSelected ? '2.5px' : '1px',
                                   boxShadow: isSelected ? `0 8px 24px ${orixa.cor}40` : '0 4px 16px rgba(0,0,0,0.12)',
                                   background: '#222'
                                 }}
@@ -1721,17 +1721,19 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                         ))}
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setRegOrixa('')}
-                        className={`w-full py-2.5 rounded-[16px] text-[11px] font-black uppercase tracking-wider transition-all border ${
-                          regOrixa === '' 
-                            ? 'bg-zinc-800 text-white border-transparent shadow-sm' 
-                            : 'bg-white/40 text-[#414141]/60 border-[#414141]/10 hover:bg-white/60 hover:text-[#414141]'
-                        }`}
-                      >
-                        Não sei / Não selecionar
-                      </button>
+                      <div className="flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => setRegOrixa('')}
+                          className={`px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                            regOrixa === '' 
+                              ? 'bg-zinc-800 text-white border-transparent shadow-xs' 
+                              : 'bg-white/50 text-[#414141]/60 border-black/5 hover:bg-white hover:text-[#414141] shadow-2xs'
+                          }`}
+                        >
+                          Não sei / Não selecionar
+                        </button>
+                      </div>
 
                       <motion.button
                         type="button"
