@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { AlertCircle, Mail, Lock, User, Phone, Hash, MapPin, Compass, Check, X, Eye, EyeOff, ChevronRight, ChevronLeft, ImagePlus, Upload } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -115,6 +115,127 @@ const ORIXAS_CADASTRO = [
   { id: 'Iemanjá', nome: 'Iemanjá', imagem: '/img/divindades/yemanja.jpg', saudacao: 'Odoyá!', cor: '#2B6CB0', titulo: 'Rainha do Mar' },
   { id: 'Oxum', nome: 'Oxum', imagem: '/img/divindades/oxum.jpg', saudacao: 'Ora Yê Yê Ô!', cor: '#EAB308', titulo: 'Dona das Águas Doces' },
 ];
+
+interface OrixaCardProps {
+  orixa: typeof ORIXAS_CADASTRO[0];
+  offset: number;
+  isSelected: boolean;
+  isActive: boolean;
+  onSelect: () => void;
+  onSwipeNext: () => void;
+  onSwipePrev: () => void;
+  onSetActive: () => void;
+}
+
+const OrixaCard = ({
+  orixa,
+  offset,
+  isSelected,
+  isActive,
+  onSelect,
+  onSwipeNext,
+  onSwipePrev,
+  onSetActive
+}: OrixaCardProps) => {
+  const dragX = useMotionValue(0);
+  const rotate = useTransform(dragX, [-200, 200], [-15, 15]);
+
+  const scale = 1 - offset * 0.06;
+  const yTranslate = offset * 12;
+  const staticOpacity = 1 - offset * 0.25;
+  const staticRotation = offset === 1 ? 2.5 : offset === 2 ? -2.5 : 0;
+
+  return (
+    <motion.div
+      drag={isActive ? "x" : false}
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.65}
+      style={{
+        x: isActive ? dragX : 0,
+        rotate: isActive ? rotate : staticRotation,
+        zIndex: 10 - offset,
+        borderColor: isSelected ? orixa.cor : 'rgba(255,255,255,0.14)',
+        borderWidth: isSelected ? '2.5px' : '1px',
+        boxShadow: isSelected ? `0 8px 24px ${orixa.cor}35` : '0 4px 16px rgba(0,0,0,0.1)',
+        background: 'rgba(30,30,30,0.85)',
+        backdropFilter: 'blur(8px)',
+      }}
+      animate={isActive ? {
+        scale: 1,
+        y: 0,
+        opacity: 1,
+      } : {
+        scale,
+        y: yTranslate,
+        opacity: staticOpacity,
+      }}
+      onDragEnd={(_, info) => {
+        if (!isActive) return;
+        const swipeThreshold = 80;
+        if (info.offset.x < -swipeThreshold) {
+          onSwipeNext();
+        } else if (info.offset.x > swipeThreshold) {
+          onSwipePrev();
+        }
+      }}
+      transition={{ type: 'spring', stiffness: 220, damping: 25 }}
+      className="absolute inset-0 select-none rounded-[24px] overflow-hidden flex flex-col justify-end p-4 text-left border cursor-pointer"
+      onClick={() => {
+        if (isActive) {
+          onSelect();
+        } else {
+          onSetActive();
+        }
+      }}
+    >
+      {/* Orixa image cover */}
+      <img
+        src={orixa.imagem}
+        alt={orixa.nome}
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+      />
+      {/* Bottom dark overlay gradient */}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none"
+        style={{
+          background: 'linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.88) 100%)'
+        }}
+      />
+
+      {/* Card Header / Icon info indicator if selected */}
+      {isSelected && (
+        <div className="absolute top-3 right-3 bg-white/95 text-emerald-600 rounded-full p-1 shadow-sm border border-emerald-50/20 z-10 animate-pulse">
+          <Check className="h-4 w-4 stroke-[3]" />
+        </div>
+      )}
+
+      {/* Orixá info */}
+      <div className="relative z-10 text-white select-none pointer-events-none mb-1">
+        <p className="text-[19px] font-black leading-none drop-shadow-sm">{orixa.nome}</p>
+        <p className="text-[9px] font-bold text-white/60 uppercase tracking-widest leading-none mt-1 drop-shadow-sm">{orixa.saudacao}</p>
+        <p className="text-[8.5px] font-medium text-white/45 italic leading-none mt-0.5 drop-shadow-sm">{orixa.titulo}</p>
+      </div>
+
+      {/* Select toggle overlay button */}
+      <div className="relative z-10 flex justify-end">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect();
+          }}
+          className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all shadow-xs ${
+            isSelected
+              ? 'bg-emerald-500 text-white border border-transparent shadow-[0_2px_8px_rgba(16,185,129,0.35)]'
+              : 'bg-white/20 hover:bg-white/35 text-white border border-white/20 backdrop-blur-xs active:scale-95'
+          }`}
+        >
+          {isSelected ? 'Selecionado' : 'Selecionar'}
+        </button>
+      </div>
+    </motion.div>
+  );
+};
 
 const formatCelular = (value: string) => {
   const digits = value.replace(/\D/g, '');
@@ -1608,98 +1729,26 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                             // Only render the active card and the next 2 behind it
                             if (offset < 0 || offset > 2) return null;
 
-                            const isActive = offset === 0;
-                            const isSelected = regOrixa === orixa.id;
-                            
-                            // Visual properties for stacked look
-                            const scale = 1 - offset * 0.06;
-                            const yTranslate = offset * 12;
-                            const opacity = 1 - offset * 0.25;
-                            const rotation = offset === 1 ? 2.5 : offset === 2 ? -2.5 : 0;
-
                             return (
-                              <motion.div
+                              <OrixaCard
                                 key={orixa.id}
-                                drag={isActive ? "x" : false}
-                                dragConstraints={{ left: 0, right: 0 }}
-                                dragElastic={0.6}
-                                onDragEnd={(_, info) => {
-                                  const swipeThreshold = 50;
-                                  if (info.offset.x < -swipeThreshold && activeOrixaCardIdx < ORIXAS_CADASTRO.length - 1) {
+                                orixa={orixa}
+                                offset={offset}
+                                isSelected={regOrixa === orixa.id}
+                                isActive={offset === 0}
+                                onSelect={() => setRegOrixa(regOrixa === orixa.id ? '' : orixa.id)}
+                                onSwipeNext={() => {
+                                  if (activeOrixaCardIdx < ORIXAS_CADASTRO.length - 1) {
                                     setActiveOrixaCardIdx(prev => prev + 1);
-                                  } else if (info.offset.x > swipeThreshold && activeOrixaCardIdx > 0) {
+                                  }
+                                }}
+                                onSwipePrev={() => {
+                                  if (activeOrixaCardIdx > 0) {
                                     setActiveOrixaCardIdx(prev => prev - 1);
                                   }
                                 }}
-                                animate={{
-                                  scale,
-                                  y: yTranslate,
-                                  opacity,
-                                  rotate: rotation,
-                                }}
-                                transition={{ type: 'spring', stiffness: 220, damping: 25 }}
-                                className="absolute inset-0 select-none rounded-[24px] overflow-hidden shadow-md flex flex-col justify-end p-4 text-left border cursor-pointer"
-                                style={{
-                                  zIndex: 10 - offset,
-                                  borderColor: isSelected ? orixa.cor : 'rgba(255,255,255,0.15)',
-                                  borderWidth: isSelected ? '2.5px' : '1px',
-                                  boxShadow: isSelected ? `0 8px 24px ${orixa.cor}40` : '0 4px 16px rgba(0,0,0,0.12)',
-                                  background: '#222'
-                                }}
-                                onClick={() => {
-                                  if (isActive) {
-                                    setRegOrixa(isSelected ? '' : orixa.id);
-                                  } else {
-                                    setActiveOrixaCardIdx(idx);
-                                  }
-                                }}
-                              >
-                                {/* Orixa image cover */}
-                                <img
-                                  src={orixa.imagem}
-                                  alt={orixa.nome}
-                                  className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-                                />
-                                {/* Bottom dark overlay gradient */}
-                                <div
-                                  className="absolute inset-0 z-0 pointer-events-none"
-                                  style={{
-                                    background: 'linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.85) 100%)'
-                                  }}
-                                />
-
-                                {/* Card Header / Icon info indicator if selected */}
-                                {isSelected && (
-                                  <div className="absolute top-3 right-3 bg-white/95 text-emerald-600 rounded-full p-1 shadow-sm border border-emerald-50/20 z-10 animate-pulse">
-                                    <Check className="h-4 w-4 stroke-[3]" />
-                                  </div>
-                                )}
-
-                                {/* Orixá info */}
-                                <div className="relative z-10 text-white select-none pointer-events-none">
-                                  <p className="text-[19px] font-black leading-none drop-shadow-sm">{orixa.nome}</p>
-                                  <p className="text-[9px] font-bold text-white/60 uppercase tracking-widest leading-none mt-1 drop-shadow-sm">{orixa.saudacao}</p>
-                                  <p className="text-[8.5px] font-medium text-white/45 italic leading-none mt-0.5 drop-shadow-sm">{orixa.titulo}</p>
-                                </div>
-
-                                {/* Select toggle overlay button */}
-                                <div className="relative z-10 flex justify-end mt-2">
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setRegOrixa(isSelected ? '' : orixa.id);
-                                    }}
-                                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all shadow-xs ${
-                                      isSelected
-                                        ? 'bg-emerald-500 text-white border border-transparent shadow-[0_2px_8px_rgba(16,185,129,0.35)]'
-                                        : 'bg-white/20 hover:bg-white/35 text-white border border-white/20 backdrop-blur-xs active:scale-95'
-                                    }`}
-                                  >
-                                    {isSelected ? 'Selecionado' : 'Selecionar'}
-                                  </button>
-                                </div>
-                              </motion.div>
+                                onSetActive={() => setActiveOrixaCardIdx(idx)}
+                              />
                             );
                           })}
                         </div>
@@ -1725,13 +1774,13 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                         <button
                           type="button"
                           onClick={() => setRegOrixa('')}
-                          className={`px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                          className={`px-4.5 py-1.5 rounded-full text-[9.5px] font-bold uppercase tracking-wider transition-all border ${
                             regOrixa === '' 
                               ? 'bg-zinc-800 text-white border-transparent shadow-xs' 
-                              : 'bg-white/50 text-[#414141]/60 border-black/5 hover:bg-white hover:text-[#414141] shadow-2xs'
+                              : 'bg-white/50 text-[#414141]/50 border-black/5 hover:bg-white hover:text-[#414141] shadow-2xs'
                           }`}
                         >
-                          Não sei / Não selecionar
+                          Prefiro não selecionar
                         </button>
                       </div>
 
