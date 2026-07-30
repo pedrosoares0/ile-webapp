@@ -142,12 +142,17 @@ export default function BurgerMenu({ isOpen, onClose, currentView, onNavigate }:
                       <img src={logoSrc} alt="Logo" className="h-full w-full object-cover" />
                     </div>
                   </div>
-                  <h2 className="text-[17px] font-black text-[#242424] tracking-[0.18em] leading-none uppercase">
+                   <h2 className="text-[17px] font-black text-[#242424] tracking-[0.18em] leading-none uppercase">
                     {(isGlobalAdmin || isHubUser) ? 'ILÊ' : terreiroSigla}
                   </h2>
                   <p className="text-[11px] font-semibold text-[#414141]/55 mt-1.5 leading-snug max-w-[220px]">
                     {isGlobalAdmin ? 'Portal Administrativo' : isHubUser ? 'Hub de Terreiros' : (currentTerreiro?.nome || 'Terreiro de Umbanda')}
                   </p>
+                  {currentAccount?.orixa && (
+                    <div className="mt-2.5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/[0.04] border border-black/[0.03] text-[9.5px] font-black uppercase tracking-wider text-[#414141]/50">
+                      ✨ Filho(a) de {currentAccount.orixa}
+                    </div>
+                  )}
                 </div>
 
                 {/* Staggered Navigation Links */}

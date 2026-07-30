@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertCircle, Mail, Lock, User, Phone, Hash, MapPin, Compass, Check, X, Eye, EyeOff, ChevronRight, ImagePlus, Upload } from 'lucide-react';
+import { AlertCircle, Mail, Lock, User, Phone, Hash, MapPin, Compass, Check, X, Eye, EyeOff, ChevronRight, ChevronLeft, ImagePlus, Upload } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -107,6 +107,15 @@ const SLIDESHOW_IMAGES = [
   '/img/login/yemanjalogin.webp',
 ];
 
+const ORIXAS_CADASTRO = [
+  { id: 'Oxalá', nome: 'Oxalá', imagem: '/img/divindades/oxala.jpg', saudacao: 'Epa Babá!', cor: '#B5A490', titulo: 'Pai da Criação' },
+  { id: 'Ogum', nome: 'Ogum', imagem: '/img/divindades/ogum.jpg', saudacao: 'Ogunhê!', cor: '#1565C0', titulo: 'Senhor da Guerra' },
+  { id: 'Oxóssi', nome: 'Oxóssi', imagem: '/img/divindades/oxossi.jpg', saudacao: 'Okê Arô!', cor: '#1A7A4A', titulo: 'Rei da Mata' },
+  { id: 'Xangô', nome: 'Xangô', imagem: '/img/divindades/xango.jpg', saudacao: 'Kaô Kabecilê!', cor: '#C2410C', titulo: 'Rei da Justiça' },
+  { id: 'Iemanjá', nome: 'Iemanjá', imagem: '/img/divindades/yemanja.jpg', saudacao: 'Odoyá!', cor: '#2B6CB0', titulo: 'Rainha do Mar' },
+  { id: 'Oxum', nome: 'Oxum', imagem: '/img/divindades/oxum.jpg', saudacao: 'Ora Yê Yê Ô!', cor: '#EAB308', titulo: 'Dona das Águas Doces' },
+];
+
 const formatCelular = (value: string) => {
   const digits = value.replace(/\D/g, '');
   const trimmed = digits.slice(0, 11);
@@ -151,6 +160,8 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
   const [regSenha, setRegSenha] = useState('');
   const [regConfirmaSenha, setRegConfirmaSenha] = useState('');
   const [regCodigoTerreiro, setRegCodigoTerreiro] = useState('');
+  const [regOrixa, setRegOrixa] = useState('');
+  const [activeOrixaCardIdx, setActiveOrixaCardIdx] = useState(0);
 
   // Terreiro Registration states (Split into 3 Steps)
   const [regStep, setRegStep] = useState(1);
@@ -574,6 +585,7 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
         member_email: regEmail.trim(),
         member_phone: regNumero,
         invite_code: matchedTerreiroId || null,
+        member_orixa: regOrixa || null,
       });
 
       if (dbError) {
@@ -606,6 +618,8 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
         setRegSenha('');
         setRegConfirmaSenha('');
         setRegCodigoTerreiro('');
+        setRegOrixa('');
+        setActiveOrixaCardIdx(0);
         setMembroStep(1);
         setSuccessData(null);
       }
@@ -1048,7 +1062,7 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                     {registerType === 'membro' ? 'Cadastro Membro' : 'Cadastro Terreiro'}
                   </span>
                   <span className="text-[9px] font-black text-[#BF2429]/90 font-mono">
-                    Passo {registerType === 'membro' ? membroStep : regStep} de 2
+                    Passo {registerType === 'membro' ? membroStep : regStep} de 3
                   </span>
                 </div>
                 <div
@@ -1062,9 +1076,9 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                     style={{
                       backgroundColor: '#BF2429'
                     }}
-                    initial={{ width: '50%' }}
+                    initial={{ width: '33.33%' }}
                     animate={{
-                      width: (registerType === 'membro' ? membroStep === 1 : regStep === 1) ? '50%' : '100%'
+                      width: `${((registerType === 'membro' ? membroStep : regStep) / 3) * 100}%`
                     }}
                     transition={{ type: 'spring', stiffness: 220, damping: 25 }}
                   />
@@ -1546,10 +1560,224 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                         </button>
                       </div>
                     </motion.div>
-                  ) : (
-                    /* STEP 2: CREDENTIALS */
+                  ) : membroStep === 2 ? (
+                    /* STEP 2: ORIXÁ SELECTION */
                     <motion.div
-                      key="membro-step2"
+                      key="membro-step2-orixa"
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.14, ease: 'easeOut' }}
+                      className="space-y-3.5 pb-1"
+                    >
+                      <div className="text-center space-y-1 pt-1">
+                        <p className="text-[14px] font-black text-[#414141] tracking-tight">Qual seu Orixá Regente?</p>
+                        <p className="text-[10.5px] text-[#414141]/50 font-medium leading-relaxed">
+                          Arraste as cartas para o lado ou use as setas para escolher o Orixá que guia e protege seus caminhos.
+                        </p>
+                      </div>
+
+                      <div className="relative w-full flex items-center justify-center py-4 my-1" style={{ height: '270px' }}>
+                        {/* Stack deck container */}
+                        <div className="relative w-[210px] h-[240px]">
+                          {/* Navigation buttons overlapping deck */}
+                          <div className="absolute top-1/2 -translate-y-1/2 -left-10 z-40">
+                            <button
+                              type="button"
+                              disabled={activeOrixaCardIdx === 0}
+                              onClick={() => setActiveOrixaCardIdx(prev => prev - 1)}
+                              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/95 border border-black/5 shadow-md text-zinc-800 disabled:opacity-30 disabled:scale-100 active:scale-90 transition-transform"
+                            >
+                              <ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.2} />
+                            </button>
+                          </div>
+                          <div className="absolute top-1/2 -translate-y-1/2 -right-10 z-40">
+                            <button
+                              type="button"
+                              disabled={activeOrixaCardIdx === ORIXAS_CADASTRO.length - 1}
+                              onClick={() => setActiveOrixaCardIdx(prev => prev + 1)}
+                              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/95 border border-black/5 shadow-md text-zinc-800 disabled:opacity-30 disabled:scale-100 active:scale-90 transition-transform"
+                            >
+                              <ChevronRight className="h-4.5 w-4.5" strokeWidth={2.2} />
+                            </button>
+                          </div>
+
+                          {/* Render Stacked Cards */}
+                          {ORIXAS_CADASTRO.map((orixa, idx) => {
+                            const offset = idx - activeOrixaCardIdx;
+                            // Only render the active card and the next 2 behind it
+                            if (offset < 0 || offset > 2) return null;
+
+                            const isActive = offset === 0;
+                            const isSelected = regOrixa === orixa.id;
+                            
+                            // Visual properties for stacked look
+                            const scale = 1 - offset * 0.06;
+                            const yTranslate = offset * 12;
+                            const opacity = 1 - offset * 0.25;
+                            const rotation = offset === 1 ? 2.5 : offset === 2 ? -2.5 : 0;
+
+                            return (
+                              <motion.div
+                                key={orixa.id}
+                                drag={isActive ? "x" : false}
+                                dragConstraints={{ left: 0, right: 0 }}
+                                dragElastic={0.6}
+                                onDragEnd={(_, info) => {
+                                  const swipeThreshold = 50;
+                                  if (info.offset.x < -swipeThreshold && activeOrixaCardIdx < ORIXAS_CADASTRO.length - 1) {
+                                    setActiveOrixaCardIdx(prev => prev + 1);
+                                  } else if (info.offset.x > swipeThreshold && activeOrixaCardIdx > 0) {
+                                    setActiveOrixaCardIdx(prev => prev - 1);
+                                  }
+                                }}
+                                animate={{
+                                  scale,
+                                  y: yTranslate,
+                                  opacity,
+                                  rotate: rotation,
+                                }}
+                                transition={{ type: 'spring', stiffness: 220, damping: 25 }}
+                                className="absolute inset-0 select-none rounded-[24px] overflow-hidden shadow-md flex flex-col justify-end p-4 text-left border cursor-pointer"
+                                style={{
+                                  zIndex: 10 - offset,
+                                  borderColor: isSelected ? orixa.cor : 'rgba(255,255,255,0.4)',
+                                  borderWidth: isSelected ? '3px' : '1px',
+                                  boxShadow: isSelected ? `0 8px 24px ${orixa.cor}40` : '0 4px 16px rgba(0,0,0,0.12)',
+                                  background: '#222'
+                                }}
+                                onClick={() => {
+                                  if (isActive) {
+                                    setRegOrixa(isSelected ? '' : orixa.id);
+                                  } else {
+                                    setActiveOrixaCardIdx(idx);
+                                  }
+                                }}
+                              >
+                                {/* Orixa image cover */}
+                                <img
+                                  src={orixa.imagem}
+                                  alt={orixa.nome}
+                                  className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                                />
+                                {/* Bottom dark overlay gradient */}
+                                <div
+                                  className="absolute inset-0 z-0 pointer-events-none"
+                                  style={{
+                                    background: 'linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.85) 100%)'
+                                  }}
+                                />
+
+                                {/* Card Header / Icon info indicator if selected */}
+                                {isSelected && (
+                                  <div className="absolute top-3 right-3 bg-white/95 text-emerald-600 rounded-full p-1 shadow-sm border border-emerald-50/20 z-10 animate-pulse">
+                                    <Check className="h-4 w-4 stroke-[3]" />
+                                  </div>
+                                )}
+
+                                {/* Orixá info */}
+                                <div className="relative z-10 text-white select-none pointer-events-none">
+                                  <p className="text-[19px] font-black leading-none drop-shadow-sm">{orixa.nome}</p>
+                                  <p className="text-[9px] font-bold text-white/60 uppercase tracking-widest leading-none mt-1 drop-shadow-sm">{orixa.saudacao}</p>
+                                  <p className="text-[8.5px] font-medium text-white/45 italic leading-none mt-0.5 drop-shadow-sm">{orixa.titulo}</p>
+                                </div>
+
+                                {/* Select toggle overlay button */}
+                                <div className="relative z-10 flex justify-end mt-2">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setRegOrixa(isSelected ? '' : orixa.id);
+                                    }}
+                                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all shadow-xs ${
+                                      isSelected
+                                        ? 'bg-emerald-500 text-white border border-transparent shadow-[0_2px_8px_rgba(16,185,129,0.35)]'
+                                        : 'bg-white/20 hover:bg-white/35 text-white border border-white/20 backdrop-blur-xs active:scale-95'
+                                    }`}
+                                  >
+                                    {isSelected ? 'Selecionado' : 'Selecionar'}
+                                  </button>
+                                </div>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Dots Indicators */}
+                      <div className="flex justify-center gap-1.5 my-1">
+                        {ORIXAS_CADASTRO.map((_, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => setActiveOrixaCardIdx(i)}
+                            className={`h-1.5 rounded-full transition-all duration-300 ${
+                              i === activeOrixaCardIdx 
+                                ? 'w-4 bg-zinc-800' 
+                                : 'w-1.5 bg-zinc-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setRegOrixa('')}
+                        className={`w-full py-2.5 rounded-[16px] text-[11px] font-black uppercase tracking-wider transition-all border ${
+                          regOrixa === '' 
+                            ? 'bg-zinc-800 text-white border-transparent shadow-sm' 
+                            : 'bg-white/40 text-[#414141]/60 border-[#414141]/10 hover:bg-white/60 hover:text-[#414141]'
+                        }`}
+                      >
+                        Não sei / Não selecionar
+                      </button>
+
+                      <motion.button
+                        type="button"
+                        onClick={() => {
+                          setError(null);
+                          setMembroStep(3);
+                        }}
+                        className="w-full rounded-full py-[15px] text-[14px] font-bold tracking-wide text-white transition-all active:scale-[0.97] mt-1"
+                        style={{
+                          background: 'linear-gradient(175deg, #e8383c 0%, #a91b1f 100%)',
+                          boxShadow: '0 0 0 2.5px rgba(255,255,255,0.28), 0 10px 28px rgba(191,36,41,0.44), inset 0 1px 0 rgba(255,255,255,0.3)'
+                        }}
+                      >
+                        <span className="flex items-center justify-center gap-2">
+                          AVANÇAR
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="opacity-80"><path d="M5 3l4 4-4 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </span>
+                      </motion.button>
+
+                      <div className="flex items-center justify-center gap-4 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setMembroStep(1)}
+                          className="text-[11px] font-semibold text-[#414141]/50 hover:text-[#414141]/80 transition-colors focus:outline-none flex items-center gap-1"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7 2L3 6l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          Passo anterior
+                        </button>
+                        <span className="text-[#414141]/15 text-xs">|</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsRegister(false);
+                            setError(null);
+                            setMembroStep(1);
+                          }}
+                          className="text-[11px] font-semibold text-[#BF2429]/60 hover:text-[#BF2429] transition-colors focus:outline-none"
+                        >
+                          Já tenho conta
+                        </button>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    /* STEP 3: CREDENTIALS */
+                    <motion.div
+                      key="membro-step3"
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -6 }}
@@ -1699,7 +1927,7 @@ export default function LoginView({ onExploreHub }: LoginViewProps) {
                       <div className="flex items-center justify-center gap-4 pt-1">
                         <button
                           type="button"
-                          onClick={() => setMembroStep(1)}
+                          onClick={() => setMembroStep(2)}
                           className="text-[11px] font-semibold text-[#414141]/50 hover:text-[#414141]/80 transition-colors focus:outline-none flex items-center gap-1"
                         >
                           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7 2L3 6l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>

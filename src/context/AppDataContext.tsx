@@ -107,6 +107,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           terreiroId: profile.terreiro_id || '',
           userId: profile.user_id,
           createdAt: profile.created_at,
+          orixa: profile.orixa,
         };
 
         setCurrentAccount(mappedAccount);
@@ -190,6 +191,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             terreiroId: u.terreiro_id || '',
             accessAccountId: u.access_account_id,
             createdAt: u.created_at,
+            orixa: u.orixa,
           }))
         );
 

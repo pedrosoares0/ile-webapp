@@ -405,6 +405,14 @@ export default function HomeView({ onNavigate, onToggleMenu }: HomeViewProps) {
                 ? `Olá pai ${currentAccount?.nome?.split(' ')[0] ?? ''}`
                 : `Olá ${currentAccount?.nome?.split(' ')[0] ?? 'Visitante'}`}
             </h1>
+            {currentAccount?.orixa && (
+              <div 
+                className="mt-1.5 mb-1 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white/95 border border-white/20 bg-white/10 backdrop-blur-xs flex items-center gap-1.5 shadow-sm"
+                style={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
+              >
+                <span>🕊️ Filho(a) de {currentAccount.orixa}</span>
+              </div>
+            )}
             {currentAccount?.role !== 'terreiro_admin' && (
               <p
                 className="text-white/95 text-[11px] font-medium tracking-[0.18em] uppercase mt-1 font-behind not-italic"

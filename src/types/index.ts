@@ -65,6 +65,7 @@ export interface AccessAccount {
   terreiroId: string;
   userId: string | null;
   createdAt: string;
+  orixa?: string | null;
 }
 
 export interface AppUser {
@@ -77,6 +78,7 @@ export interface AppUser {
   terreiroId: string;
   accessAccountId: string | null;
   createdAt: string;
+  orixa?: string | null;
 }
 
 export interface TerreiroEvent {
